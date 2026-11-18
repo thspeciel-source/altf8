@@ -210,9 +210,10 @@ const VERSIONS = [
   { id:'v6', file:'versions/v6.html', label:'v6 - Play + F8 to shut off (2026-11-17)', note:'Hold Play + F8 to turn off with a SHUT OFF? bar. Holding F8 alone only turns on.' },
   { id:'v7', file:'versions/v7.html', label:'v7 - Rhythms across bars, text-free note shape (2026-11-17)', note:'Rhythm presets across the 4 bars on a 16th grid; notes show the rhythm. Text-free note design screen; Play twice to loop.' },
   { id:'v8', file:'versions/v8.html', label:'v8 - Selectors instead of the switch (2026-11-17)', note:'No more multi-step switch. B opens a selector menu (Notes, Rhythm, Pattern, Chords); the knob picks, F8 opens. Pattern sets how long each chord lasts across the loop; Rhythm splits each chord into hits. All notes light up and change live while you turn.' },
-  { id:'v9', file:'index.html', label:'v9 - Note actions, button strip, metronome (2026-11-17)', note:'While a note is grabbed the 4 buttons do octave up, octave down, accent and delete; B cancels. Buttons line up with a label strip at the bottom of the screen. Kick metronome. The selector menu outlines the part of the screen each item controls and shows the next one.' }
+  { id:'v9', file:'versions/v9.html', label:'v9 - Note actions, button strip, metronome (2026-11-17)', note:'While a note is grabbed the 4 buttons do octave up, octave down, accent and delete; B cancels. Buttons line up with a label strip at the bottom of the screen. Kick metronome. The selector menu outlines the part of the screen each item controls and shows the next one.' },
+  { id:'v10', file:'index.html', label:'v10 - Full-screen note shape (2026-11-17)', note:"No ADSR text. The note shape fills the whole screen while you turn the shape knobs and on the note design screen. The right column shows a colored level bar next to each knob." }
 ];
-const CURRENT = 'v9';
+const CURRENT = 'v10';
 
 /* ================= state ================= */
 const st = {
@@ -667,10 +668,10 @@ function knobLabels(){
   return [['ATTACK', fmt(ATK[P.a])], ['DECAY', fmt(DEC[P.d])], ['SUSTAIN', Math.round(P.s * 100) + '%'], ['RELEASE', fmt(REL[P.r])]];
 }
 function drawLabels(){
+  // no text: one colored meter per knob, level with that knob
   px(83, 0, 1, 112, C.dim);
-  const L = knobLabels(), ys = [14, 42, 70, 98], cols = [SEG.a, SEG.d, SEG.s, SEG.r];
-  if (st.screen === 'design') { ['A','D','S','R'].forEach((l, i) => txt(l, 92, ys[i] - 5, cols[i], 2)); return; }
-  L.forEach((l, i) => { stxt('k' + i, l[0], 7, 85, ys[i] - 7, cols[i]); stxt('v' + i, l[1], 7, 85, ys[i] + 1, C.txt); });
+  const ys = [14, 42, 70, 98], cols = [SEG.a, SEG.d, SEG.s, SEG.r];
+  for (let i = 0; i < 4; i++) { px(87, ys[i] - 2, 22, 4, C.grid); px(87, ys[i] - 2, Math.max(1, Math.round(22 * knobFrac(i))), 4, cols[i]); }
 }
 function wave(ph, w){ ph = ph - Math.floor(ph); if (w === 0) return Math.sin(ph * 2 * Math.PI); if (w === 1) return 1 - 4 * Math.abs(ph - 0.5); if (w === 2) return 2 * ph - 1; return ph < 0.5 ? 1 : -1; }
 function env(t, P){ const a = ATK[P.a], d = DEC[P.d], s = P.s, r = REL[P.r], hold = 0.3; if (t < a) return t / Math.max(a, 1e-4); if (t < a + d) return 1 - (1 - s) * (t - a) / d; if (t < a + d + hold) return s; const u = t - a - d - hold; return u < r ? s * (1 - u / r) : 0; }
@@ -743,7 +744,6 @@ function drawMelody(now){
       }
     }
   }
-  if (now - st.lastEdit < 2000 && st.prevStart) { px(3, 21, 77, 64, C.dim); px(4, 22, 75, 62, C.bg); drawShape(now, 6, 24, 71, 58); }
   if (st.menu) { drawMenu(now); return 'F8:OK NEXT:' + MODES[(st.menuIdx + 1) % MODES.length]; }
   if (st.mode !== 'notes') return 'KNOB F8:KEEP B:MENU';
   let prompt;
@@ -837,7 +837,6 @@ function drawShape(now, x0, y0, w, h){
   return false;
 }
 function drawDesign(now){
-  drawShape(now, 2, 4, 79, 92);
   return '';
 }
 function drawSettings(now){
@@ -859,7 +858,9 @@ function draw(){
     else {
       px(0, 0, 112, 112, C.bg);
       const prompt = st.screen === 'melody' ? drawMelody(now) : st.screen === 'design' ? drawDesign(now) : drawSettings(now);
-      drawLabels(); drawButtonBar();
+      const full = st.screen === 'design' || (st.screen === 'melody' && st.prevStart && now - st.lastEdit < 2000);
+      if (full) { px(0, 0, 112, 112, C.bg); drawShape(now, 2, 2, 108, 108); }
+      else { drawLabels(); drawButtonBar(); }
       if (st.shut) {
         const f = Math.min(1, (now - st.shut.t0) / SHUT_MS);
         px(10, 38, 92, 36, C.acc); px(11, 39, 90, 34, C.bg);
@@ -873,7 +874,8 @@ function draw(){
         lines.forEach((ln, i) => txt(ln, Math.round(56 - ln.length * 2), 49 + i * 8, C.txt));
       }
       const showMsg = st.msg && now - st.msgT < 1400;
-      stxt('pr', showMsg ? st.msg : prompt, 20, 1, 99, showMsg ? C.acc : C.txt);
+      if (!full) stxt('pr', showMsg ? st.msg : prompt, 20, 1, 99, showMsg ? C.acc : C.txt);
+      else if (showMsg) { px(0, 0, 112, 7, C.bg); txt(st.msg, Math.max(1, Math.round(56 - st.msg.length * 2)), 1, C.acc); }
     }
   }
   for (let i = 0; i < 4; i++) { const r = document.getElementById('r' + i); r.classList.toggle('off', !st.on); r.style.setProperty('--p', st.on ? knobFrac(i).toFixed(3) : 0); }
