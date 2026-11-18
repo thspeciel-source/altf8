@@ -13,9 +13,15 @@ The emulator is a single page with no build step.
 
 Older builds are in `versions/` and can be picked from the version selector on the page.
 
-## Staying in sync
+## Staying in sync (no GitHub Desktop needed)
 
-- Before working: pull (GitHub Desktop: "Fetch origin" then "Pull", or `git pull`).
-- After a change: commit and push (GitHub Desktop: "Commit to main" then "Push origin", or `git commit` + `git push`).
-- When a change is a new build, copy the current `index.html` into `versions/vN.html` first and add it to the `VERSIONS` list in each file.
-- Blueprint (decisions, ideas, open questions): see the AltF8 Blueprint doc.
+Pick whichever fits:
+
+- **No install:** on github.com, click **Code > Download ZIP**, unzip, double-click `index.html`. Download again to get the latest.
+- **Terminal (git):** once, `git clone https://github.com/thspeciel-source/altf8`. Then `git pull` before working and `git add -A && git commit -m "what changed" && git push` after.
+- **Small edits in the browser:** open a file on github.com, click the pencil icon, edit, then **Commit changes**.
+- **Through Claude:** ask Claude in a session with this repo attached to make the change; it commits and pushes.
+
+When a change is a new build, copy the current `index.html` into `versions/vN.html` first and add it to the `VERSIONS` list in each file.
+
+Blueprint (decisions, ideas, open questions): see the AltF8 Blueprint doc.
