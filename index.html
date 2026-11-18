@@ -26,7 +26,7 @@
   #mainknob { position:absolute; left:196px; top:318px; width:88px; height:88px; border-radius:50%; cursor:ns-resize;
     background:radial-gradient(circle at 35% 30%,#666b77,#23262c 70%); box-shadow:0 4px 8px rgba(0,0,0,.5), inset 0 0 0 4px #1b1e23; }
   #mainknob::after { content:''; position:absolute; left:50%; top:8px; width:5px; height:14px; margin-left:-2.5px; border-radius:3px; background:var(--acc); }
-  .bar { position:absolute; top:274px; width:36px; height:28px; border-radius:6px; background:linear-gradient(#4a4f5a,#2b2f37); color:#cfd6e6; font-size:11px; font-weight:700; display:flex; align-items:center; justify-content:center; cursor:pointer; box-shadow:0 3px 0 #16181c; }
+  .bar { position:absolute; top:274px; width:52px; height:28px; border-radius:6px; background:linear-gradient(#4a4f5a,#2b2f37); color:#cfd6e6; font-size:11px; font-weight:700; display:flex; align-items:center; justify-content:center; cursor:pointer; box-shadow:0 3px 0 #16181c; }
   .bar.sel { background:linear-gradient(#ffe27a,#e8b820); color:#2a2100; }
   .bar:active,.btn:active,.bar.down,.btn.down { transform:translateY(2px); box-shadow:0 1px 0 #16181c; }
   #track { position:absolute; left:6px; right:6px; top:17px; height:10px; border-radius:5px; background:#2b2f37; box-shadow:inset 0 1px 3px rgba(0,0,0,.7); }
@@ -83,9 +83,9 @@
       <div class="ring" id="r2" style="left:258px;top:156px"><div class="knob" id="k2"></div></div>
       <div class="ring" id="r3" style="left:258px;top:212px"><div class="knob" id="k3"></div></div>
       <div class="bar" id="b0" style="left:23px">1</div>
-      <div class="bar" id="b1" style="left:63px">2</div>
-      <div class="bar" id="b2" style="left:103px">3</div>
-      <div class="bar" id="b3" style="left:143px">4</div>
+      <div class="bar" id="b1" style="left:79px">2</div>
+      <div class="bar" id="b2" style="left:135px">3</div>
+      <div class="bar" id="b3" style="left:191px">4</div>
       <div id="mainknob"></div>
       <div class="btn" id="f8">F8</div>
       <div class="btn" id="bbtn">B</div>
@@ -93,7 +93,7 @@
       <div id="brand">AltF8</div>
       <span class="kbd" style="left:236px;top:-30px">Space</span>
       <span class="kbd" style="left:286px;top:276px">Q/A..R/F</span>
-      <span class="kbd" style="left:35px;top:306px">1</span><span class="kbd" style="left:75px;top:306px">2</span><span class="kbd" style="left:115px;top:306px">3</span><span class="kbd" style="left:155px;top:306px">4</span>
+      <span class="kbd" style="left:43px;top:306px">1</span><span class="kbd" style="left:99px;top:306px">2</span><span class="kbd" style="left:155px;top:306px">3</span><span class="kbd" style="left:211px;top:306px">4</span>
       <span class="kbd" style="left:224px;top:410px">&larr; &rarr;</span>
       <span class="kbd" style="left:42px;top:398px">Enter</span>
       <span class="kbd" style="left:100px;top:398px">Backspace</span>
@@ -211,9 +211,10 @@ const VERSIONS = [
   { id:'v7', file:'versions/v7.html', label:'v7 - Rhythms across bars, text-free note shape (2026-11-17)', note:'Rhythm presets across the 4 bars on a 16th grid; notes show the rhythm. Text-free note design screen; Play twice to loop.' },
   { id:'v8', file:'versions/v8.html', label:'v8 - Selectors instead of the switch (2026-11-17)', note:'No more multi-step switch. B opens a selector menu (Notes, Rhythm, Pattern, Chords); the knob picks, F8 opens. Pattern sets how long each chord lasts across the loop; Rhythm splits each chord into hits. All notes light up and change live while you turn.' },
   { id:'v9', file:'versions/v9.html', label:'v9 - Note actions, button strip, metronome (2026-11-17)', note:'While a note is grabbed the 4 buttons do octave up, octave down, accent and delete; B cancels. Buttons line up with a label strip at the bottom of the screen. Kick metronome. The selector menu outlines the part of the screen each item controls and shows the next one.' },
-  { id:'v10', file:'index.html', label:'v10 - Full-screen note shape (2026-11-17)', note:"No ADSR text. The note shape fills the whole screen while you turn the shape knobs and on the note design screen. The right column shows a colored level bar next to each knob." }
+  { id:'v10', file:'versions/v10.html', label:'v10 - Full-screen note shape (2026-11-17)', note:"No ADSR text. The note shape fills the whole screen while you turn the shape knobs and on the note design screen. The right column shows a colored level bar next to each knob." },
+  { id:'v11', file:'index.html', label:'v11 - Notes fill the screen (2026-11-17)', note:'Right column removed. The notes, header and button cells use the full screen width, and the 4 buttons are wider to stay lined up with their bars.' }
 ];
-const CURRENT = 'v10';
+const CURRENT = 'v11';
 
 /* ================= state ================= */
 const st = {
@@ -677,13 +678,13 @@ function wave(ph, w){ ph = ph - Math.floor(ph); if (w === 0) return Math.sin(ph 
 function env(t, P){ const a = ATK[P.a], d = DEC[P.d], s = P.s, r = REL[P.r], hold = 0.3; if (t < a) return t / Math.max(a, 1e-4); if (t < a + d) return 1 - (1 - s) * (t - a) / d; if (t < a + d + hold) return s; const u = t - a - d - hold; return u < r ? s * (1 - u / r) : 0; }
 
 function drawMelody(now){
-  if (st.mode === 'rhythm') stxt('hd', 'R:' + RHY[st.rhy].name, 12, 1, 1, C.acc);
-  else if (st.mode === 'pattern') stxt('hd', 'P:' + PATTERNS[st.pat].name, 12, 1, 1, C.acc);
+  if (st.mode === 'rhythm') stxt('hd', 'R:' + RHY[st.rhy].name, 19, 1, 1, C.acc);
+  else if (st.mode === 'pattern') stxt('hd', 'P:' + PATTERNS[st.pat].name, 19, 1, 1, C.acc);
   else txt('NOTES', 1, 1, C.mut);
-  txt(st.tempo + '', 52, 1, C.mut);
-  if (st.metro) for (let i = 0; i < 4; i++) px(65 + i * 2, 2, 1, 3, st.playing && curStep >= 0 && Math.floor(curStep / 4) % 4 === i ? C.play : C.acc);
-  txt(st.playing ? '>' : '=', 76, 1, st.playing ? C.play : C.mut);
-  px(0, 7, 83, 1, C.dim);
+  txt(st.tempo + '', 84, 1, C.mut);
+  if (st.metro) for (let i = 0; i < 4; i++) px(98 + i * 2, 2, 1, 3, st.playing && curStep >= 0 && Math.floor(curStep / 4) % 4 === i ? C.play : C.acc);
+  txt(st.playing ? '>' : '=', 108, 1, st.playing ? C.play : C.mut);
+  px(0, 7, 112, 1, C.dim);
   // playhead
   if (st.playing && ac) { while (uiQ.length && uiQ[0].t <= ac.currentTime) curStep = uiQ.shift().s; }
   // pitch window
@@ -696,16 +697,16 @@ function drawMelody(now){
     if (mn < st.viewTop - 34) st.viewTop = Math.max(mx, mn + 34);
   }
   const top = st.viewTop, yOf = m => 19 + (top - m) * 2;
-  for (let m = top - 34; m <= top; m++) if (m % 12 === 0) { const y = yOf(m) + 1; px(1, y, 80, 1, C.grid); }
+  for (let m = top - 34; m <= top; m++) if (m % 12 === 0) { const y = yOf(m) + 1; px(1, y, 110, 1, C.grid); }
   const blink = Math.floor(now / 350) % 2 === 0;
-  const colX = st2 => 1 + Math.floor(st2 / 16) * 20 + 2 + (st2 % 16);
+  const colX = st2 => Math.floor(st2 / 16) * 28 + 2 + Math.floor((st2 % 16) * 1.5);
   const allSel = st.mode === 'rhythm' || st.mode === 'pattern';
   patternEvents(); const segs = evCache.segs;
   // bar grid, beat ticks, playhead
-  for (let b = 0; b < 4; b++) { const x0 = 1 + b * 20; for (let k = 0; k < 16; k += 4) px(x0 + 2 + k, 17, 1, 1, C.grid); }
-  if (curStep >= 0) px(colX(curStep), 17, 1, 1, C.play);
+  for (let b = 0; b < 4; b++) for (let k = 0; k < 16; k += 4) px(colX(b * 16 + k), 17, 2, 1, C.grid);
+  if (curStep >= 0) px(colX(curStep), 17, 2, 1, C.play);
   // selection lines over the chosen chord's time span (or everything in rhythm/pattern)
-  for (const sg of segs) if (allSel || sg.slot === st.sel) for (let k = 0; k < sg.len; k++) { const g = (sg.start + k) % LOOP; px(colX(g), 9, 1, 1, allSel ? C.sel : C.acc); px(colX(g), 90, 1, 1, allSel ? C.sel : C.acc); }
+  for (const sg of segs) if (allSel || sg.slot === st.sel) for (let k = 0; k < sg.len; k++) { const g = (sg.start + k) % LOOP; px(colX(g), 9, 2, 1, allSel ? C.sel : C.acc); px(colX(g), 90, 2, 1, allSel ? C.sel : C.acc); }
   // chord names and melody note names at the first time each chord appears
   let lastName = -99, lastLab = -99;
   const seen = new Set();
@@ -724,7 +725,7 @@ function drawMelody(now){
   // edit cursor brackets around the selected chord's first span
   if (st.phase === 'edit' && st.mode === 'notes' && !st.menu) {
     const sg = segs.find(z => z.slot === st.sel), list = barList(st.sel);
-    if (sg && list.length) { const y = yOf(list[Math.min(st.cursor, list.length - 1)].midi); px(colX(sg.start) - 1, y - 1, 1, 4, C.sel); px(colX((sg.start + sg.len - 1) % LOOP) + 1, y - 1, 1, 4, C.sel); }
+    if (sg && list.length) { const y = yOf(list[Math.min(st.cursor, list.length - 1)].midi); px(colX(sg.start) - 1, y - 1, 1, 4, C.sel); px(colX((sg.start + sg.len - 1) % LOOP) + 2, y - 1, 1, 4, C.sel); }
   }
   // notes, drawn where they play (they can start early or tie over the bar line, never overlap)
   for (const e of patternEvents()) {
@@ -739,8 +740,8 @@ function drawMelody(now){
       const c = grabRef !== null && n.ref === grabRef ? (blink ? C.sel : n.c) : (allSel ? (blink ? C.sel : n.c) : n.c);
       if (n.em && y > 19) px(colX(e.start), y - 2, 1, 1, C.sel);
       for (let k = 0; k < e.len; k++) {
-        const g = (e.start + k) % LOOP; px(colX(g), y, 1, 2, c);
-        if (g % 16 === 15 && k < e.len - 1) px(colX(g) + 1, y + 1, 4, 1, c);
+        const g = (e.start + k) % LOOP; px(colX(g), y, 2, 2, c);
+        if (g % 16 === 15 && k < e.len - 1) px(colX(g) + 2, y + 1, 4, 1, c);
       }
     }
   }
@@ -755,23 +756,23 @@ function drawMelody(now){
 }
 // menu: every item sits on the part of the screen it controls; current one outlined, next one dotted
 function menuRegion(m){
-  if (m === 'METRONOME') return [0, 0, 83, 8];
-  if (m === 'CHORDS') return [0, 8, 83, 9];
-  if (m === 'RHYTHM') return [0, 17, 83, 72];
-  if (m === 'NOTES') return [1 + st.sel * 20, 19, 20, 68];
-  return [0, 89, 83, 9];
+  if (m === 'METRONOME') return [0, 0, 112, 8];
+  if (m === 'CHORDS') return [0, 8, 112, 9];
+  if (m === 'RHYTHM') return [0, 17, 112, 72];
+  if (m === 'NOTES') return [st.sel * 28 + 1, 19, 27, 68];
+  return [0, 89, 112, 9];
 }
 function outline(x, y, w, h, c, dotted){
   for (let i = 0; i < w; i++) if (!dotted || i % 2 === 0) { px(x + i, y, 1, 1, c); px(x + i, y + h - 1, 1, 1, c); }
   for (let i = 0; i < h; i++) if (!dotted || i % 2 === 0) { px(x, y + i, 1, 1, c); px(x + w - 1, y + i, 1, 1, c); }
 }
 function drawMenu(now){
-  g.fillStyle = 'rgba(11,16,32,0.72)'; g.fillRect(0, 0, 83, 98);
+  g.fillStyle = 'rgba(11,16,32,0.72)'; g.fillRect(0, 0, 112, 98);
   const cur = MODES[st.menuIdx], nxt = MODES[(st.menuIdx + 1) % MODES.length];
   const nr = menuRegion(nxt); outline(nr[0], nr[1], nr[2], nr[3], C.mut, true);
   const r = menuRegion(cur); outline(r[0], r[1], r[2], r[3], Math.floor(now / 300) % 2 ? SEG.a : C.sel, false);
   const name = cur === 'METRONOME' ? 'METRO ' + (st.metro ? 'ON' : 'OFF') : cur;
-  const w = name.length * 4 + 3, x = Math.max(1, Math.min(82 - w, Math.round(r[0] + r[2] / 2 - w / 2))), y = Math.round(r[1] + r[3] / 2 - 3.5);
+  const w = name.length * 4 + 3, x = Math.max(1, Math.min(111 - w, Math.round(r[0] + r[2] / 2 - w / 2))), y = Math.round(r[1] + r[3] / 2 - 3.5);
   px(x, y, w, 7, SEG.a); txt(name, x + 2, y + 1, C.bg);
 }
 // bottom strip: one cell per bar button, sitting right above that button
@@ -782,9 +783,9 @@ function drawButtonBar(){
     else { labs = ['1', '2', '3', '4']; hi = st.sel; }
   }
   for (let b = 0; b < 4; b++) {
-    const x = 1 + b * 20, on = labs[b] !== '';
-    px(x, 105, 19, 7, b === hi ? SEG.a : on ? C.dim : C.grid);
-    if (on) txt(labs[b], x + Math.round((19 - (labs[b].length * 4 - 1)) / 2), 106, b === hi ? C.bg : C.txt);
+    const x = 1 + b * 28, on = labs[b] !== '';
+    px(x, 105, 26, 7, b === hi ? SEG.a : on ? C.dim : C.grid);
+    if (on) txt(labs[b], x + Math.round((26 - (labs[b].length * 4 - 1)) / 2), 106, b === hi ? C.bg : C.txt);
   }
 }
 // visual feedback for the 4 setting knobs on the melody screen
@@ -840,14 +841,14 @@ function drawDesign(now){
   return '';
 }
 function drawSettings(now){
-  txt('SETTINGS', 1, 1, C.mut); px(0, 7, 83, 1, C.dim);
+  txt('SETTINGS', 1, 1, C.mut); px(0, 7, 112, 1, C.dim);
   SETTINGS.forEach((n, i) => {
     const y = 10 + i * 7, cur = i === st.setCur;
-    if (cur) px(0, y - 1, 83, 7, st.setEdit ? '#3a2f00' : C.dim);
+    if (cur) px(0, y - 1, 112, 7, st.setEdit ? '#3a2f00' : C.dim);
     txt((cur ? '>' : ' ') + n, 1, y, cur ? C.txt : C.mut);
     txt(settingValue(i), 50, y, cur && st.setEdit && Math.floor(now / 300) % 2 ? C.sel : C.acc);
   });
-  drawOverlay(now, [0, 3, 1, 2][st.setCur], 4, 40, 75, 54);
+  drawOverlay(now, [0, 3, 1, 2][st.setCur], 4, 40, 104, 54);
   return st.setEdit ? 'KNOB:CHANGE F8:DONE' : 'KNOB:PICK F8:EDIT';
 }
 function draw(){
@@ -860,7 +861,7 @@ function draw(){
       const prompt = st.screen === 'melody' ? drawMelody(now) : st.screen === 'design' ? drawDesign(now) : drawSettings(now);
       const full = st.screen === 'design' || (st.screen === 'melody' && st.prevStart && now - st.lastEdit < 2000);
       if (full) { px(0, 0, 112, 112, C.bg); drawShape(now, 2, 2, 108, 108); }
-      else { drawLabels(); drawButtonBar(); }
+      else drawButtonBar();
       if (st.shut) {
         const f = Math.min(1, (now - st.shut.t0) / SHUT_MS);
         px(10, 38, 92, 36, C.acc); px(11, 39, 90, 34, C.bg);
@@ -874,7 +875,7 @@ function draw(){
         lines.forEach((ln, i) => txt(ln, Math.round(56 - ln.length * 2), 49 + i * 8, C.txt));
       }
       const showMsg = st.msg && now - st.msgT < 1400;
-      if (!full) stxt('pr', showMsg ? st.msg : prompt, 20, 1, 99, showMsg ? C.acc : C.txt);
+      if (!full) stxt('pr', showMsg ? st.msg : prompt, 27, 1, 99, showMsg ? C.acc : C.txt);
       else if (showMsg) { px(0, 0, 112, 7, C.bg); txt(st.msg, Math.max(1, Math.round(56 - st.msg.length * 2)), 1, C.acc); }
     }
   }
