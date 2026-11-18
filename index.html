@@ -29,14 +29,13 @@
   .bar { position:absolute; top:280px; width:42px; height:32px; border-radius:6px; background:linear-gradient(#4a4f5a,#2b2f37); color:#cfd6e6; font-size:11px; font-weight:700; display:flex; align-items:center; justify-content:center; cursor:pointer; box-shadow:0 3px 0 #16181c; }
   .bar.sel { background:linear-gradient(#ffe27a,#e8b820); color:#2a2100; }
   .bar:active,.btn:active,.bar.down,.btn.down { transform:translateY(2px); box-shadow:0 1px 0 #16181c; }
-  #switch { position:absolute; left:20px; top:342px; width:162px; height:44px; }
   #track { position:absolute; left:6px; right:6px; top:17px; height:10px; border-radius:5px; background:#2b2f37; box-shadow:inset 0 1px 3px rgba(0,0,0,.7); }
   .det { position:absolute; top:8px; width:6px; height:6px; margin-left:-3px; border-radius:50%; background:#8d93a0; cursor:pointer; }
   .det.lit { background:var(--cyan); box-shadow:0 0 6px var(--cyan); }
   #slider { position:absolute; top:10px; width:22px; height:24px; margin-left:-11px; border-radius:5px; background:linear-gradient(#5a5f6a,#2d3139); box-shadow:0 2px 3px rgba(0,0,0,.5); transition:left .08s; pointer-events:none; }
-  .btn { position:absolute; top:430px; width:50px; height:50px; border-radius:50%; font-weight:800; font-size:15px; display:flex; align-items:center; justify-content:center; cursor:pointer; box-shadow:0 4px 0 #16181c; }
-  #f8 { left:44px; background:radial-gradient(circle at 40% 35%,#ff7a6b,#c73a2c); color:#fff; }
-  #bbtn { left:108px; background:radial-gradient(circle at 40% 35%,#6f7682,#3a3f49); color:#fff; }
+  .btn { position:absolute; top:342px; width:50px; height:50px; border-radius:50%; font-weight:800; font-size:15px; display:flex; align-items:center; justify-content:center; cursor:pointer; box-shadow:0 4px 0 #16181c; }
+  #f8 { left:40px; background:radial-gradient(circle at 40% 35%,#ff7a6b,#c73a2c); color:#fff; }
+  #bbtn { left:110px; background:radial-gradient(circle at 40% 35%,#6f7682,#3a3f49); color:#fff; }
   #jack { position:absolute; left:34px; bottom:-5px; width:16px; height:10px; border-radius:0 0 8px 8px; background:#111; }
   #brand { position:absolute; right:18px; bottom:14px; font:700 13px/1 ui-monospace,Menlo,monospace; color:#9b9483; letter-spacing:.08em; }
   .kbd { position:absolute; font:700 9px/1 ui-monospace,Menlo,monospace; color:#5d5748; background:rgba(255,255,255,.55); border-radius:3px; padding:2px 3px; pointer-events:none; }
@@ -87,7 +86,6 @@
       <div class="bar" id="b1" style="left:76px">2</div>
       <div class="bar" id="b2" style="left:134px">3</div>
       <div class="bar" id="b3" style="left:192px">4</div>
-      <div id="switch"><div id="track"></div><div id="slider"></div></div>
       <div id="mainknob"></div>
       <div class="btn" id="f8">F8</div>
       <div class="btn" id="bbtn">B</div>
@@ -96,10 +94,9 @@
       <span class="kbd" style="left:236px;top:-30px">Space</span>
       <span class="kbd" style="left:286px;top:276px">Q/A..R/F</span>
       <span class="kbd" style="left:26px;top:316px">1</span><span class="kbd" style="left:84px;top:316px">2</span><span class="kbd" style="left:142px;top:316px">3</span><span class="kbd" style="left:200px;top:316px">4</span>
-      <span class="kbd" style="left:70px;top:390px">Z / X</span>
       <span class="kbd" style="left:224px;top:410px">&larr; &rarr;</span>
-      <span class="kbd" style="left:46px;top:486px">Enter</span>
-      <span class="kbd" style="left:104px;top:486px">Backspace</span>
+      <span class="kbd" style="left:42px;top:398px">Enter</span>
+      <span class="kbd" style="left:100px;top:398px">Backspace</span>
     </div>
     <div class="cap">Drawn at real size: 62 x 102 mm, like an original iPod. Screen about 2.5 in, drawn at 112 x 112 pixels. Headphone jack bottom-left.</div>
   </div>
@@ -111,10 +108,9 @@
         <tr><td>Main knob: pitch, options, note cursor</td><td><kbd>&larr;</kbd><kbd>&rarr;</kbd> or scroll / drag the knob</td></tr>
         <tr><td>Note shape knobs 1-4: attack, decay, sustain, release (labels on screen)</td><td><kbd>Q</kbd>/<kbd>A</kbd> <kbd>W</kbd>/<kbd>S</kbd> <kbd>E</kbd>/<kbd>D</kbd> <kbd>R</kbd>/<kbd>F</kbd> (up / down)</td></tr>
         <tr><td>Bar buttons 1-4</td><td><kbd>1</kbd><kbd>2</kbd><kbd>3</kbd><kbd>4</kbd></td></tr>
-        <tr><td>Multi-step rhythm switch</td><td><kbd>Z</kbd> left, <kbd>X</kbd> right</td></tr>
         <tr><td>F8: confirm / find chords. Hold: power on</td><td><kbd>Enter</kbd></td></tr>
         <tr><td>Power off: hold Play + F8 together until the bar fills</td><td>hold <kbd>Space</kbd> + <kbd>Enter</kbd></td></tr>
-        <tr><td>B: reject / cancel. Hold: delete note</td><td><kbd>Backspace</kbd></td></tr>
+        <tr><td>B: reject / cancel. Otherwise opens the selector menu (Notes, Rhythm, Pattern, Chords). Hold: delete note</td><td><kbd>Backspace</kbd></td></tr>
         <tr><td>Play / pause</td><td><kbd>Space</kbd></td></tr>
         <tr><td>Switch screen (melody / note design / settings)</td><td>hold <kbd>Space</kbd> + <kbd>&larr;</kbd><kbd>&rarr;</kbd></td></tr>
       </table>
@@ -125,7 +121,9 @@
         <li>Yellow = notes you placed. Cyan = notes placed by the chord finder.</li>
         <li>Turning any of the 4 knobs shows the note's shape and plays it until you stop for 2 seconds.</li>
         <li>On the note design screen, Play plays the note once; press Play again within 2 seconds to loop it, and once more to stop.</li>
-        <li>The rhythm switch changes how the chords are played across the 4 bars, and the notes on screen show that rhythm.</li>
+        <li>Press B (when not rejecting or cancelling) to open the selector menu at the top. Turn the knob to pick NOTES, RHYTHM, PATTERN or CHORDS, then press F8.</li>
+        <li>PATTERN sets how long each of the 4 chords lasts across the loop. RHYTHM sets how each chord is split into hits. All notes light up and change live as you turn the knob; F8 keeps it, B goes back to the menu.</li>
+        <li>CHORDS reopens the chord finder suggestions at any time.</li>
         <li>Tempo, key, cutoff and resonance are on the settings screen: knob to pick, F8 to edit, knob to change, F8 when done.</li>
       </ul>
     </div>
@@ -157,29 +155,45 @@
 const NN = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
 const MAJ = [0,2,4,5,7,9,11], MIN = [0,2,3,5,7,8,10];
 const KEYS = ['CHROM'].concat(NN.map(n => n + ' MAJ'), NN.map(n => n + ' MIN'));
-// Rhythm presets on a 16th-note grid. Each event is [start, length] in 16ths from the start of its bar.
-// A negative start pushes the chord early into the previous bar (anticipation); a length past 16 ties it over the bar line.
-// span 2 = the pattern covers two bars. Events never overlap: each one is cut where the next one starts.
+// PATTERN = how long each of the 4 chords lasts across the 4-bar loop (harmonic rhythm), on a 16th grid.
+// Each entry is [chord slot, length in 16ths]; off < 0 starts every change early (anticipation).
+const PATTERNS = [
+  { name:'ONE PER BAR', off:0, seq:[[0,16],[1,16],[2,16],[3,16]] },
+  { name:'PUSHED CHANGES', off:-2, seq:[[0,16],[1,16],[2,16],[3,16]] },
+  { name:'TWO PER BAR', off:0, seq:[[0,8],[1,8],[2,8],[3,8],[0,8],[1,8],[2,8],[3,8]] },
+  { name:'SPEED UP TO END', off:0, seq:[[0,24],[1,24],[2,8],[3,8]] },
+  { name:'LONG SHORT', off:0, seq:[[0,24],[1,8],[2,24],[3,8]] },
+  { name:'SHORT LONG', off:0, seq:[[0,8],[1,24],[2,8],[3,24]] }
+];
+// RHYTHM = how each chord is split into hits. hits = 16th positions in the bar; every chord change is also hit.
+// cap = longest a hit may ring (16ths); hits never overlap: each one ends where the next begins.
 const RHY = [
-  { name:'ONE PER BAR', span:1, ev:[[0,16]] },
-  { name:'PUSH', span:1, ev:[[-2,10],[8,6]] },
-  { name:'CHARLESTON', span:1, ev:[[0,6],[6,4]] },
-  { name:'DOUBLE TRESILLO', span:2, ev:[[0,6],[6,6],[12,6],[18,6],[24,4],[28,4]] },
-  { name:'OFFBEAT STABS', span:1, ev:[[2,1],[6,1],[10,1],[14,1]] }
+  { name:'SUSTAIN', hits:[], cap:64 },
+  { name:'QUARTERS', hits:[0,4,8,12], cap:64 },
+  { name:'CHARLESTON', hits:[0,6], cap:64 },
+  { name:'TRESILLO 3+3+2', hits:[0,6,12], cap:64 },
+  { name:'OFFBEAT STABS', hits:[2,6,10,14], cap:1 },
+  { name:'DRIVING EIGHTHS', hits:[0,2,4,6,8,10,12,14], cap:64 }
 ];
 const LOOP = 64;
 const SEG = { a:'#ffd23f', d:'#34d6e8', s:'#7dff6a', r:'#ff4fd8' };
-let evCache = { rhy:-1, list:[] };
+let evCache = { key:'', list:[], segs:[] };
+function chordSegments(){
+  const P = PATTERNS[st.pat], out = []; let pos = P.off;
+  for (const [slot, len] of P.seq) { out.push({ start:((pos % LOOP) + LOOP) % LOOP, len, slot }); pos += len; }
+  return out;
+}
 function patternEvents(){
-  if (evCache.rhy === st.rhy) return evCache.list;
-  const R = RHY[st.rhy], out = [];
-  for (let b0 = 0; b0 < 4; b0 += R.span) for (const [s0, l] of R.ev) {
-    const bar = s0 < 0 ? b0 : Math.min(3, b0 + Math.floor(s0 / 16));
-    out.push({ start:(((b0 * 16 + s0) % LOOP) + LOOP) % LOOP, len:l, bar });
+  const key = st.pat + ':' + st.rhy;
+  if (evCache.key === key) return evCache.list;
+  const R = RHY[st.rhy], segs = chordSegments(), out = [];
+  for (const sg of segs) {
+    const starts = [];
+    for (let k = 0; k < sg.len; k++) { const g = sg.start + k; if (k === 0 || R.hits.includes(((g % 16) + 16) % 16)) starts.push(k); }
+    starts.forEach((k, i) => { const next = i + 1 < starts.length ? starts[i + 1] : sg.len; out.push({ start:(sg.start + k) % LOOP, len:Math.min(next - k, R.cap), bar:sg.slot }); });
   }
   out.sort((x, y) => x.start - y.start);
-  out.forEach((e, i) => { const n = out[(i + 1) % out.length]; let gap = n.start - e.start; if (gap <= 0) gap += LOOP; e.len = Math.min(e.len, gap); });
-  evCache = { rhy:st.rhy, list:out };
+  evCache = { key, list:out, segs };
   return out;
 }
 const WAVES = ['sine','triangle','sawtooth','square'], WNAME = ['SINE','TRI','SAW','SQUARE'];
@@ -194,9 +208,10 @@ const VERSIONS = [
   { id:'v4', file:'versions/v4.html', label:'v4 - Steady preview + power-on chime (2026-11-17)', note:'Turning the shape knobs keeps a steady repeat instead of restarting the note. Chime on power-on.' },
   { id:'v5', file:'versions/v5.html', label:'v5 - Cleaner footer (2026-11-17)', note:'Gap between the two bottom text lines on every screen.' },
   { id:'v6', file:'versions/v6.html', label:'v6 - Play + F8 to shut off (2026-11-17)', note:'Hold Play + F8 to turn off with a SHUT OFF? bar. Holding F8 alone only turns on.' },
-  { id:'v7', file:'index.html', label:'v7 - Rhythms across bars, text-free note shape (2026-11-17)', note:'Rhythm presets now play across the 4 bars on a 16th grid (push, Charleston, double tresillo, offbeat stabs) and the notes on screen show the rhythm. Notes can start early or tie over the bar line but never overlap. Note design screen shows only the shape with colored A D S R. Play there plays the note; press again within 2 s to loop.' }
+  { id:'v7', file:'versions/v7.html', label:'v7 - Rhythms across bars, text-free note shape (2026-11-17)', note:'Rhythm presets across the 4 bars on a 16th grid; notes show the rhythm. Text-free note design screen; Play twice to loop.' },
+  { id:'v8', file:'index.html', label:'v8 - Selectors instead of the switch (2026-11-17)', note:'No more multi-step switch. B opens a selector menu (Notes, Rhythm, Pattern, Chords); the knob picks, F8 opens. Pattern sets how long each chord lasts across the loop; Rhythm splits each chord into hits. All notes light up and change live while you turn.' }
 ];
-const CURRENT = 'v7';
+const CURRENT = 'v8';
 
 /* ================= state ================= */
 const st = {
@@ -206,7 +221,7 @@ const st = {
   bars:[0,1,2,3].map(() => ({ mel:null, chord:null, notes:[] })),
   patch:{ wave:1, a:2, d:4, s:0.6, r:4, cutoff:2400, reso:2 },
   msg:'', msgT:0, lastEdit:0, mainAngle:0, kAngles:[0,0,0,0],
-  viewTop:76, ov:null, loopNote:false, pop:null, shut:null, setCur:0, setEdit:false, prevStart:0, prevDur:0
+  viewTop:76, ov:null, pat:0, mode:'notes', menu:false, menuIdx:0, loopNote:false, pop:null, shut:null, setCur:0, setEdit:false, prevStart:0, prevDur:0
 };
 
 /* ================= music helpers ================= */
@@ -409,6 +424,9 @@ function mainTurn(dir){
   if (held.play) { held.playUsed = true; const S = ['melody','design','settings']; st.screen = S[(S.indexOf(st.screen) + dir + 3) % 3]; st.setEdit = false; st.loopNote = false; return; }
   if (st.screen === 'settings') { if (st.setEdit) changeSetting(dir); else st.setCur = (st.setCur + dir + 4) % 4; return; }
   if (st.screen === 'design') { st.patch.wave = (st.patch.wave + dir + 4) % 4; if (performance.now() - st.lastEdit > 2000) previewDesign(); st.lastEdit = performance.now(); return; }
+  if (st.menu) { st.menuIdx = (st.menuIdx + dir + MODES.length) % MODES.length; return; }
+  if (st.mode === 'rhythm') { st.rhy = (st.rhy + dir + RHY.length) % RHY.length; return; }
+  if (st.mode === 'pattern') { st.pat = (st.pat + dir + PATTERNS.length) % PATTERNS.length; return; }
   const B = st.bars[st.sel];
   if (st.phase === 'suggest') { const n = st.options.length; st.optIdx = (st.optIdx + dir + n) % n; return; }
   if (st.phase === 'entry' || (st.phase === 'edit' && !B.mel && !B.notes.length)) {
@@ -461,19 +479,29 @@ function settingValue(c){
 }
 function selBar(i){
   if (!st.on) return;
+  if (st.menu || st.mode !== 'notes') return;
   st.sel = i; st.cursor = 0; st.grab = null;
   if (st.phase !== 'suggest' && st.bars[i].mel) preview(st.bars[i].mel.midi);
 }
-function setRhy(p){ st.rhy = Math.max(0, Math.min(4, p)); drawSwitch(); if (st.on) flash(RHY[st.rhy].name); }
+const MODES = ['NOTES', 'RHYTHM', 'PATTERN', 'CHORDS'];
+function openMenu(){ st.menu = true; st.menuIdx = Math.max(0, MODES.indexOf(st.mode.toUpperCase())); st.grab = null; }
+function runChordFinder(){
+  if (!allSet()) { flash('SET 4 NOTES FIRST'); return false; }
+  const r = findChords(st.bars.map(b => b.mel.midi));
+  st.options = r.options; st.optIdx = 0; st.phase = 'suggest'; flash('KEY ' + NN[r.key.root] + ' ' + r.key.mode.toUpperCase()); return true;
+}
+function enterMode(){
+  const m = MODES[st.menuIdx];
+  if (m === 'CHORDS') { if (runChordFinder()) { st.menu = false; st.mode = 'notes'; } return; }
+  st.menu = false; st.mode = m.toLowerCase();
+}
 function f8Tap(){
   if (!st.on) return; initAudio();
   if (st.screen === 'design') { flash('PATCH SAVED'); return; }
   if (st.screen === 'settings') { st.setEdit = !st.setEdit; if (!st.setEdit) flash('SET'); return; }
-  if (st.phase === 'entry') {
-    if (!allSet()) { flash('SET 4 NOTES FIRST'); return; }
-    const r = findChords(st.bars.map(b => b.mel.midi));
-    st.options = r.options; st.optIdx = 0; st.phase = 'suggest'; flash('KEY ' + NN[r.key.root] + ' ' + r.key.mode.toUpperCase()); return;
-  }
+  if (st.menu) { enterMode(); return; }
+  if (st.mode === 'rhythm' || st.mode === 'pattern') { flash((st.mode === 'rhythm' ? RHY[st.rhy] : PATTERNS[st.pat]).name + ' SET'); st.mode = 'notes'; return; }
+  if (st.phase === 'entry') { runChordFinder(); return; }
   if (st.phase === 'suggest') {
     const o = st.options[st.optIdx];
     st.bars.forEach((B, i) => { B.chord = o.chords[i]; B.notes = voicing(B.mel.midi, o.chords[i]).map(m => ({ midi:m, auto:true })); });
@@ -487,15 +515,19 @@ function f8Tap(){
 function bTap(){
   if (!st.on) return;
   if (st.screen === 'settings') { st.setEdit = false; return; }
+  if (st.screen !== 'melody') return;
+  if (st.menu) { st.menu = false; return; }
+  if (st.mode !== 'notes') { openMenu(); return; }
   if (st.phase === 'suggest') {
     st.options.splice(st.optIdx, 1);
     if (!st.options.length) { st.phase = 'entry'; flash('NO MORE OPTIONS'); return; }
     st.optIdx = st.optIdx % st.options.length; flash('REJECTED'); return;
   }
-  if (st.phase === 'edit' && st.grab) { const B = st.bars[st.sel], n = st.grab.ref === 'mel' ? B.mel : B.notes[st.grab.ref]; n.midi = st.grab.orig; st.grab = null; flash('CANCELLED'); }
+  if (st.phase === 'edit' && st.grab) { const B = st.bars[st.sel], n = st.grab.ref === 'mel' ? B.mel : B.notes[st.grab.ref]; n.midi = st.grab.orig; st.grab = null; flash('CANCELLED'); return; }
+  openMenu();
 }
 function bHold(){
-  if (!st.on || st.screen !== 'melody') return;
+  if (!st.on || st.screen !== 'melody' || st.menu || st.mode !== 'notes') return;
   const B = st.bars[st.sel];
   if (st.phase === 'entry') { if (B.mel) { B.mel = null; flash('NOTE DELETED'); } return; }
   if (st.phase === 'edit') {
@@ -544,8 +576,6 @@ document.addEventListener('keydown', e => {
   if (knobKeys[kl]) { setKnob(knobKeys[kl][0], knobKeys[kl][1]); e.preventDefault(); return; }
   if (e.repeat) { if ([' ', 'Enter', 'Backspace'].includes(k)) e.preventDefault(); return; }
   if (['1','2','3','4'].includes(k)) { selBar(+k - 1); press('b' + (+k - 1), true); return; }
-  if (kl === 'z') { setRhy(st.rhy - 1); return; }
-  if (kl === 'x') { setRhy(st.rhy + 1); return; }
   if (k === 'Enter') { f8Down(); e.preventDefault(); return; }
   if (k === 'Backspace') { bDown(); e.preventDefault(); return; }
   if (k === ' ') { playDown(); e.preventDefault(); return; }
@@ -576,11 +606,6 @@ function bindKnob(el, fn){
 }
 bindKnob(document.getElementById('mainknob'), mainTurn);
 [0,1,2,3].forEach(i => bindKnob(document.getElementById('r' + i), d => setKnob(i, d)));
-const sw = document.getElementById('switch'), DET_X = [14, 47, 81, 115, 148];
-DET_X.forEach((x, i) => { const d = document.createElement('div'); d.className = 'det'; d.style.left = x + 'px'; d.addEventListener('pointerdown', e => { e.preventDefault(); setRhy(i); }); sw.appendChild(d); });
-sw.addEventListener('pointerdown', e => { const r = sw.getBoundingClientRect(), x = e.clientX - r.left; let best = 0; DET_X.forEach((dx, i) => { if (Math.abs(dx - x) < Math.abs(DET_X[best] - x)) best = i; }); setRhy(best); });
-function drawSwitch(){ document.getElementById('slider').style.left = DET_X[st.rhy] + 'px'; sw.querySelectorAll('.det').forEach((d, i) => d.classList.toggle('lit', i === st.rhy)); }
-drawSwitch();
 
 /* ================= pixel font + drawing ================= */
 const F = {
@@ -622,7 +647,7 @@ function wave(ph, w){ ph = ph - Math.floor(ph); if (w === 0) return Math.sin(ph 
 function env(t, P){ const a = ATK[P.a], d = DEC[P.d], s = P.s, r = REL[P.r], hold = 0.3; if (t < a) return t / Math.max(a, 1e-4); if (t < a + d) return 1 - (1 - s) * (t - a) / d; if (t < a + d + hold) return s; const u = t - a - d - hold; return u < r ? s * (1 - u / r) : 0; }
 
 function drawMelody(now){
-  txt('MELODY', 1, 1, C.mut);
+  txt(st.mode === 'notes' ? 'NOTES' : st.mode.toUpperCase(), 1, 1, st.mode === 'notes' ? C.mut : C.acc);
   txt(st.tempo + '', 52, 1, C.mut);
   txt(st.playing ? '>' : '=', 76, 1, st.playing ? C.play : C.mut);
   px(0, 7, 83, 1, C.dim);
@@ -640,30 +665,35 @@ function drawMelody(now){
   const top = st.viewTop, yOf = m => 19 + (top - m) * 2;
   for (let m = top - 34; m <= top; m++) if (m % 12 === 0) { const y = yOf(m) + 1; px(1, y, 80, 1, C.grid); }
   const blink = Math.floor(now / 350) % 2 === 0;
-  for (let b = 0; b < 4; b++) {
-    const x0 = 1 + b * 20, B = st.bars[b], sel = b === st.sel;
-    if (sel) { px(x0, 9, 19, 1, C.acc); px(x0, 90, 19, 1, C.acc); px(x0, 9, 1, 82, C.dim); px(x0 + 18, 9, 1, 82, C.dim); }
-    // chord name
-    let cname = '';
-    if (st.phase === 'suggest' && st.options.length) cname = chordName(st.options[st.optIdx].chords[b]);
-    else if (B.chord) cname = chordName(B.chord);
-    if (cname && !(st.phase === 'suggest' && !blink)) txt(cname, x0 + 2, 11, st.phase === 'suggest' ? C.sug : C.auto);
-    // beat ticks + playhead (16 px per bar, 1 px per 16th)
-    for (let k = 0; k < 16; k += 4) px(x0 + 2 + k, 17, 1, 1, C.grid);
-    if (curStep >= 0 && Math.floor(curStep / 16) === b) px(x0 + 2 + (curStep % 16), 17, 1, 1, C.play);
-    // edit cursor brackets
-    if (sel && st.phase === 'edit') {
-      const list = barList(b);
-      if (list.length) { const it = list[Math.min(st.cursor, list.length - 1)], y = yOf(it.midi); px(x0, y - 1, 1, 4, C.sel); px(x0 + 18, y - 1, 1, 4, C.sel); }
-    }
-    // note name under column
-    let label = '';
-    if (sel && st.phase === 'edit') { const list = barList(b); if (list.length) label = noteName(list[Math.min(st.cursor, list.length - 1)].midi); }
-    else if (B.mel) label = noteName(B.mel.midi);
-    if (label) txt(label, x0 + 2, 92, sel ? C.txt : C.mut);
-  }
-  // notes, drawn where the rhythm pattern plays them (they can start early or tie over the bar line, never overlap)
   const colX = st2 => 1 + Math.floor(st2 / 16) * 20 + 2 + (st2 % 16);
+  const allSel = st.mode === 'rhythm' || st.mode === 'pattern';
+  patternEvents(); const segs = evCache.segs;
+  // bar grid, beat ticks, playhead
+  for (let b = 0; b < 4; b++) { const x0 = 1 + b * 20; for (let k = 0; k < 16; k += 4) px(x0 + 2 + k, 17, 1, 1, C.grid); }
+  if (curStep >= 0) px(colX(curStep), 17, 1, 1, C.play);
+  // selection lines over the chosen chord's time span (or everything in rhythm/pattern)
+  for (const sg of segs) if (allSel || sg.slot === st.sel) for (let k = 0; k < sg.len; k++) { const g = (sg.start + k) % LOOP; px(colX(g), 9, 1, 1, allSel ? C.sel : C.acc); px(colX(g), 90, 1, 1, allSel ? C.sel : C.acc); }
+  // chord names and melody note names at the first time each chord appears
+  let lastName = -99, lastLab = -99;
+  const seen = new Set();
+  for (const sg of segs.slice().sort((x, y) => x.start - y.start)) {
+    if (seen.has(sg.slot)) continue; seen.add(sg.slot);
+    const B = st.bars[sg.slot], x = colX(sg.start);
+    let cname = '';
+    if (st.phase === 'suggest' && st.options.length) cname = chordName(st.options[st.optIdx].chords[sg.slot]);
+    else if (B.chord) cname = chordName(B.chord);
+    if (cname && x >= lastName && !(st.phase === 'suggest' && !blink)) { txt(cname, x, 11, st.phase === 'suggest' ? C.sug : C.auto); lastName = x + cname.length * 4 + 1; }
+    let label = '';
+    if (sg.slot === st.sel && st.phase === 'edit' && st.mode === 'notes') { const list = barList(sg.slot); if (list.length) label = noteName(list[Math.min(st.cursor, list.length - 1)].midi); }
+    else if (B.mel) label = noteName(B.mel.midi);
+    if (label && x >= lastLab) { txt(label, x, 92, sg.slot === st.sel ? C.txt : C.mut); lastLab = x + label.length * 4 + 1; }
+  }
+  // edit cursor brackets around the selected chord's first span
+  if (st.phase === 'edit' && st.mode === 'notes' && !st.menu) {
+    const sg = segs.find(z => z.slot === st.sel), list = barList(st.sel);
+    if (sg && list.length) { const y = yOf(list[Math.min(st.cursor, list.length - 1)].midi); px(colX(sg.start) - 1, y - 1, 1, 4, C.sel); px(colX((sg.start + sg.len - 1) % LOOP) + 1, y - 1, 1, 4, C.sel); }
+  }
+  // notes, drawn where they play (they can start early or tie over the bar line, never overlap)
   for (const e of patternEvents()) {
     const B = st.bars[e.bar]; if (!B.mel && !B.notes.length) continue;
     let notes;
@@ -673,7 +703,7 @@ function drawMelody(now){
     for (const n of notes) {
       if (!n.c) continue;
       const y = yOf(n.midi); if (y <= 18 || y >= 89) continue;
-      const c = grabRef !== null && n.ref === grabRef ? (blink ? C.sel : n.c) : n.c;
+      const c = grabRef !== null && n.ref === grabRef ? (blink ? C.sel : n.c) : (allSel ? (blink ? C.sel : n.c) : n.c);
       for (let k = 0; k < e.len; k++) {
         const g = (e.start + k) % LOOP; px(colX(g), y, 1, 2, c);
         if (g % 16 === 15 && k < e.len - 1) px(colX(g) + 1, y + 1, 4, 1, c);
@@ -683,12 +713,20 @@ function drawMelody(now){
   if (now - st.lastEdit < 2000 && st.prevStart) { px(3, 21, 77, 64, C.dim); px(4, 22, 75, 62, C.bg); drawShape(now, 6, 24, 71, 58); }
   px(0, 98, 83, 1, C.dim);
   // footer
-  stxt('rhy', RHY[st.rhy].name, 20, 1, 100, C.auto);
+  if (st.mode === 'rhythm') stxt('rhy', 'RHYTHM: ' + RHY[st.rhy].name + ' ' + (st.rhy + 1) + '/' + RHY.length, 20, 1, 100, C.acc);
+  else if (st.mode === 'pattern') stxt('rhy', 'PATTERN: ' + PATTERNS[st.pat].name + ' ' + (st.pat + 1) + '/' + PATTERNS.length, 20, 1, 100, C.acc);
+  else stxt('rhy', PATTERNS[st.pat].name + ' / ' + RHY[st.rhy].name, 20, 1, 100, C.auto);
+  if (st.menu) {
+    px(0, 0, 83, 8, SEG.a); const m = MODES[st.menuIdx];
+    txt('<', 2, 1, C.bg); txt('>', 77, 1, C.bg); txt(m, Math.round(42 - m.length * 2), 1, C.bg);
+    return 'KNOB:PICK F8:OPEN B:BACK';
+  }
+  if (st.mode !== 'notes') return 'KNOB:CHANGE F8:KEEP B:MENU';
   let prompt;
   const n = st.bars.filter(b => b.mel).length;
-  if (st.phase === 'entry') prompt = n < 4 ? 'KNOB:PITCH ' + n + '/4' : 'F8:FIND CHORDS';
+  if (st.phase === 'entry') prompt = n < 4 ? 'KNOB:PITCH ' + n + '/4  B:MENU' : 'F8:FIND CHORDS';
   else if (st.phase === 'suggest') prompt = 'KNOB:MORE F8:OK B:NO ' + (st.optIdx + 1) + '/' + st.options.length;
-  else prompt = st.grab ? 'KNOB:MOVE F8:SET B:UNDO' : 'KNOB:PICK NOTE F8:GRAB';
+  else prompt = st.grab ? 'KNOB:MOVE F8:SET B:UNDO' : 'KNOB:PICK NOTE F8:GRAB B:MENU';
   return prompt;
 }
 // visual feedback for the 4 setting knobs on the melody screen
@@ -818,7 +856,7 @@ verSel.addEventListener('change', () => { const v = VERSIONS.find(x => x.id === 
 const SKEY = 'altf8.saves.v1';
 function loadSaves(){ try { return JSON.parse(localStorage.getItem(SKEY) || '[]'); } catch (e) { return null; } }
 function storeSaves(a){ try { localStorage.setItem(SKEY, JSON.stringify(a)); return true; } catch (e) { return false; } }
-function snapshot(){ return JSON.parse(JSON.stringify({ bars:st.bars, phase:st.phase === 'suggest' ? 'entry' : st.phase, rhy:st.rhy, tempo:st.tempo, key:st.key, patch:st.patch })); }
+function snapshot(){ return JSON.parse(JSON.stringify({ bars:st.bars, phase:st.phase === 'suggest' ? 'entry' : st.phase, rhy:st.rhy, pat:st.pat, tempo:st.tempo, key:st.key, patch:st.patch })); }
 function renderSaves(){
   const list = document.getElementById('snaplist'); list.innerHTML = '';
   const a = loadSaves();
@@ -827,7 +865,7 @@ function renderSaves(){
   a.forEach((s, i) => {
     const r = document.createElement('div'); r.className = 'row';
     const sp = document.createElement('span'); sp.textContent = s.name + '  (' + s.date + ')';
-    const lb = document.createElement('button'); lb.textContent = 'Load'; lb.onclick = () => { Object.assign(st, JSON.parse(JSON.stringify(s.data))); st.options = []; st.grab = null; st.cursor = 0; applyFilter(); drawSwitch(); setStatus('Loaded "' + s.name + '".'); };
+    const lb = document.createElement('button'); lb.textContent = 'Load'; lb.onclick = () => { Object.assign(st, JSON.parse(JSON.stringify(s.data))); st.options = []; st.grab = null; st.cursor = 0; applyFilter(); evCache.key = ''; setStatus('Loaded "' + s.name + '".'); };
     const db = document.createElement('button'); db.textContent = 'Delete'; db.onclick = () => { const b = loadSaves() || []; b.splice(i, 1); storeSaves(b); renderSaves(); };
     r.append(sp, lb, db); list.appendChild(r);
   });
