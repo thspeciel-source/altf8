@@ -26,7 +26,7 @@
   #mainknob { position:absolute; left:196px; top:318px; width:88px; height:88px; border-radius:50%; cursor:ns-resize;
     background:radial-gradient(circle at 35% 30%,#666b77,#23262c 70%); box-shadow:0 4px 8px rgba(0,0,0,.5), inset 0 0 0 4px #1b1e23; }
   #mainknob::after { content:''; position:absolute; left:50%; top:8px; width:5px; height:14px; margin-left:-2.5px; border-radius:3px; background:var(--acc); }
-  .bar { position:absolute; top:280px; width:42px; height:32px; border-radius:6px; background:linear-gradient(#4a4f5a,#2b2f37); color:#cfd6e6; font-size:11px; font-weight:700; display:flex; align-items:center; justify-content:center; cursor:pointer; box-shadow:0 3px 0 #16181c; }
+  .bar { position:absolute; top:274px; width:36px; height:28px; border-radius:6px; background:linear-gradient(#4a4f5a,#2b2f37); color:#cfd6e6; font-size:11px; font-weight:700; display:flex; align-items:center; justify-content:center; cursor:pointer; box-shadow:0 3px 0 #16181c; }
   .bar.sel { background:linear-gradient(#ffe27a,#e8b820); color:#2a2100; }
   .bar:active,.btn:active,.bar.down,.btn.down { transform:translateY(2px); box-shadow:0 1px 0 #16181c; }
   #track { position:absolute; left:6px; right:6px; top:17px; height:10px; border-radius:5px; background:#2b2f37; box-shadow:inset 0 1px 3px rgba(0,0,0,.7); }
@@ -78,14 +78,14 @@
       <div id="pwrled"></div>
       <div id="play" data-k="play">PLAY</div>
       <div id="scrwrap"><canvas id="scr" width="112" height="112"></canvas></div>
-      <div class="ring" id="r0" style="left:258px;top:42px"><div class="knob" id="k0"></div></div>
-      <div class="ring" id="r1" style="left:258px;top:98px"><div class="knob" id="k1"></div></div>
-      <div class="ring" id="r2" style="left:258px;top:154px"><div class="knob" id="k2"></div></div>
-      <div class="ring" id="r3" style="left:258px;top:210px"><div class="knob" id="k3"></div></div>
-      <div class="bar" id="b0" style="left:18px">1</div>
-      <div class="bar" id="b1" style="left:76px">2</div>
-      <div class="bar" id="b2" style="left:134px">3</div>
-      <div class="bar" id="b3" style="left:192px">4</div>
+      <div class="ring" id="r0" style="left:258px;top:44px"><div class="knob" id="k0"></div></div>
+      <div class="ring" id="r1" style="left:258px;top:100px"><div class="knob" id="k1"></div></div>
+      <div class="ring" id="r2" style="left:258px;top:156px"><div class="knob" id="k2"></div></div>
+      <div class="ring" id="r3" style="left:258px;top:212px"><div class="knob" id="k3"></div></div>
+      <div class="bar" id="b0" style="left:23px">1</div>
+      <div class="bar" id="b1" style="left:63px">2</div>
+      <div class="bar" id="b2" style="left:103px">3</div>
+      <div class="bar" id="b3" style="left:143px">4</div>
       <div id="mainknob"></div>
       <div class="btn" id="f8">F8</div>
       <div class="btn" id="bbtn">B</div>
@@ -93,7 +93,7 @@
       <div id="brand">AltF8</div>
       <span class="kbd" style="left:236px;top:-30px">Space</span>
       <span class="kbd" style="left:286px;top:276px">Q/A..R/F</span>
-      <span class="kbd" style="left:26px;top:316px">1</span><span class="kbd" style="left:84px;top:316px">2</span><span class="kbd" style="left:142px;top:316px">3</span><span class="kbd" style="left:200px;top:316px">4</span>
+      <span class="kbd" style="left:35px;top:306px">1</span><span class="kbd" style="left:75px;top:306px">2</span><span class="kbd" style="left:115px;top:306px">3</span><span class="kbd" style="left:155px;top:306px">4</span>
       <span class="kbd" style="left:224px;top:410px">&larr; &rarr;</span>
       <span class="kbd" style="left:42px;top:398px">Enter</span>
       <span class="kbd" style="left:100px;top:398px">Backspace</span>
@@ -209,9 +209,10 @@ const VERSIONS = [
   { id:'v5', file:'versions/v5.html', label:'v5 - Cleaner footer (2026-11-17)', note:'Gap between the two bottom text lines on every screen.' },
   { id:'v6', file:'versions/v6.html', label:'v6 - Play + F8 to shut off (2026-11-17)', note:'Hold Play + F8 to turn off with a SHUT OFF? bar. Holding F8 alone only turns on.' },
   { id:'v7', file:'versions/v7.html', label:'v7 - Rhythms across bars, text-free note shape (2026-11-17)', note:'Rhythm presets across the 4 bars on a 16th grid; notes show the rhythm. Text-free note design screen; Play twice to loop.' },
-  { id:'v8', file:'index.html', label:'v8 - Selectors instead of the switch (2026-11-17)', note:'No more multi-step switch. B opens a selector menu (Notes, Rhythm, Pattern, Chords); the knob picks, F8 opens. Pattern sets how long each chord lasts across the loop; Rhythm splits each chord into hits. All notes light up and change live while you turn.' }
+  { id:'v8', file:'versions/v8.html', label:'v8 - Selectors instead of the switch (2026-11-17)', note:'No more multi-step switch. B opens a selector menu (Notes, Rhythm, Pattern, Chords); the knob picks, F8 opens. Pattern sets how long each chord lasts across the loop; Rhythm splits each chord into hits. All notes light up and change live while you turn.' },
+  { id:'v9', file:'index.html', label:'v9 - Note actions, button strip, metronome (2026-11-17)', note:'While a note is grabbed the 4 buttons do octave up, octave down, accent and delete; B cancels. Buttons line up with a label strip at the bottom of the screen. Kick metronome. The selector menu outlines the part of the screen each item controls and shows the next one.' }
 ];
-const CURRENT = 'v8';
+const CURRENT = 'v9';
 
 /* ================= state ================= */
 const st = {
@@ -221,7 +222,7 @@ const st = {
   bars:[0,1,2,3].map(() => ({ mel:null, chord:null, notes:[] })),
   patch:{ wave:1, a:2, d:4, s:0.6, r:4, cutoff:2400, reso:2 },
   msg:'', msgT:0, lastEdit:0, mainAngle:0, kAngles:[0,0,0,0],
-  viewTop:76, ov:null, pat:0, mode:'notes', menu:false, menuIdx:0, loopNote:false, pop:null, shut:null, setCur:0, setEdit:false, prevStart:0, prevDur:0
+  viewTop:76, ov:null, pat:0, mode:'notes', menu:false, menuIdx:0, loopNote:false, pop:null, shut:null, setCur:0, setEdit:false, prevStart:0, prevDur:0, metro:false
 };
 
 /* ================= music helpers ================= */
@@ -365,6 +366,13 @@ function previewDesign(){
   st.prevStart = performance.now(); st.prevDur = dur + REL[P.r];
   nextPrev = ac.currentTime + dur + REL[P.r] + 0.15;
 }
+function kick(t, accent){
+  if (!ac) return;
+  const o = ac.createOscillator(), g = ac.createGain(), pk = accent ? 1.0 : 0.7;
+  o.type = 'sine'; o.frequency.setValueAtTime(150, t); o.frequency.exponentialRampToValueAtTime(45, t + 0.12);
+  g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(pk, t + 0.003); g.gain.exponentialRampToValueAtTime(0.001, t + 0.28);
+  o.connect(g); g.connect(master); o.start(t); o.stop(t + 0.3);
+}
 function preview(midi){ if (st.on && ac) voice(midi, ac.currentTime + 0.005, 0.22, 0.8); }
 
 /* ================= sequencer ================= */
@@ -376,8 +384,9 @@ function barNotes(b){
     const ch = st.options[st.optIdx].chords[b];
     return [{ midi:B.mel.midi, mel:true }].concat(voicing(B.mel.midi, ch).map(m => ({ midi:m })));
   }
-  const out = B.notes.map(n => ({ midi:n.midi }));
-  if (B.mel) out.push({ midi:B.mel.midi, mel:true });
+  const em = B.emph === undefined ? 'mel' : B.emph;
+  const out = B.notes.map((n, i) => ({ midi:n.midi, mel:em === i }));
+  if (B.mel) out.push({ midi:B.mel.midi, mel:em === 'mel' });
   return out;
 }
 function schedule(s, t){
@@ -385,6 +394,7 @@ function schedule(s, t){
     const dur = e.len * stepDur() * (e.len <= 1 ? 0.6 : 0.95);
     barNotes(e.bar).forEach(n => voice(n.midi, t, dur, n.mel ? 1 : 0.55));
   }
+  if (st.metro && s % 4 === 0) kick(t, s % 16 === 0);
   uiQ.push({ s, t });
 }
 setInterval(() => {
@@ -477,13 +487,31 @@ function settingValue(c){
   if (c === 2) return P.cutoff >= 1000 ? (P.cutoff / 1000).toFixed(1) + 'K' : Math.round(P.cutoff) + '';
   return P.reso.toFixed(1);
 }
+function grabbedNote(){ const B = st.bars[st.sel]; return st.grab.ref === 'mel' ? B.mel : B.notes[st.grab.ref]; }
+function delNote(B, ref){
+  if (ref === 'mel') B.mel = null; else B.notes.splice(ref, 1);
+  const em = B.emph === undefined ? 'mel' : B.emph;
+  if (em === ref) B.emph = 'mel'; else if (typeof em === 'number' && typeof ref === 'number' && em > ref) B.emph = em - 1;
+}
+const NOTE_ACTS = ['OCT+', 'OCT-', 'ACC', 'DEL'];
+function noteAction(i){
+  const B = st.bars[st.sel], n = grabbedNote();
+  if (i === 0 || i === 1) {
+    const m = n.midi + (i === 0 ? 12 : -12);
+    if (m < LO || m > HI) { flash(i === 0 ? 'TOO HIGH' : 'TOO LOW'); return; }
+    n.midi = m; preview(m); st.cursor = barList(st.sel).findIndex(x => x.ref === st.grab.ref); flash(i === 0 ? 'OCTAVE UP' : 'OCTAVE DOWN'); return;
+  }
+  if (i === 2) { B.emph = st.grab.ref; preview(n.midi); flash('ACCENTED'); return; }
+  delNote(B, st.grab.ref); st.grab = null; st.cursor = 0; flash('NOTE DELETED');
+}
 function selBar(i){
   if (!st.on) return;
+  if (st.screen === 'melody' && !st.menu && st.mode === 'notes' && st.phase === 'edit' && st.grab) { noteAction(i); return; }
   if (st.menu || st.mode !== 'notes') return;
   st.sel = i; st.cursor = 0; st.grab = null;
   if (st.phase !== 'suggest' && st.bars[i].mel) preview(st.bars[i].mel.midi);
 }
-const MODES = ['NOTES', 'RHYTHM', 'PATTERN', 'CHORDS'];
+const MODES = ['METRONOME', 'CHORDS', 'RHYTHM', 'NOTES', 'PATTERN'];
 function openMenu(){ st.menu = true; st.menuIdx = Math.max(0, MODES.indexOf(st.mode.toUpperCase())); st.grab = null; }
 function runChordFinder(){
   if (!allSet()) { flash('SET 4 NOTES FIRST'); return false; }
@@ -492,6 +520,7 @@ function runChordFinder(){
 }
 function enterMode(){
   const m = MODES[st.menuIdx];
+  if (m === 'METRONOME') { st.metro = !st.metro; st.menu = false; flash(st.metro ? (st.playing ? 'METRONOME ON' : 'METRO ON: PRESS PLAY') : 'METRONOME OFF'); return; }
   if (m === 'CHORDS') { if (runChordFinder()) { st.menu = false; st.mode = 'notes'; } return; }
   st.menu = false; st.mode = m.toLowerCase();
 }
@@ -504,12 +533,12 @@ function f8Tap(){
   if (st.phase === 'entry') { runChordFinder(); return; }
   if (st.phase === 'suggest') {
     const o = st.options[st.optIdx];
-    st.bars.forEach((B, i) => { B.chord = o.chords[i]; B.notes = voicing(B.mel.midi, o.chords[i]).map(m => ({ midi:m, auto:true })); });
+    st.bars.forEach((B, i) => { B.chord = o.chords[i]; B.notes = voicing(B.mel.midi, o.chords[i]).map(m => ({ midi:m, auto:true })); B.emph = 'mel'; });
     st.phase = 'edit'; st.cursor = 0; flash('CHORDS SET'); return;
   }
   // edit
   const list = barList(st.sel); if (!list.length) return;
-  if (!st.grab) { const it = list[st.cursor]; const n = it.ref === 'mel' ? st.bars[st.sel].mel : st.bars[st.sel].notes[it.ref]; st.grab = { ref:it.ref, orig:n.midi }; }
+  if (!st.grab) { const it = list[st.cursor]; const n = it.ref === 'mel' ? st.bars[st.sel].mel : st.bars[st.sel].notes[it.ref]; st.grab = { ref:it.ref, orig:n.midi, emph:st.bars[st.sel].emph }; }
   else { const B = st.bars[st.sel], n = st.grab.ref === 'mel' ? B.mel : B.notes[st.grab.ref]; if (n.midi !== st.grab.orig) n.auto = false; st.grab = null; flash('NOTE PLACED'); }
 }
 function bTap(){
@@ -523,7 +552,7 @@ function bTap(){
     if (!st.options.length) { st.phase = 'entry'; flash('NO MORE OPTIONS'); return; }
     st.optIdx = st.optIdx % st.options.length; flash('REJECTED'); return;
   }
-  if (st.phase === 'edit' && st.grab) { const B = st.bars[st.sel], n = st.grab.ref === 'mel' ? B.mel : B.notes[st.grab.ref]; n.midi = st.grab.orig; st.grab = null; flash('CANCELLED'); return; }
+  if (st.phase === 'edit' && st.grab) { const B = st.bars[st.sel], n = st.grab.ref === 'mel' ? B.mel : B.notes[st.grab.ref]; n.midi = st.grab.orig; B.emph = st.grab.emph; st.grab = null; flash('CANCELLED'); return; }
   openMenu();
 }
 function bHold(){
@@ -532,7 +561,7 @@ function bHold(){
   if (st.phase === 'entry') { if (B.mel) { B.mel = null; flash('NOTE DELETED'); } return; }
   if (st.phase === 'edit') {
     const list = barList(st.sel); if (!list.length) return; const it = list[Math.min(st.cursor, list.length - 1)];
-    if (it.ref === 'mel') B.mel = null; else B.notes.splice(it.ref, 1);
+    delNote(B, it.ref);
     st.grab = null; st.cursor = 0; flash('NOTE DELETED');
   }
 }
@@ -647,8 +676,11 @@ function wave(ph, w){ ph = ph - Math.floor(ph); if (w === 0) return Math.sin(ph 
 function env(t, P){ const a = ATK[P.a], d = DEC[P.d], s = P.s, r = REL[P.r], hold = 0.3; if (t < a) return t / Math.max(a, 1e-4); if (t < a + d) return 1 - (1 - s) * (t - a) / d; if (t < a + d + hold) return s; const u = t - a - d - hold; return u < r ? s * (1 - u / r) : 0; }
 
 function drawMelody(now){
-  txt(st.mode === 'notes' ? 'NOTES' : st.mode.toUpperCase(), 1, 1, st.mode === 'notes' ? C.mut : C.acc);
+  if (st.mode === 'rhythm') stxt('hd', 'R:' + RHY[st.rhy].name, 12, 1, 1, C.acc);
+  else if (st.mode === 'pattern') stxt('hd', 'P:' + PATTERNS[st.pat].name, 12, 1, 1, C.acc);
+  else txt('NOTES', 1, 1, C.mut);
   txt(st.tempo + '', 52, 1, C.mut);
+  if (st.metro) for (let i = 0; i < 4; i++) px(65 + i * 2, 2, 1, 3, st.playing && curStep >= 0 && Math.floor(curStep / 4) % 4 === i ? C.play : C.acc);
   txt(st.playing ? '>' : '=', 76, 1, st.playing ? C.play : C.mut);
   px(0, 7, 83, 1, C.dim);
   // playhead
@@ -698,12 +730,13 @@ function drawMelody(now){
     const B = st.bars[e.bar]; if (!B.mel && !B.notes.length) continue;
     let notes;
     if (st.phase === 'suggest' && st.options.length && B.mel) notes = [{ midi:B.mel.midi, c:C.acc }].concat(voicing(B.mel.midi, st.options[st.optIdx].chords[e.bar]).map(m => ({ midi:m, c:blink ? C.sug : null })));
-    else { notes = B.notes.map((n, i) => ({ midi:n.midi, c:n.auto ? C.auto : C.acc, ref:i })); if (B.mel) notes.push({ midi:B.mel.midi, c:C.acc, ref:'mel' }); }
+    else { const em = B.emph === undefined ? 'mel' : B.emph; notes = B.notes.map((n, i) => ({ midi:n.midi, c:n.auto ? C.auto : C.acc, ref:i, em:em === i && B.notes.length > 0 })); if (B.mel) notes.push({ midi:B.mel.midi, c:C.acc, ref:'mel', em:em === 'mel' && B.notes.length > 0 }); }
     const grabRef = st.grab && e.bar === st.sel ? st.grab.ref : null;
     for (const n of notes) {
       if (!n.c) continue;
       const y = yOf(n.midi); if (y <= 18 || y >= 89) continue;
       const c = grabRef !== null && n.ref === grabRef ? (blink ? C.sel : n.c) : (allSel ? (blink ? C.sel : n.c) : n.c);
+      if (n.em && y > 19) px(colX(e.start), y - 2, 1, 1, C.sel);
       for (let k = 0; k < e.len; k++) {
         const g = (e.start + k) % LOOP; px(colX(g), y, 1, 2, c);
         if (g % 16 === 15 && k < e.len - 1) px(colX(g) + 1, y + 1, 4, 1, c);
@@ -711,23 +744,48 @@ function drawMelody(now){
     }
   }
   if (now - st.lastEdit < 2000 && st.prevStart) { px(3, 21, 77, 64, C.dim); px(4, 22, 75, 62, C.bg); drawShape(now, 6, 24, 71, 58); }
-  px(0, 98, 83, 1, C.dim);
-  // footer
-  if (st.mode === 'rhythm') stxt('rhy', 'RHYTHM: ' + RHY[st.rhy].name + ' ' + (st.rhy + 1) + '/' + RHY.length, 20, 1, 100, C.acc);
-  else if (st.mode === 'pattern') stxt('rhy', 'PATTERN: ' + PATTERNS[st.pat].name + ' ' + (st.pat + 1) + '/' + PATTERNS.length, 20, 1, 100, C.acc);
-  else stxt('rhy', PATTERNS[st.pat].name + ' / ' + RHY[st.rhy].name, 20, 1, 100, C.auto);
-  if (st.menu) {
-    px(0, 0, 83, 8, SEG.a); const m = MODES[st.menuIdx];
-    txt('<', 2, 1, C.bg); txt('>', 77, 1, C.bg); txt(m, Math.round(42 - m.length * 2), 1, C.bg);
-    return 'KNOB:PICK F8:OPEN B:BACK';
-  }
-  if (st.mode !== 'notes') return 'KNOB:CHANGE F8:KEEP B:MENU';
+  if (st.menu) { drawMenu(now); return 'F8:OK NEXT:' + MODES[(st.menuIdx + 1) % MODES.length]; }
+  if (st.mode !== 'notes') return 'KNOB F8:KEEP B:MENU';
   let prompt;
   const n = st.bars.filter(b => b.mel).length;
   if (st.phase === 'entry') prompt = n < 4 ? 'KNOB:PITCH ' + n + '/4  B:MENU' : 'F8:FIND CHORDS';
   else if (st.phase === 'suggest') prompt = 'KNOB:MORE F8:OK B:NO ' + (st.optIdx + 1) + '/' + st.options.length;
-  else prompt = st.grab ? 'KNOB:MOVE F8:SET B:UNDO' : 'KNOB:PICK NOTE F8:GRAB B:MENU';
+  else prompt = st.grab ? 'KNOB F8:OK B:CANCEL' : 'KNOB:PICK F8:GRAB';
   return prompt;
+}
+// menu: every item sits on the part of the screen it controls; current one outlined, next one dotted
+function menuRegion(m){
+  if (m === 'METRONOME') return [0, 0, 83, 8];
+  if (m === 'CHORDS') return [0, 8, 83, 9];
+  if (m === 'RHYTHM') return [0, 17, 83, 72];
+  if (m === 'NOTES') return [1 + st.sel * 20, 19, 20, 68];
+  return [0, 89, 83, 9];
+}
+function outline(x, y, w, h, c, dotted){
+  for (let i = 0; i < w; i++) if (!dotted || i % 2 === 0) { px(x + i, y, 1, 1, c); px(x + i, y + h - 1, 1, 1, c); }
+  for (let i = 0; i < h; i++) if (!dotted || i % 2 === 0) { px(x, y + i, 1, 1, c); px(x + w - 1, y + i, 1, 1, c); }
+}
+function drawMenu(now){
+  g.fillStyle = 'rgba(11,16,32,0.72)'; g.fillRect(0, 0, 83, 98);
+  const cur = MODES[st.menuIdx], nxt = MODES[(st.menuIdx + 1) % MODES.length];
+  const nr = menuRegion(nxt); outline(nr[0], nr[1], nr[2], nr[3], C.mut, true);
+  const r = menuRegion(cur); outline(r[0], r[1], r[2], r[3], Math.floor(now / 300) % 2 ? SEG.a : C.sel, false);
+  const name = cur === 'METRONOME' ? 'METRO ' + (st.metro ? 'ON' : 'OFF') : cur;
+  const w = name.length * 4 + 3, x = Math.max(1, Math.min(82 - w, Math.round(r[0] + r[2] / 2 - w / 2))), y = Math.round(r[1] + r[3] / 2 - 3.5);
+  px(x, y, w, 7, SEG.a); txt(name, x + 2, y + 1, C.bg);
+}
+// bottom strip: one cell per bar button, sitting right above that button
+function drawButtonBar(){
+  let labs = ['', '', '', ''], hi = -1;
+  if (st.screen === 'melody' && !st.menu && st.mode === 'notes') {
+    if (st.phase === 'edit' && st.grab) labs = NOTE_ACTS;
+    else { labs = ['1', '2', '3', '4']; hi = st.sel; }
+  }
+  for (let b = 0; b < 4; b++) {
+    const x = 1 + b * 20, on = labs[b] !== '';
+    px(x, 105, 19, 7, b === hi ? SEG.a : on ? C.dim : C.grid);
+    if (on) txt(labs[b], x + Math.round((19 - (labs[b].length * 4 - 1)) / 2), 106, b === hi ? C.bg : C.txt);
+  }
 }
 // visual feedback for the 4 setting knobs on the melody screen
 function filterDb(f){ const P = st.patch, r = f / P.cutoff, q = P.reso; return 20 * Math.log10(1 / Math.sqrt((1 - r * r) ** 2 + (r / q) ** 2)); }
@@ -791,9 +849,7 @@ function drawSettings(now){
     txt(settingValue(i), 50, y, cur && st.setEdit && Math.floor(now / 300) % 2 ? C.sel : C.acc);
   });
   drawOverlay(now, [0, 3, 1, 2][st.setCur], 4, 40, 75, 54);
-  px(0, 98, 83, 1, C.dim);
-  txt('KNOB: PICK', 1, 100, C.auto);
-  return st.setEdit ? 'KNOB:CHANGE F8:DONE' : 'F8:EDIT  PLAY+KNOB:SCREEN';
+  return st.setEdit ? 'KNOB:CHANGE F8:DONE' : 'KNOB:PICK F8:EDIT';
 }
 function draw(){
   const now = performance.now();
@@ -803,7 +859,7 @@ function draw(){
     else {
       px(0, 0, 112, 112, C.bg);
       const prompt = st.screen === 'melody' ? drawMelody(now) : st.screen === 'design' ? drawDesign(now) : drawSettings(now);
-      drawLabels();
+      drawLabels(); drawButtonBar();
       if (st.shut) {
         const f = Math.min(1, (now - st.shut.t0) / SHUT_MS);
         px(10, 38, 92, 36, C.acc); px(11, 39, 90, 34, C.bg);
@@ -817,11 +873,11 @@ function draw(){
         lines.forEach((ln, i) => txt(ln, Math.round(56 - ln.length * 2), 49 + i * 8, C.txt));
       }
       const showMsg = st.msg && now - st.msgT < 1400;
-      stxt('pr', showMsg ? st.msg : prompt, 20, 1, 106, showMsg ? C.acc : C.txt);
+      stxt('pr', showMsg ? st.msg : prompt, 20, 1, 99, showMsg ? C.acc : C.txt);
     }
   }
   for (let i = 0; i < 4; i++) { const r = document.getElementById('r' + i); r.classList.toggle('off', !st.on); r.style.setProperty('--p', st.on ? knobFrac(i).toFixed(3) : 0); }
-  for (let i = 0; i < 4; i++) document.getElementById('b' + i).classList.toggle('sel', st.on && st.sel === i);
+  for (let i = 0; i < 4; i++) document.getElementById('b' + i).classList.toggle('sel', st.on && st.sel === i && !(st.grab && st.phase === 'edit'));
   requestAnimationFrame(draw);
 }
 requestAnimationFrame(draw);
