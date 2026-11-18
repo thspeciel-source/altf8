@@ -73,7 +73,7 @@
   <div id="devcol">
     <div>
       <h1>AltF8 emulator</h1>
-      <div class="sub">Melody + chord finder and note design. Click the page, then hold F8 (Enter) to power on.</div>
+      <div class="sub">Melody + chord finder and note design. Click the page, then hold F8 (Enter) to power on. Hold Play + F8 (Space + Enter) to turn off.</div>
     </div>
     <div id="device">
       <div id="pwrled"></div>
@@ -112,7 +112,8 @@
         <tr><td>Note shape knobs 1-4: attack, decay, sustain, release (labels on screen)</td><td><kbd>Q</kbd>/<kbd>A</kbd> <kbd>W</kbd>/<kbd>S</kbd> <kbd>E</kbd>/<kbd>D</kbd> <kbd>R</kbd>/<kbd>F</kbd> (up / down)</td></tr>
         <tr><td>Bar buttons 1-4</td><td><kbd>1</kbd><kbd>2</kbd><kbd>3</kbd><kbd>4</kbd></td></tr>
         <tr><td>Multi-step rhythm switch</td><td><kbd>Z</kbd> left, <kbd>X</kbd> right</td></tr>
-        <tr><td>F8: confirm / find chords. Hold: power on/off</td><td><kbd>Enter</kbd></td></tr>
+        <tr><td>F8: confirm / find chords. Hold: power on</td><td><kbd>Enter</kbd></td></tr>
+        <tr><td>Power off: hold Play + F8 together until the bar fills</td><td>hold <kbd>Space</kbd> + <kbd>Enter</kbd></td></tr>
         <tr><td>B: reject / cancel. Hold: delete note</td><td><kbd>Backspace</kbd></td></tr>
         <tr><td>Play / pause</td><td><kbd>Space</kbd></td></tr>
         <tr><td>Switch screen (melody / note design / settings)</td><td>hold <kbd>Space</kbd> + <kbd>&larr;</kbd><kbd>&rarr;</kbd></td></tr>
@@ -171,9 +172,10 @@ const VERSIONS = [
   { id:'v2', file:'versions/v2.html', label:'v2 - Knob feedback fixes (2026-11-17)', note:'Notes visibly move; setting knobs (tempo, cutoff, resonance, key) play the bar and show a visual.' },
   { id:'v3', file:'versions/v3.html', label:'v3 - Knobs always shape the note (2026-11-17)', note:'The 4 knobs are always attack, decay, sustain, release and show the note shape. Settings screen for tempo, key, cutoff, resonance.' },
   { id:'v4', file:'versions/v4.html', label:'v4 - Steady preview + power-on chime (2026-11-17)', note:'Turning the shape knobs no longer restarts the note: it keeps repeating at a steady pace and picks up your changes. A chime plays when the AltF8 turns on.' },
-  { id:'v5', file:'index.html', label:'v5 - Cleaner footer (2026-11-17)', note:'The two bottom text lines on every screen no longer touch: rhythm name and prompt have a gap between them.' }
+  { id:'v5', file:'versions/v5.html', label:'v5 - Cleaner footer (2026-11-17)', note:'The two bottom text lines on every screen no longer touch: rhythm name and prompt have a gap between them.' },
+  { id:'v6', file:'index.html', label:'v6 - Play + F8 to shut off (2026-11-17)', note:'Hold Play + F8 together to turn off: the screen asks SHUT OFF? with a bar that fills; let go early to stay on. Holding F8 alone now only turns the device on. A falling chime plays on shut off.' }
 ];
-const CURRENT = 'v5';
+const CURRENT = 'v6';
 
 /* ================= state ================= */
 const st = {
@@ -183,7 +185,7 @@ const st = {
   bars:[0,1,2,3].map(() => ({ mel:null, chord:null, notes:[] })),
   patch:{ wave:1, a:2, d:4, s:0.6, r:4, cutoff:2400, reso:2 },
   msg:'', msgT:0, lastEdit:0, mainAngle:0, kAngles:[0,0,0,0],
-  viewTop:76, ov:null, setCur:0, setEdit:false, prevStart:0, prevDur:0
+  viewTop:76, ov:null, shut:null, setCur:0, setEdit:false, prevStart:0, prevDur:0
 };
 
 /* ================= music helpers ================= */
@@ -304,10 +306,10 @@ function previewBar(){
   let notes = barNotes(st.sel); if (!notes.length) notes = [{ midi:60 + (keyInfo(st.key).mode === 'chrom' ? 0 : keyInfo(st.key).root), mel:true }];
   notes.forEach(n => voice(n.midi, ac.currentTime + 0.01, 0.45, n.mel ? 1 : 0.55));
 }
-function chime(){
+function chime(down){
   if (!ac) return;
   if (ac.state !== 'running') ac.resume();
-  const t0 = ac.currentTime + 0.05, notes = [72, 76, 79, 84];
+  const t0 = ac.currentTime + 0.05, notes = down ? [84, 79, 76, 72] : [72, 76, 79, 84];
   notes.forEach((m, i) => {
     const t = t0 + i * 0.09, f = 440 * Math.pow(2, (m - 69) / 12);
     [[1, 0.22], [2.01, 0.06], [3.98, 0.025]].forEach(([mul, lvl]) => {
@@ -474,19 +476,30 @@ function bHold(){
     st.grab = null; st.cursor = 0; flash('NOTE DELETED');
   }
 }
-function powerToggle(){
-  st.on = !st.on; document.getElementById('pwrled').classList.toggle('on', st.on);
-  if (st.on) { initAudio(); st.boot = performance.now(); chime(); } else { st.playing = false; curStep = -1; }
+function powerOn(){
+  if (st.on) return;
+  st.on = true; document.getElementById('pwrled').classList.add('on');
+  initAudio(); st.boot = performance.now(); chime(false);
 }
+function powerOff(){
+  if (!st.on) return;
+  chime(true);
+  st.on = false; st.shut = null; st.playing = false; curStep = -1;
+  document.getElementById('pwrled').classList.remove('on');
+}
+const SHUT_MS = 1500;
+function startShut(){ if (!st.on) return; st.shut = { t0:performance.now() }; held.playUsed = true; held.f8Fired = true; if (held.f8) { clearTimeout(held.f8); held.f8 = 'shut'; } }
+function cancelShut(){ if (st.shut) { st.shut = null; flash('STAYING ON'); } }
+setInterval(() => { if (st.shut && performance.now() - st.shut.t0 >= SHUT_MS) powerOff(); }, 30);
 
 /* ================= input: holds ================= */
 const held = { play:false, playUsed:false, f8:null, f8Fired:false, b:null, bFired:false };
-function f8Down(){ if (held.f8) return; held.f8Fired = false; held.f8 = setTimeout(() => { held.f8Fired = true; powerToggle(); }, 800); press('f8', true); }
-function f8Up(){ if (!held.f8) return; clearTimeout(held.f8); held.f8 = null; press('f8', false); if (!held.f8Fired) { if (st.on) f8Tap(); else flashHint(); } }
+function f8Down(){ if (held.f8) return; held.f8Fired = false; press('f8', true); if (st.on && held.play) { held.f8 = 'shut'; startShut(); return; } held.f8 = setTimeout(() => { held.f8Fired = true; if (!st.on) powerOn(); }, 800); }
+function f8Up(){ if (!held.f8) return; if (held.f8 !== 'shut') clearTimeout(held.f8); held.f8 = null; press('f8', false); if (st.shut) { cancelShut(); return; } if (!held.f8Fired) { if (st.on) f8Tap(); else flashHint(); } }
 function bDown(){ if (held.b) return; held.bFired = false; held.b = setTimeout(() => { held.bFired = true; bHold(); }, 600); press('bbtn', true); }
 function bUp(){ if (!held.b) return; clearTimeout(held.b); held.b = null; press('bbtn', false); if (!held.bFired) bTap(); }
-function playDown(){ if (held.play) return; held.play = true; held.playUsed = false; press('play', true); }
-function playUp(){ if (!held.play) return; held.play = false; press('play', false); if (!held.playUsed) togglePlay(); }
+function playDown(){ if (held.play) return; held.play = true; held.playUsed = false; press('play', true); if (st.on && held.f8) startShut(); }
+function playUp(){ if (!held.play) return; held.play = false; press('play', false); if (st.shut) { cancelShut(); return; } if (!held.playUsed) togglePlay(); }
 function press(id, on){ const el = document.getElementById(id); if (el) el.classList.toggle('down', on); }
 function flashHint(){ setStatus('The AltF8 is off: hold F8 (Enter) for about a second to power on.'); }
 function setStatus(t){ const s = document.getElementById('status'); s.textContent = t; clearTimeout(setStatus.t); setStatus.t = setTimeout(() => { s.textContent = ''; }, 3500); }
@@ -717,6 +730,13 @@ function draw(){
       px(0, 0, 112, 112, C.bg);
       const prompt = st.screen === 'melody' ? drawMelody(now) : st.screen === 'design' ? drawDesign(now) : drawSettings(now);
       drawLabels();
+      if (st.shut) {
+        const f = Math.min(1, (now - st.shut.t0) / SHUT_MS);
+        px(10, 38, 92, 36, C.acc); px(11, 39, 90, 34, C.bg);
+        txt('SHUT OFF?', 38, 44, C.txt);
+        px(18, 56, 76, 7, C.dim); px(19, 57, Math.round(74 * f), 5, f >= 1 ? C.sug : C.acc);
+        txt('KEEP HOLDING', 32, 66, C.mut);
+      }
       const showMsg = st.msg && now - st.msgT < 1400;
       stxt('pr', showMsg ? st.msg : prompt, 20, 1, 106, showMsg ? C.acc : C.txt);
     }
