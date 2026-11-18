@@ -124,6 +124,8 @@
         <li>After confirming: pick a bar, turn the knob to a note, F8 to grab it, turn to move it, F8 to place or B to cancel. Hold B to delete.</li>
         <li>Yellow = notes you placed. Cyan = notes placed by the chord finder.</li>
         <li>Turning any of the 4 knobs shows the note's shape and plays it until you stop for 2 seconds.</li>
+        <li>On the note design screen, Play plays the note once; press Play again within 2 seconds to loop it, and once more to stop.</li>
+        <li>The rhythm switch changes how the chords are played across the 4 bars, and the notes on screen show that rhythm.</li>
         <li>Tempo, key, cutoff and resonance are on the settings screen: knob to pick, F8 to edit, knob to change, F8 when done.</li>
       </ul>
     </div>
@@ -155,13 +157,31 @@
 const NN = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
 const MAJ = [0,2,4,5,7,9,11], MIN = [0,2,3,5,7,8,10];
 const KEYS = ['CHROM'].concat(NN.map(n => n + ' MAJ'), NN.map(n => n + ' MIN'));
+// Rhythm presets on a 16th-note grid. Each event is [start, length] in 16ths from the start of its bar.
+// A negative start pushes the chord early into the previous bar (anticipation); a length past 16 ties it over the bar line.
+// span 2 = the pattern covers two bars. Events never overlap: each one is cut where the next one starts.
 const RHY = [
-  { name:'ONE PER BAR', hits:[0] },
-  { name:'CHARLESTON', hits:[0,3] },
-  { name:'REVERSE CHARLESTON', hits:[1,4] },
-  { name:'TRESILLO 3+3+2', hits:[0,3,6] },
-  { name:'FOUR ON THE FLOOR', hits:[0,2,4,6] }
+  { name:'ONE PER BAR', span:1, ev:[[0,16]] },
+  { name:'PUSH', span:1, ev:[[-2,10],[8,6]] },
+  { name:'CHARLESTON', span:1, ev:[[0,6],[6,4]] },
+  { name:'DOUBLE TRESILLO', span:2, ev:[[0,6],[6,6],[12,6],[18,6],[24,4],[28,4]] },
+  { name:'OFFBEAT STABS', span:1, ev:[[2,1],[6,1],[10,1],[14,1]] }
 ];
+const LOOP = 64;
+const SEG = { a:'#ffd23f', d:'#34d6e8', s:'#7dff6a', r:'#ff4fd8' };
+let evCache = { rhy:-1, list:[] };
+function patternEvents(){
+  if (evCache.rhy === st.rhy) return evCache.list;
+  const R = RHY[st.rhy], out = [];
+  for (let b0 = 0; b0 < 4; b0 += R.span) for (const [s0, l] of R.ev) {
+    const bar = s0 < 0 ? b0 : Math.min(3, b0 + Math.floor(s0 / 16));
+    out.push({ start:(((b0 * 16 + s0) % LOOP) + LOOP) % LOOP, len:l, bar });
+  }
+  out.sort((x, y) => x.start - y.start);
+  out.forEach((e, i) => { const n = out[(i + 1) % out.length]; let gap = n.start - e.start; if (gap <= 0) gap += LOOP; e.len = Math.min(e.len, gap); });
+  evCache = { rhy:st.rhy, list:out };
+  return out;
+}
 const WAVES = ['sine','triangle','sawtooth','square'], WNAME = ['SINE','TRI','SAW','SQUARE'];
 const ATK = [0,0.005,0.01,0.02,0.05,0.1,0.2,0.3,0.5,0.8,1.2,2];
 const DEC = [0.02,0.05,0.1,0.15,0.25,0.4,0.6,0.9,1.3,2];
@@ -171,11 +191,12 @@ const VERSIONS = [
   { id:'v1', file:'versions/v1.html', label:'v1 - Melody + chords, note design (2026-11-17)', note:'First build: melody + chord finder screen, note design screen, rhythm switch, keyboard map, ESP32 monitor.' },
   { id:'v2', file:'versions/v2.html', label:'v2 - Knob feedback fixes (2026-11-17)', note:'Notes visibly move; setting knobs (tempo, cutoff, resonance, key) play the bar and show a visual.' },
   { id:'v3', file:'versions/v3.html', label:'v3 - Knobs always shape the note (2026-11-17)', note:'The 4 knobs are always attack, decay, sustain, release and show the note shape. Settings screen for tempo, key, cutoff, resonance.' },
-  { id:'v4', file:'versions/v4.html', label:'v4 - Steady preview + power-on chime (2026-11-17)', note:'Turning the shape knobs no longer restarts the note: it keeps repeating at a steady pace and picks up your changes. A chime plays when the AltF8 turns on.' },
-  { id:'v5', file:'versions/v5.html', label:'v5 - Cleaner footer (2026-11-17)', note:'The two bottom text lines on every screen no longer touch: rhythm name and prompt have a gap between them.' },
-  { id:'v6', file:'index.html', label:'v6 - Play + F8 to shut off (2026-11-17)', note:'Hold Play + F8 together to turn off: the screen asks SHUT OFF? with a bar that fills; let go early to stay on. Holding F8 alone now only turns the device on. A falling chime plays on shut off.' }
+  { id:'v4', file:'versions/v4.html', label:'v4 - Steady preview + power-on chime (2026-11-17)', note:'Turning the shape knobs keeps a steady repeat instead of restarting the note. Chime on power-on.' },
+  { id:'v5', file:'versions/v5.html', label:'v5 - Cleaner footer (2026-11-17)', note:'Gap between the two bottom text lines on every screen.' },
+  { id:'v6', file:'versions/v6.html', label:'v6 - Play + F8 to shut off (2026-11-17)', note:'Hold Play + F8 to turn off with a SHUT OFF? bar. Holding F8 alone only turns on.' },
+  { id:'v7', file:'index.html', label:'v7 - Rhythms across bars, text-free note shape (2026-11-17)', note:'Rhythm presets now play across the 4 bars on a 16th grid (push, Charleston, double tresillo, offbeat stabs) and the notes on screen show the rhythm. Notes can start early or tie over the bar line but never overlap. Note design screen shows only the shape with colored A D S R. Play there plays the note; press again within 2 s to loop.' }
 ];
-const CURRENT = 'v6';
+const CURRENT = 'v7';
 
 /* ================= state ================= */
 const st = {
@@ -185,7 +206,7 @@ const st = {
   bars:[0,1,2,3].map(() => ({ mel:null, chord:null, notes:[] })),
   patch:{ wave:1, a:2, d:4, s:0.6, r:4, cutoff:2400, reso:2 },
   msg:'', msgT:0, lastEdit:0, mainAngle:0, kAngles:[0,0,0,0],
-  viewTop:76, ov:null, shut:null, setCur:0, setEdit:false, prevStart:0, prevDur:0
+  viewTop:76, ov:null, loopNote:false, pop:null, shut:null, setCur:0, setEdit:false, prevStart:0, prevDur:0
 };
 
 /* ================= music helpers ================= */
@@ -333,7 +354,7 @@ function preview(midi){ if (st.on && ac) voice(midi, ac.currentTime + 0.005, 0.2
 
 /* ================= sequencer ================= */
 let step = 0, nextT = 0, uiQ = [], curStep = -1;
-const stepDur = () => 60 / st.tempo / 2;
+const stepDur = () => 60 / st.tempo / 4;
 function barNotes(b){
   const B = st.bars[b];
   if (st.phase === 'suggest' && st.options.length && B.mel) {
@@ -345,17 +366,24 @@ function barNotes(b){
   return out;
 }
 function schedule(s, t){
-  const bar = Math.floor(s / 8), s8 = s % 8, hits = RHY[st.rhy].hits, i = hits.indexOf(s8);
-  if (i >= 0) {
-    const nh = i + 1 < hits.length ? hits[i + 1] : 8, dur = (nh - s8) * stepDur() * 0.9;
-    barNotes(bar).forEach(n => voice(n.midi, t, dur, n.mel ? 1 : 0.55));
+  for (const e of patternEvents()) if (e.start === s) {
+    const dur = e.len * stepDur() * (e.len <= 1 ? 0.6 : 0.95);
+    barNotes(e.bar).forEach(n => voice(n.midi, t, dur, n.mel ? 1 : 0.55));
   }
   uiQ.push({ s, t });
 }
 setInterval(() => {
   if (!st.playing || !ac || !st.on) return;
-  while (nextT < ac.currentTime + 0.12) { schedule(step, nextT); nextT += stepDur(); step = (step + 1) % 32; }
+  while (nextT < ac.currentTime + 0.12) { schedule(step, nextT); nextT += stepDur(); step = (step + 1) % LOOP; }
 }, 25);
+function popup(text, kind){ st.pop = { text, kind, t:performance.now() }; }
+function designPlay(){
+  if (st.playing) togglePlay();
+  const now = performance.now();
+  if (st.loopNote) { st.loopNote = false; popup('LOOP OFF', ''); return; }
+  if (st.pop && st.pop.kind === 'again' && now - st.pop.t < 2000) { st.loopNote = true; popup('LOOPING', ''); previewDesign(); return; }
+  previewDesign(); popup('PRESS AGAIN|TO LOOP', 'again');
+}
 function togglePlay(){
   if (!st.on) return; initAudio(); if (!ac) return;
   st.playing = !st.playing;
@@ -364,7 +392,7 @@ function togglePlay(){
 let nextPrev = 0;
 setInterval(() => {
   if (!st.on || !ac || st.playing) return;
-  if (performance.now() - st.lastEdit > 2000) return;
+  if (!st.loopNote && performance.now() - st.lastEdit > 2000) return;
   if (ac.currentTime < nextPrev) return;
   previewDesign();
 }, 40);
@@ -378,7 +406,7 @@ function barList(b){ const B = st.bars[b], l = B.notes.map((n, i) => ({ midi:n.m
 function mainTurn(dir){
   if (!st.on) return;
   st.mainAngle += dir * 15; document.getElementById('mainknob').style.transform = 'rotate(' + st.mainAngle + 'deg)';
-  if (held.play) { held.playUsed = true; const S = ['melody','design','settings']; st.screen = S[(S.indexOf(st.screen) + dir + 3) % 3]; st.setEdit = false; return; }
+  if (held.play) { held.playUsed = true; const S = ['melody','design','settings']; st.screen = S[(S.indexOf(st.screen) + dir + 3) % 3]; st.setEdit = false; st.loopNote = false; return; }
   if (st.screen === 'settings') { if (st.setEdit) changeSetting(dir); else st.setCur = (st.setCur + dir + 4) % 4; return; }
   if (st.screen === 'design') { st.patch.wave = (st.patch.wave + dir + 4) % 4; if (performance.now() - st.lastEdit > 2000) previewDesign(); st.lastEdit = performance.now(); return; }
   const B = st.bars[st.sel];
@@ -499,7 +527,7 @@ function f8Up(){ if (!held.f8) return; if (held.f8 !== 'shut') clearTimeout(held
 function bDown(){ if (held.b) return; held.bFired = false; held.b = setTimeout(() => { held.bFired = true; bHold(); }, 600); press('bbtn', true); }
 function bUp(){ if (!held.b) return; clearTimeout(held.b); held.b = null; press('bbtn', false); if (!held.bFired) bTap(); }
 function playDown(){ if (held.play) return; held.play = true; held.playUsed = false; press('play', true); if (st.on && held.f8) startShut(); }
-function playUp(){ if (!held.play) return; held.play = false; press('play', false); if (st.shut) { cancelShut(); return; } if (!held.playUsed) togglePlay(); }
+function playUp(){ if (!held.play) return; held.play = false; press('play', false); if (st.shut) { cancelShut(); return; } if (!held.playUsed) { if (st.screen === 'design') designPlay(); else togglePlay(); } }
 function press(id, on){ const el = document.getElementById(id); if (el) el.classList.toggle('down', on); }
 function flashHint(){ setStatus('The AltF8 is off: hold F8 (Enter) for about a second to power on.'); }
 function setStatus(t){ const s = document.getElementById('status'); s.textContent = t; clearTimeout(setStatus.t); setStatus.t = setTimeout(() => { s.textContent = ''; }, 3500); }
@@ -586,8 +614,9 @@ function knobLabels(){
 }
 function drawLabels(){
   px(83, 0, 1, 112, C.dim);
-  const L = knobLabels(), ys = [14, 42, 70, 98];
-  L.forEach((l, i) => { stxt('k' + i, l[0], 7, 85, ys[i] - 7, C.mut); stxt('v' + i, l[1], 7, 85, ys[i] + 1, C.acc); });
+  const L = knobLabels(), ys = [14, 42, 70, 98], cols = [SEG.a, SEG.d, SEG.s, SEG.r];
+  if (st.screen === 'design') { ['A','D','S','R'].forEach((l, i) => txt(l, 92, ys[i] - 5, cols[i], 2)); return; }
+  L.forEach((l, i) => { stxt('k' + i, l[0], 7, 85, ys[i] - 7, cols[i]); stxt('v' + i, l[1], 7, 85, ys[i] + 1, C.txt); });
 }
 function wave(ph, w){ ph = ph - Math.floor(ph); if (w === 0) return Math.sin(ph * 2 * Math.PI); if (w === 1) return 1 - 4 * Math.abs(ph - 0.5); if (w === 2) return 2 * ph - 1; return ph < 0.5 ? 1 : -1; }
 function env(t, P){ const a = ATK[P.a], d = DEC[P.d], s = P.s, r = REL[P.r], hold = 0.3; if (t < a) return t / Math.max(a, 1e-4); if (t < a + d) return 1 - (1 - s) * (t - a) / d; if (t < a + d + hold) return s; const u = t - a - d - hold; return u < r ? s * (1 - u / r) : 0; }
@@ -619,24 +648,13 @@ function drawMelody(now){
     if (st.phase === 'suggest' && st.options.length) cname = chordName(st.options[st.optIdx].chords[b]);
     else if (B.chord) cname = chordName(B.chord);
     if (cname && !(st.phase === 'suggest' && !blink)) txt(cname, x0 + 2, 11, st.phase === 'suggest' ? C.sug : C.auto);
-    // beat ticks
-    for (let k = 0; k < 8; k += 2) px(x0 + 2 + k * 2, 17, 1, 1, C.grid);
-    if (curStep >= 0 && Math.floor(curStep / 8) === b) px(x0 + 2 + (curStep % 8) * 2, 17, 2, 1, C.play);
-    // notes
-    if (st.phase === 'suggest' && st.options.length && B.mel) {
-      voicing(B.mel.midi, st.options[st.optIdx].chords[b]).forEach(m => { const y = yOf(m); if (y > 18 && y < 89 && blink) px(x0 + 2, y, 15, 2, C.sug); });
-    } else {
-      B.notes.forEach(n => { const y = yOf(n.midi); if (y > 18 && y < 89) px(x0 + 2, y, 15, 2, n.auto ? C.auto : C.acc); });
-    }
-    if (B.mel) { const y = yOf(B.mel.midi); if (y > 18 && y < 89) px(x0 + 2, y, 15, 2, C.acc); }
-    // edit cursor
+    // beat ticks + playhead (16 px per bar, 1 px per 16th)
+    for (let k = 0; k < 16; k += 4) px(x0 + 2 + k, 17, 1, 1, C.grid);
+    if (curStep >= 0 && Math.floor(curStep / 16) === b) px(x0 + 2 + (curStep % 16), 17, 1, 1, C.play);
+    // edit cursor brackets
     if (sel && st.phase === 'edit') {
       const list = barList(b);
-      if (list.length) {
-        const it = list[Math.min(st.cursor, list.length - 1)], y = yOf(it.midi);
-        if (st.grab) { if (blink) px(x0 + 2, y, 15, 2, C.sel); }
-        px(x0 + 1, y - 1, 1, 4, C.sel); px(x0 + 17, y - 1, 1, 4, C.sel);
-      }
+      if (list.length) { const it = list[Math.min(st.cursor, list.length - 1)], y = yOf(it.midi); px(x0, y - 1, 1, 4, C.sel); px(x0 + 18, y - 1, 1, 4, C.sel); }
     }
     // note name under column
     let label = '';
@@ -644,7 +662,25 @@ function drawMelody(now){
     else if (B.mel) label = noteName(B.mel.midi);
     if (label) txt(label, x0 + 2, 92, sel ? C.txt : C.mut);
   }
-  if (now - st.lastEdit < 2000 && st.prevStart) { px(3, 21, 77, 60, C.dim); px(4, 22, 75, 58, C.bg); txt('NOTE SHAPE', 6, 24, C.mut); drawShape(now, 5, 31, 73, 47); }
+  // notes, drawn where the rhythm pattern plays them (they can start early or tie over the bar line, never overlap)
+  const colX = st2 => 1 + Math.floor(st2 / 16) * 20 + 2 + (st2 % 16);
+  for (const e of patternEvents()) {
+    const B = st.bars[e.bar]; if (!B.mel && !B.notes.length) continue;
+    let notes;
+    if (st.phase === 'suggest' && st.options.length && B.mel) notes = [{ midi:B.mel.midi, c:C.acc }].concat(voicing(B.mel.midi, st.options[st.optIdx].chords[e.bar]).map(m => ({ midi:m, c:blink ? C.sug : null })));
+    else { notes = B.notes.map((n, i) => ({ midi:n.midi, c:n.auto ? C.auto : C.acc, ref:i })); if (B.mel) notes.push({ midi:B.mel.midi, c:C.acc, ref:'mel' }); }
+    const grabRef = st.grab && e.bar === st.sel ? st.grab.ref : null;
+    for (const n of notes) {
+      if (!n.c) continue;
+      const y = yOf(n.midi); if (y <= 18 || y >= 89) continue;
+      const c = grabRef !== null && n.ref === grabRef ? (blink ? C.sel : n.c) : n.c;
+      for (let k = 0; k < e.len; k++) {
+        const g = (e.start + k) % LOOP; px(colX(g), y, 1, 2, c);
+        if (g % 16 === 15 && k < e.len - 1) px(colX(g) + 1, y + 1, 4, 1, c);
+      }
+    }
+  }
+  if (now - st.lastEdit < 2000 && st.prevStart) { px(3, 21, 77, 64, C.dim); px(4, 22, 75, 62, C.bg); drawShape(now, 6, 24, 71, 58); }
   px(0, 98, 83, 1, C.dim);
   // footer
   stxt('rhy', RHY[st.rhy].name, 20, 1, 100, C.auto);
@@ -683,30 +719,30 @@ function drawOverlay(now, k, x0, y0, w, h){
   }
 }
 function drawShape(now, x0, y0, w, h){
-  const P = st.patch, T = ATK[P.a] + DEC[P.d] + 0.3 + REL[P.r], mid = y0 + Math.floor(h / 2), amp = Math.floor(h / 2) - 2;
+  const P = st.patch, A = ATK[P.a], D = DEC[P.d], H = 0.3, R = REL[P.r], T = A + D + H + R;
+  const hh = h - 8, mid = y0 + Math.floor(hh / 2), amp = Math.floor(hh / 2) - 2;
+  const segOf = t => t < A ? 'a' : t < A + D ? 'd' : t < A + D + H ? 's' : 'r';
   px(x0, mid, w, 1, C.grid);
   for (let x = 0; x < w; x++) {
-    const t = x / (w - 1) * T, e = env(t, P), v = wave(x * 0.17, P.wave) * e, y = Math.round(mid - v * amp);
-    if (y < mid) px(x0 + x, y, 1, mid - y, C.auto); else px(x0 + x, mid, 1, y - mid + 1, C.auto);
-    px(x0 + x, Math.round(mid - e * amp), 1, 1, C.acc); px(x0 + x, Math.round(mid + e * amp), 1, 1, C.acc);
+    const t = x / (w - 1) * T, e = env(t, P), v = wave(x * 0.17, P.wave) * e, y = Math.round(mid - v * amp), c = SEG[segOf(t)];
+    if (y < mid) px(x0 + x, y, 1, mid - y, C.dim); else px(x0 + x, mid, 1, y - mid + 1, C.dim);
+    px(x0 + x, Math.round(mid - e * amp), 1, 1, c); px(x0 + x, Math.round(mid + e * amp), 1, 1, c);
   }
+  // letters under each part of the shape
+  const parts = [['A', 0, A], ['D', A, A + D], ['S', A + D, A + D + H], ['R', A + D + H, T]];
+  let lastX = -9;
+  parts.forEach(([L, t0, t1]) => {
+    let cx = Math.round(x0 + ((t0 + t1) / 2) / T * (w - 1)) - 1;
+    cx = Math.max(cx, lastX + 5); cx = Math.min(cx, x0 + w - 3); lastX = cx;
+    txt(L, cx, y0 + h - 5, SEG[L.toLowerCase()]);
+  });
   const el = (now - st.prevStart) / 1000;
-  if (st.prevStart && el < T) { const hx = Math.round(el / T * (w - 1)); px(x0 + hx, mid - amp - 2, 1, amp * 2 + 5, C.play); return true; }
+  if (st.prevStart && el < T) { const hx = Math.round(el / T * (w - 1)); px(x0 + hx, mid - amp - 2, 1, amp * 2 + 5, C.sel); return true; }
   return false;
 }
 function drawDesign(now){
-  txt('NOTE DESIGN', 1, 1, C.mut); px(0, 7, 83, 1, C.dim);
-  txt('WAVE ' + WNAME[st.patch.wave], 1, 10, C.acc);
-  const P = st.patch;
-  if (drawShape(now, 1, 18, 81, 40)) txt('PLAYING', 50, 10, C.play);
-  // single cycle
-  px(1, 62, 30, 1, C.dim); px(1, 90, 30, 1, C.dim);
-  for (let x = 0; x < 30; x++) px(1 + x, Math.round(76 - wave(x / 30, P.wave) * 11), 1, 1, C.txt);
-  txt('1 CYCLE', 34, 64, C.mut);
-  txt('NOTE PLAYS', 34, 74, C.mut); txt('WHILE YOU', 34, 80, C.mut); txt('EDIT', 34, 86, C.mut);
-  px(0, 98, 83, 1, C.dim);
-  txt('KNOB: WAVE', 1, 100, C.auto);
-  return 'PLAY+KNOB:SCREEN';
+  drawShape(now, 2, 4, 79, 92);
+  return '';
 }
 function drawSettings(now){
   txt('SETTINGS', 1, 1, C.mut); px(0, 7, 83, 1, C.dim);
@@ -736,6 +772,11 @@ function draw(){
         txt('SHUT OFF?', 38, 44, C.txt);
         px(18, 56, 76, 7, C.dim); px(19, 57, Math.round(74 * f), 5, f >= 1 ? C.sug : C.acc);
         txt('KEEP HOLDING', 32, 66, C.mut);
+      }
+      if (st.pop && now - st.pop.t < 1600) {
+        const lines = st.pop.text.split('|'), bh = 10 + lines.length * 8;
+        px(8, 44, 96, bh, SEG.a); px(9, 45, 94, bh - 2, C.bg);
+        lines.forEach((ln, i) => txt(ln, Math.round(56 - ln.length * 2), 49 + i * 8, C.txt));
       }
       const showMsg = st.msg && now - st.msgT < 1400;
       stxt('pr', showMsg ? st.msg : prompt, 20, 1, 106, showMsg ? C.acc : C.txt);
