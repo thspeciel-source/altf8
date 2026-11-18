@@ -73,7 +73,7 @@
   <div id="devcol">
     <div>
       <h1>AltF8 emulator</h1>
-      <div class="sub">Melody + chord finder and a small synth with a mod matrix. Click the page, then hold F8 (Enter) to power on. Hold Play + F8 (Space + Enter) to turn off. Hold Play and turn the main knob to change screens.</div>
+      <div class="sub">Melody + chord finder and a small synth with a mod matrix. Click the page, then hold F8 (Enter) to power on. Hold Play + F8 (Space + Enter) to turn off. Hold Play to open the screen fan, turn the main knob to pick a screen, let go to open it.</div>
     </div>
     <div id="device">
       <div id="pwrled"></div>
@@ -113,7 +113,7 @@
         <tr><td>Power off: hold Play + F8 together until the bar fills</td><td>hold <kbd>Space</kbd> + <kbd>Enter</kbd></td></tr>
         <tr><td>B: reject / cancel. Otherwise opens the selector menu (Notes, Rhythm, Pattern, Chords). Hold: delete note</td><td><kbd>Backspace</kbd></td></tr>
         <tr><td>Play / pause</td><td><kbd>Space</kbd></td></tr>
-        <tr><td>Switch screen (melody / note shape / OSC / FILTER / MOD / settings)</td><td>hold <kbd>Space</kbd> + <kbd>&larr;</kbd><kbd>&rarr;</kbd></td></tr>
+        <tr><td>Switch screen: hold Play to open the fan from the top-right corner, turn the knob (the picked screen turns yellow), let go to open it</td><td>hold <kbd>Space</kbd>, <kbd>&larr;</kbd><kbd>&rarr;</kbd>, release</td></tr>
       </table>
       <ul class="help">
         <li><b>OSC</b>: knobs are unison (1-7 voices), detune (spread between unison voices, in cents), fine tune (&plusmn;100 cents) and octave. Main knob picks the wave.</li>
@@ -224,9 +224,10 @@ const VERSIONS = [
   { id:'v9', file:'versions/v9.html', label:'v9 - Note actions, button strip, metronome (2026-11-17)', note:'While a note is grabbed the 4 buttons do octave up, octave down, accent and delete; B cancels. Buttons line up with a label strip at the bottom of the screen. Kick metronome. The selector menu outlines the part of the screen each item controls and shows the next one.' },
   { id:'v10', file:'versions/v10.html', label:'v10 - Full-screen note shape (2026-11-17)', note:"No ADSR text. The note shape fills the whole screen while you turn the shape knobs and on the note design screen. The right column shows a colored level bar next to each knob." },
   { id:'v11', file:'versions/v11.html', label:'v11 - Notes fill the screen (2026-11-17)', note:'Right column removed. The notes, header and button cells use the full screen width, and the 4 buttons are wider to stay lined up with their bars.' },
-  { id:'v12', file:'index.html', label:'v12 - Synth engine + mod matrix (2026-11-18)', note:'Unison, detune and fine tune; a second filter; two LFOs, a second envelope and two step sequencers routed through an 8-slot mod matrix on a new MOD screen.' }
+  { id:'v12', file:'versions/v12.html', label:'v12 - Synth engine + mod matrix (2026-11-18)', note:'Unison, detune and fine tune; a second filter; two LFOs, a second envelope and two step sequencers routed through an 8-slot mod matrix on a new MOD screen.' },
+  { id:'v13', file:'index.html', label:'v13 - Screen fan + play/pause animation (2026-11-18)', note:'Hold Play to open a fan of the 6 screens from the top-right corner; the knob moves the yellow selection and letting go opens it. Play/pause slides an icon in from the same corner.' }
 ];
-const CURRENT = 'v12';
+const CURRENT = 'v13';
 /* ---- synth engine constants (v12) ---- */
 const UNI_MAX = 7;
 const FTYPES = ['lowpass','highpass','bandpass','notch'], FNAME = ['LP','HP','BP','NOTCH'];
@@ -277,7 +278,7 @@ const st = {
   patch:defaultPatch(),
   msg:'', msgT:0, lastEdit:0, mainAngle:0, kAngles:[0,0,0,0],
   viewTop:76, ov:null, pat:0, mode:'notes', menu:false, menuIdx:0, loopNote:false, pop:null, shut:null, setCur:0, setEdit:false, prevStart:0, prevDur:0, metro:false,
-  fSel:0, modTab:'lfo', lfoSel:0, seqSel:0, seqCur:0, mtxRow:0, lastKnob:-1
+  fan:null, pp:null, fSel:0, modTab:'lfo', lfoSel:0, seqSel:0, seqCur:0, mtxRow:0, lastKnob:-1
 };
 
 /* ================= music helpers ================= */
@@ -587,6 +588,7 @@ function designPlay(){
 function togglePlay(){
   if (!st.on) return; initAudio(); if (!ac) return;
   st.playing = !st.playing;
+  st.pp = { t:performance.now(), playing:st.playing };
   if (st.playing) { step = 0; nextT = ac.currentTime + 0.06; uiQ = []; resetSeqs(nextT); } else curStep = -1;
 }
 let nextPrev = 0;
@@ -606,7 +608,7 @@ function barList(b){ const B = st.bars[b], l = B.notes.map((n, i) => ({ midi:n.m
 function mainTurn(dir){
   if (!st.on) return;
   st.mainAngle += dir * 15; document.getElementById('mainknob').style.transform = 'rotate(' + st.mainAngle + 'deg)';
-  if (held.play) { held.playUsed = true; const S = SCREENS; st.screen = S[(S.indexOf(st.screen) + dir + S.length) % S.length]; st.setEdit = false; st.loopNote = false; flash(SCREEN_NAME[st.screen]); return; }
+  if (held.play) { held.playUsed = true; if (!st.fan || st.fan.closing) openFan(); st.fan.sel = clamp(st.fan.sel + dir, 0, SCREENS.length - 1); return; }
   if (st.screen === 'settings') { if (st.setEdit) changeSetting(dir); else st.setCur = (st.setCur + dir + 4) % 4; return; }
   if (st.screen === 'filter') { st.fSel = 1 - st.fSel; return; }
   if (st.screen === 'mod') { modTurn(dir); return; }
@@ -807,6 +809,14 @@ function bHold(){
     st.grab = null; st.cursor = 0; flash('NOTE DELETED');
   }
 }
+/* ---- v13 screen fan: hold Play, turn the knob, let go ---- */
+const FAN_HOLD = 300, FAN_MS = 160;
+function openFan(){ if (!st.on || st.shut) return; held.playUsed = true; st.fan = { t:performance.now(), sel:SCREENS.indexOf(st.screen), closing:false }; }
+function closeFan(pick){
+  if (!st.fan || st.fan.closing) return;
+  if (pick) { const s2 = SCREENS[st.fan.sel]; if (s2 !== st.screen) { st.screen = s2; st.setEdit = false; st.loopNote = false; } }
+  st.fan.closing = true; st.fan.t = performance.now();
+}
 function powerOn(){
   if (st.on) return;
   st.on = true; document.getElementById('pwrled').classList.add('on');
@@ -815,28 +825,28 @@ function powerOn(){
 function powerOff(){
   if (!st.on) return;
   chime(true);
-  st.on = false; st.shut = null; st.playing = false; curStep = -1;
+  st.on = false; st.shut = null; st.fan = null; st.pp = null; st.playing = false; curStep = -1;
   document.getElementById('pwrled').classList.remove('on');
 }
 const SHUT_MS = 1500;
-function startShut(){ if (!st.on) return; st.shut = { t0:performance.now() }; held.playUsed = true; held.f8Fired = true; if (held.f8) { clearTimeout(held.f8); held.f8 = 'shut'; } }
+function startShut(){ if (!st.on) return; if (st.fan) st.fan = null; st.shut = { t0:performance.now() }; held.playUsed = true; held.f8Fired = true; if (held.f8) { clearTimeout(held.f8); held.f8 = 'shut'; } }
 function cancelShut(){ if (st.shut) { st.shut = null; flash('STAYING ON'); } }
 setInterval(() => { if (st.shut && performance.now() - st.shut.t0 >= SHUT_MS) powerOff(); }, 30);
 
 /* ================= input: holds ================= */
-const held = { play:false, playUsed:false, f8:null, f8Fired:false, b:null, bFired:false };
+const held = { play:false, playUsed:false, fanT:null, f8:null, f8Fired:false, b:null, bFired:false };
 function f8Down(){ if (held.f8) return; held.f8Fired = false; press('f8', true); if (st.on && held.play) { held.f8 = 'shut'; startShut(); return; } held.f8 = setTimeout(() => { held.f8Fired = true; if (!st.on) powerOn(); }, 800); }
 function f8Up(){ if (!held.f8) return; if (held.f8 !== 'shut') clearTimeout(held.f8); held.f8 = null; press('f8', false); if (st.shut) { cancelShut(); return; } if (!held.f8Fired) { if (st.on) f8Tap(); else flashHint(); } }
 function bDown(){ if (held.b) return; held.bFired = false; held.b = setTimeout(() => { held.bFired = true; bHold(); }, 600); press('bbtn', true); }
 function bUp(){ if (!held.b) return; clearTimeout(held.b); held.b = null; press('bbtn', false); if (!held.bFired) bTap(); }
-function playDown(){ if (held.play) return; held.play = true; held.playUsed = false; press('play', true); if (st.on && held.f8) startShut(); }
-function playUp(){ if (!held.play) return; held.play = false; press('play', false); if (st.shut) { cancelShut(); return; } if (!held.playUsed) { if (SYNTH_SCREENS.includes(st.screen)) designPlay(); else togglePlay(); } }
+function playDown(){ if (held.play) return; held.play = true; held.playUsed = false; press('play', true); if (st.on && held.f8) { startShut(); return; } clearTimeout(held.fanT); held.fanT = setTimeout(() => { if (held.play && !held.f8 && !st.shut) openFan(); }, FAN_HOLD); }
+function playUp(){ if (!held.play) return; held.play = false; clearTimeout(held.fanT); press('play', false); if (st.shut) { cancelShut(); return; } if (st.fan && !st.fan.closing) { closeFan(true); return; } if (!held.playUsed) { if (SYNTH_SCREENS.includes(st.screen)) designPlay(); else togglePlay(); } }
 function press(id, on){ const el = document.getElementById(id); if (el) el.classList.toggle('down', on); }
 function flashHint(){ setStatus('The AltF8 is off: hold F8 (Enter) for about a second to power on.'); }
 function setStatus(t){ const s = document.getElementById('status'); s.textContent = t; clearTimeout(setStatus.t); setStatus.t = setTimeout(() => { s.textContent = ''; }, 3500); }
 
 document.addEventListener('pointerdown', () => wakeAudio(), true);
-window.addEventListener('blur', () => { held.play = false; if (held.f8) { clearTimeout(held.f8); held.f8 = null; } if (held.b) { clearTimeout(held.b); held.b = null; } ['play','f8','bbtn'].forEach(id => press(id, false)); });
+window.addEventListener('blur', () => { held.play = false; clearTimeout(held.fanT); if (st.fan) closeFan(false); if (held.f8) { clearTimeout(held.f8); held.f8 = null; } if (held.b) { clearTimeout(held.b); held.b = null; } ['play','f8','bbtn'].forEach(id => press(id, false)); });
 document.addEventListener('keydown', e => {
   wakeAudio();
   if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT')) return;
@@ -1234,6 +1244,41 @@ function drawSettings(now){
   drawOverlay(now, [0, 3, 1, 2][st.setCur], 4, 40, 104, 54);
   return st.setEdit ? 'KNOB:CHANGE F8:DONE' : 'KNOB:PICK F8:EDIT';
 }
+// slide-in amount for corner overlays: 0 -> 1 -> 0
+const ease = x => 1 - Math.pow(1 - clamp(x, 0, 1), 3);
+const FAN_R = 96, FAN_LAB = ['MELODY','SHAPE','OSC','FILTER','MOD','SET'];
+function drawFan(now){
+  const F = st.fan; if (!F) return;
+  const p = ease((now - F.t) / FAN_MS); if (F.closing && p >= 1) { st.fan = null; return; }
+  const R = FAN_R * (F.closing ? 1 - p : p), n = SCREENS.length, step = 90 / n, cur = SCREENS.indexOf(st.screen);
+  const top = Math.ceil(R);
+  for (let y = 0; y < top && y < 112; y++) for (let x = Math.max(0, Math.floor(111 - R)); x < 112; x++) {
+    const dx = 112 - (x + 0.5), dy = y + 0.5, d = Math.hypot(dx, dy); if (d >= R) continue;
+    const a = Math.atan2(dy, dx) * 180 / Math.PI, i = Math.min(n - 1, Math.floor(a / step));
+    const edge = d >= R - 1.2, sep = d > 6 && Math.abs(a - Math.round(a / step) * step) * Math.PI / 180 * d < 0.55;
+    px(x, y, 1, 1, edge ? C.mut : sep ? C.mut : i === F.sel ? SEG.a : '#121a2e');
+  }
+  if (R < FAN_R * 0.75) return;
+  for (let i = 0; i < n; i++) {
+    const a = (i + 0.5) * step * Math.PI / 180, r = R * (0.62 + i * 0.03), lab = FAN_LAB[i], w = lab.length * 4 - 1;
+    const cx = 112 - r * Math.cos(a), cy = r * Math.sin(a);
+    const x = Math.round(clamp(cx - w / 2, 1, 110 - w)), y = Math.round(clamp(cy - 2, 1, 105));
+    txt(lab, x, y, i === F.sel ? C.bg : i === cur ? C.auto : C.txt);
+  }
+}
+const PP_R = 24, PP_IN = 140, PP_HOLD = 650;
+function drawPlayPause(now){
+  const P2 = st.pp; if (!P2) return;
+  const t = now - P2.t; if (t > PP_IN * 2 + PP_HOLD) { st.pp = null; return; }
+  const k = t < PP_IN ? ease(t / PP_IN) : t < PP_IN + PP_HOLD ? 1 : 1 - ease((t - PP_IN - PP_HOLD) / PP_IN);
+  const R = PP_R * k, off = (1 - k) * PP_R * 0.75;
+  for (let y = 0; y < Math.ceil(R); y++) for (let x = Math.floor(111 - R); x < 112; x++) {
+    const d = Math.hypot(112 - (x + 0.5), y + 0.5); if (d < R) px(x, y, 1, 1, d >= R - 1.2 ? C.mut : C.dim);
+  }
+  const ox = Math.round(off), c = P2.playing ? C.play : C.acc;
+  if (P2.playing) { for (let r = 0; r <= 10; r++) px(97 + ox, 3 + r - ox, Math.min(r, 10 - r) + 1, 1, c); }
+  else { px(96 + ox, 3 - ox, 3, 11, c); px(101 + ox, 3 - ox, 3, 11, c); }
+}
 function draw(){
   const now = performance.now();
   px(0, 0, 112, 112, '#000');
@@ -1258,8 +1303,10 @@ function draw(){
         lines.forEach((ln, i) => txt(ln, Math.round(56 - ln.length * 2), 49 + i * 8, C.txt));
       }
       const showMsg = st.msg && now - st.msgT < 1400;
-      if (!full) stxt('pr', showMsg ? st.msg : prompt, 27, 1, 99, showMsg ? C.acc : C.txt);
+      if (st.fan && !st.fan.closing) { if (!full) px(0, 98, 112, 7, C.bg); stxt('pr', 'LET GO: ' + SCREEN_NAME[SCREENS[st.fan.sel]], 27, 1, 99, C.acc); }
+      else if (!full) stxt('pr', showMsg ? st.msg : prompt, 27, 1, 99, showMsg ? C.acc : C.txt);
       else if (showMsg) { px(0, 0, 112, 7, C.bg); txt(st.msg, Math.max(1, Math.round(56 - st.msg.length * 2)), 1, C.acc); }
+      drawPlayPause(now); drawFan(now);
     }
   }
   for (let i = 0; i < 4; i++) { const r = document.getElementById('r' + i); r.classList.toggle('off', !st.on); r.style.setProperty('--p', st.on ? knobFrac(i).toFixed(3) : 0); }
