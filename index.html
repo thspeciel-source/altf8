@@ -349,9 +349,10 @@ const VERSIONS = [
   { id:'v15', file:'versions/v15.html', label:'v15 - Clean melody screen + aluminum knobs (2026-11-18)', note:'Melody screen has no text or button strip at the bottom; prompts show under the device instead. Brushed aluminum knobs. Full screen stretches to the phone and spreads out the controls.' },
   { id:'v16', file:'versions/v16.html', label:'v16 - Flat top-down look, edge-to-edge phone (2026-11-18)', note:'No side edges or drop shadows on knobs and buttons. Full screen fills under the status bar and home bar; opening from a Home Screen icon goes straight to full screen.' },
   { id:'v17', file:'versions/v17.html', label:'v17 - Note shaping: 4 buttons x 2 pages (2026-11-18)', note:'NOTE SHAPE screen: buttons 1-4 pick Source, Envelope, Filter + Drive, Motion + FX; press again for page 2. Each knob shows a close-up, the whole note or the harmonics, in its own color.' },
-  { id:'v18', file:'index.html', label:'v18 - 8-bar loops, adaptive chords, feel/rhythm/arp knobs (2026-11-18)', note:'Chord finder suggests 8-chord loops (chord 8 can resolve, or 7 and 8 change) in plain, 7th, sus and add9 colors. After keeping chords, the knob moves only the main note; chords re-adapt, F8 keeps, B undoes. Melody knobs: 1 chord lengths + swing/note length/humanize, 2 rhythm + accents, 3 arpeggio + voicing, 4 tempo.' }
+  { id:'v18', file:'versions/v18.html', label:'v18 - 8-bar loops, adaptive chords, feel/rhythm/arp knobs (2026-11-18)', note:'Chord finder suggests 8-chord loops (chord 8 can resolve, or 7 and 8 change) in plain, 7th, sus and add9 colors. After keeping chords, the knob moves only the main note; chords re-adapt, F8 keeps, B undoes. Melody knobs: 1 chord lengths + swing/note length/humanize, 2 rhythm + accents, 3 arpeggio + voicing, 4 tempo.' },
+  { id:'v19', file:'index.html', label:'v19 - iPhone sound unlock, new play/pause badge (2026-11-18)', note:'Sound starts on any tap or knob release on iPhone, not only Play. Play/pause shows an outlined badge that comes out of the corner and dissolves.' }
 ];
-const CURRENT = 'v18';
+const CURRENT = 'v19';
 /* ---- synth engine constants (v12) ---- */
 const UNI_MAX = 7;
 const FTYPES = ['lowpass','highpass','bandpass','notch'], FNAME = ['LP','HP','BP','NOTCH'];
@@ -1443,11 +1444,13 @@ function silentWavUrl(){
 }
 function unlockAudio(){
   wakeAudio();
+  // a one-sample silent buffer started inside the gesture fully wakes Web Audio on iPhone
+  try { if (ac) { const b = ac.createBuffer(1, 1, ac.sampleRate), sN = ac.createBufferSource(); sN.buffer = b; sN.connect(ac.destination); sN.start(0); if (ac.state !== 'running') ac.resume(); } } catch (e) {}
   if (iosUnlocked) return; iosUnlocked = true;
   try { if (navigator.audioSession) navigator.audioSession.type = 'playback'; } catch (e) {}
   try { const el = new Audio(silentWavUrl()); el.loop = true; el.setAttribute('playsinline', ''); el.play().catch(() => { iosUnlocked = false; }); } catch (e) {}
 }
-['touchend', 'click', 'keydown'].forEach(ev => document.addEventListener(ev, unlockAudio, true));
+['touchend', 'pointerup', 'click', 'keydown'].forEach(ev => document.addEventListener(ev, unlockAudio, true));
 document.addEventListener('visibilitychange', () => { if (!document.hidden && ac && ac.state !== 'running') ac.resume(); });
 window.addEventListener('blur', () => { held.play = false; clearTimeout(held.fanT); if (st.fan) closeFan(false); if (held.f8) { clearTimeout(held.f8); held.f8 = null; } if (held.b) { clearTimeout(held.b); held.b = null; } ['play','f8','bbtn'].forEach(id => press(id, false)); });
 document.addEventListener('keydown', e => {
@@ -1854,18 +1857,25 @@ function drawFan(now){
     txt(lab, Math.round(cx + sx * rr - w / 2), Math.round(cy + sy * rr - 2), i === F.sel ? C.bg : i === cur ? C.auto : C.txt);
   });
 }
-const PP_R = 24, PP_IN = 140, PP_HOLD = 650;
+// play/pause badge: comes out of the top-right corner, holds, then dissolves pixel by pixel (ordered dither)
+const PP_IN = 160, PP_HOLD = 420, PP_OUT = 520, PP_CX = 100, PP_CY = 12, PP_R = 9;
+const BAYER = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5];
 function drawPlayPause(now){
   const P2 = st.pp; if (!P2) return;
-  const t = now - P2.t; if (t > PP_IN * 2 + PP_HOLD) { st.pp = null; return; }
-  const k = t < PP_IN ? ease(t / PP_IN) : t < PP_IN + PP_HOLD ? 1 : 1 - ease((t - PP_IN - PP_HOLD) / PP_IN);
-  const R = PP_R * k, off = (1 - k) * PP_R * 0.75;
-  for (let y = 0; y < Math.ceil(R); y++) for (let x = Math.floor(111 - R); x < 112; x++) {
-    const d = Math.hypot(112 - (x + 0.5), y + 0.5); if (d < R) px(x, y, 1, 1, d >= R - 1.2 ? C.mut : C.dim);
+  const t = now - P2.t; if (t > PP_IN + PP_HOLD + PP_OUT) { st.pp = null; return; }
+  // alpha drives the dither: pixels whose threshold is below it are drawn
+  const alpha = t < PP_IN ? ease(t / PP_IN) : t < PP_IN + PP_HOLD ? 1 : 1 - (t - PP_IN - PP_HOLD) / PP_OUT;
+  const slide = t < PP_IN ? (1 - ease(t / PP_IN)) * 6 : 0;            // starts 6 px up and to the right, eases into place
+  const cx = Math.round(PP_CX + slide), cy = Math.round(PP_CY - slide), c = P2.playing ? C.play : C.acc;
+  const pix = [];
+  for (let y = cy - PP_R - 1; y <= cy + PP_R + 1; y++) for (let x = cx - PP_R - 1; x <= cx + PP_R + 1; x++) {
+    const d = Math.hypot(x + 0.5 - (cx + 0.5), y + 0.5 - (cy + 0.5));
+    if (d <= PP_R - 0.6) pix.push([x, y, C.bg]); else if (d <= PP_R + 0.4) pix.push([x, y, c]); else if (d <= PP_R + 1.4) pix.push([x, y, C.bg]);
   }
-  const ox = Math.round(off), c = P2.playing ? C.play : C.acc;
-  if (P2.playing) { for (let r = 0; r <= 10; r++) px(97 + ox, 3 + r - ox, Math.min(r, 10 - r) + 1, 1, c); }
-  else { px(96 + ox, 3 - ox, 3, 11, c); px(101 + ox, 3 - ox, 3, 11, c); }
+  // play: a solid 9 px tall triangle, nudged right so it looks centered; pause: two 2 px bars
+  if (P2.playing) { for (let r = -4; r <= 4; r++) { const w = 7 - Math.round(Math.abs(r) * 1.5); for (let k = 0; k < w; k++) pix.push([cx - 2 + k, cy + r, c]); } }
+  else { for (let y = -4; y <= 4; y++) pix.push([cx - 3, y + cy, c], [cx - 2, y + cy, c], [cx + 1, y + cy, c], [cx + 2, y + cy, c]); }
+  for (const [x, y, col] of pix) { if (x < 0 || y < 0 || x > 111 || y > 111) continue; if (BAYER[(x & 3) + (y & 3) * 4] / 16 < alpha) px(x, y, 1, 1, col); }
 }
 // what the bottom of the screen used to say, shown under the device instead (melody screen is kept clean)
 let hintTxt = null;
