@@ -467,9 +467,10 @@ const VERSIONS = [
   { id:'v32', file:'versions/v32.html', label:'v32 - Knobs blink after chords are set (2026-11-18)', note:'On the melody screen the side knobs only start blinking once you have kept a chord pattern with F8.' },
   { id:'v33', file:'versions/v33.html', label:'v33 - Tasteful chord colors, options start at 5 (2026-11-18)', note:'7ths now go only on the dominant and ii, sus only on a dominant near the end of a phrase, add9 only on I and IV, so most chords stay plain. Add9 is written C2 and sus4 as GSUS. Chord options open at number 5 with the best one there and the next-best on both sides; the list stops at its ends instead of wrapping to the least likely options.' },
   { id:'v34', file:'versions/v34.html', label:'v34 - Chord lengths with rests, numbers instead of names, metronome on (2026-11-18)', note:'Knob 1 has 26 chord-length presets: connected ones, breaths before changes, clear rests (3 beats + rest, half bar + rest, long-short pairs) and detached ones (tenuto, portato, staccato). The screen shows the gaps. Knobs 1-3 show only a number out of the total. The metronome is on by default.' },
-  { id:'v35', file:'index.html', label:'v35 - Turnaround on the last chord (2026-11-18)', note:'Chord options now include turnaround versions (tagged + TURN): chord 8 splits in two and its second half is the V of chord 1, leading back to the top of the loop. The split works with every chord-length preset, and rests are shared between the two halves.' }
+  { id:'v35', file:'versions/v35.html', label:'v35 - Turnaround on the last chord (2026-11-18)', note:'Chord options now include turnaround versions (tagged + TURN): chord 8 splits in two and its second half is the V of chord 1, leading back to the top of the loop. The split works with every chord-length preset, and rests are shared between the two halves.' },
+  { id:'v36', file:'index.html', label:'v36 - Zoom while editing patterns, sound edits play your pattern (2026-11-18)', note:'Turning knobs 1-3 on the melody screen zooms into 4 bars for a moment so short hits and rests are readable; separate hits always keep a 1-pixel gap. Knobs only blink if this song has not used them yet (remembered with the song). On the Sound screen, once you have a chord pattern, edits play your pattern (stops 4 s after you stop editing) instead of a single note; Play plays the pattern.' }
 ];
-const CURRENT = 'v35';
+const CURRENT = 'v36';
 /* ---- synth engine constants (v12) ---- */
 const UNI_MAX = 7;
 const FTYPES = ['lowpass','highpass','bandpass','notch'], FNAME = ['LP','HP','BP','NOTCH'];
@@ -1291,7 +1292,12 @@ function chime(down){
     });
   });
 }
+// on the Sound screen, once a chord pattern exists, edits are heard on your pattern instead of a single test note
+function hasPattern(){ return !!(st.prog && allSet() && (st.phase === 'edit' || st.phase === 'adapt')); }
 function previewDesign(){
+  if (st.on && ac && !st.playing && st.screen === 'design' && hasPattern()) {
+    st.playing = true; st.autoPlay = true; step = 0; nextT = ac.currentTime + 0.06; uiQ = []; resetSeqs(nextT); return;
+  }
   if (!st.on || !ac || st.playing) return;
   const P = st.patch, long = ['osc','filter','mod'].includes(st.screen), dur = (long ? Math.max(ATK[P.a] + DEC[P.d] + 0.3, 1.6) : ATK[P.a] + DEC[P.d] + 0.3) + shTimes(P).dly + shTimes(P).hold, root = 60 + (keyInfo(st.key).mode === 'chrom' ? 0 : keyInfo(st.key).root);
   voices.slice().forEach(() => steal());
@@ -1362,6 +1368,7 @@ setInterval(() => {
 }, 25);
 function popup(text, kind){ st.pop = { text, kind, t:performance.now() }; }
 function designPlay(){
+  if (hasPattern()) { st.autoPlay = false; togglePlay(); return; }
   if (st.playing) togglePlay();
   const now = performance.now();
   if (st.loopNote) { st.loopNote = false; popup('LOOP OFF', ''); return; }
@@ -1375,6 +1382,11 @@ function togglePlay(){
   if (st.playing) { step = 0; nextT = ac.currentTime + 0.06; uiQ = []; resetSeqs(nextT); } else curStep = -1;
 }
 let nextPrev = 0;
+setInterval(() => {
+  if (!st.autoPlay) return;
+  if (!st.playing) { st.autoPlay = false; return; }
+  if (st.screen !== 'design' || performance.now() - st.lastEdit > 4000) { st.playing = false; st.autoPlay = false; curStep = -1; }
+}, 200);
 setInterval(() => {
   if (!st.on || !ac || st.playing) return;
   if (!st.loopNote && performance.now() - st.lastEdit > 2000) return;
@@ -1522,6 +1534,12 @@ function modValue(src, now){
 }
 // does any knob on this Sound page take motion? (the envelope times, drive, fold... do not)
 function pageCanMod(){ return shapeDefs().some(d => MOD_SCALE[d.key]); }
+// a knob counts as used in this song if it was turned, or (melody) its setting is not the starting one
+function knobUsed(i){
+  if (st.touched[knobPage() + i]) return true;
+  if (st.screen === 'melody') return [st.pat !== 0, st.rhy !== 0, st.voi !== 0, st.tempo !== 110][i];
+  return false;
+}
 function knobPage(){ return st.screen === 'design' ? 'd' + st.shTab + st.shPage : st.screen; }
 function knobFrac(i){ return clamp(knobDefs()[i].frac(), 0, 1); }
 const SETTINGS = ['TEMPO', 'KEY', 'CUTOFF 1', 'RESO 1', 'METRONOME', 'UPDATE'];
@@ -1799,6 +1817,10 @@ function env(t, P){ const a = ATK[P.a], d = DEC[P.d], s = P.s, r = REL[P.r], hol
 
 // menu: every item sits on the part of the screen it controls; current one outlined, next one dotted
 function drawMelody(now){
+  // while knobs 1-3 are being turned, zoom into one half (4 bars) so short hits and gaps are readable
+  const zp = st.lastKnob >= 0 && st.lastKnob < 3 && now - st.lastEdit < 2500;
+  const half = st.playing && curStep >= 0 ? (curStep >= 64 ? 1 : 0) : st.sel >= 4 ? 1 : 0;
+  const vOff = zp ? half * 64 : 0, vSpan = zp ? 64 : LOOP;
   // no permanent header: a label shows only while a knob turns or a rhythm/pattern list is open
   const knobLabel = st.lastKnob >= 0 && now - st.lastEdit < 1500 ? knobDefs()[st.lastKnob] : null;
   if (st.playing && ac) { while (uiQ.length && uiQ[0].t <= ac.currentTime) curStep = uiQ.shift().s; }
@@ -1814,15 +1836,15 @@ function drawMelody(now){
   } else if (!st.vPs) { st.vPs = 2; st.vTop = 84; }
   const yOf = m => Math.round(10 + (st.vTop - m) * st.vPs), nh = clamp(Math.round(st.vPs) - 1, 2, 4);
   // the selected bar glows faintly behind its notes (both halves)
-  if (st.mode === 'notes' || !st.mode) { const cx = s => 1 + Math.floor(s * 110 / LOOP); patternEvents(); for (const sg of evCache.segs) if (sg.slot === st.sel) { const a = cx(sg.start), b = cx(sg.start + sg.len); g.fillStyle = 'rgba(255,210,63,0.09)'; g.fillRect(a, 7, Math.max(1, b - a), 104); } }
+  if (st.mode === 'notes' || !st.mode) { const cx = s => 1 + Math.floor((s - vOff) * 110 / vSpan); patternEvents(); for (const sg of evCache.segs) if (sg.slot === st.sel) { const a = cx(sg.start), b = cx(sg.start + sg.len); g.fillStyle = 'rgba(255,210,63,0.09)'; g.fillRect(a, 7, Math.max(1, b - a), 104); } }
   for (let m = Math.floor(st.vTop - 100 / st.vPs); m <= st.vTop; m++) if (m % 12 === 0) { const y = yOf(m) + 1; if (y > 9 && y < 110) px(1, y, 110, 1, C.grid); }
   const blink = Math.floor(now / 350) % 2 === 0, sugg = st.phase === 'suggest' || st.phase === 'adapt';
-  const colX = s => 1 + Math.floor(s * 110 / LOOP);
+  const colX = s => 1 + Math.floor((s - vOff) * 110 / vSpan);
   const allSel = st.mode === 'rhythm' || st.mode === 'pattern';
   patternEvents(); const segs = evCache.segs, pr = curProg();
   // 8 bars across the screen: beat ticks, a faint line between the two halves, playhead
   for (let b = 0; b < 8; b++) for (let k = 0; k < 16; k += 4) px(colX(b * 16 + k), 8, 1, 1, k ? C.grid : C.dim);
-  for (let y = 10; y < 110; y += 3) px(colX(64), y, 1, 1, C.grid);
+  if (!zp) for (let y = 10; y < 110; y += 3) px(colX(64), y, 1, 1, C.grid);
   if (curStep >= 0) px(colX(curStep), 7, 1, 2, C.play);
   // selection lines over the selected bar's chord, in both halves
   for (const sg of segs) if (allSel || sg.slot === st.sel) { const c = allSel ? C.sel : C.acc; px(colX(sg.start), 6, Math.max(1, colX(sg.start + sg.len) - colX(sg.start)), 1, c); px(colX(sg.start), 111, Math.max(1, colX(sg.start + sg.len) - colX(sg.start)), 1, c); }
@@ -1833,7 +1855,7 @@ function drawMelody(now){
     const ch = pr[sg.slot]; if (!ch) continue;
     const cname = chordName(ch), x = colX(sg.start);
     const differs = sg.slot >= 4 && !sameChord(ch, pr[sg.slot - 4]);
-    if (x >= lastName && !(sugg && !blink)) { txt(cname, x, 0, sugg ? C.sug : C.auto); lastName = x + cname.length * 4 + 1; }
+    if (x >= 0 && x < 108 && x >= lastName && !(sugg && !blink)) { txt(cname, x, 0, sugg ? C.sug : C.auto); lastName = x + cname.length * 4 + 1; }
   }
   // brackets around the selected bar's main note (first half) when you can move it
   if ((st.phase === 'edit' || st.phase === 'adapt') && st.mode === 'notes' && !st.menu && st.bars[st.sel % 4].mel) {
@@ -1843,7 +1865,7 @@ function drawMelody(now){
   // notes, drawn where they play; arpeggios show only the note each hit plays
   for (const e of patternEvents()) {
     const bn = barNotes(e.bar); if (!bn.length) continue;
-    const x0 = colX(e.start), x1 = colX(e.start + e.on), w = Math.max(1, x1 - x0 - (x1 - x0 >= 3 ? 1 : 0));
+    const x0 = colX(e.start), x1 = colX(e.start + e.on), w = Math.max(1, x1 - x0 - (x1 - x0 >= 2 ? 1 : 0));
     let list;
     if (A.mode && !e.full) { const ms = arpNotes(bn, A); const m = ms[arpIndex(ms.length, A.mode, e.k)]; const top = bn.find(n => n.mel && n.midi === m); list = [{ midi:m, mel:!!top, alt:top && top.alt }]; }
     else list = bn;
@@ -2215,7 +2237,7 @@ function draw(){
       { const t = now - st.boot - BOOT_LOGO - BOOT_CLOSE; if (t >= 0 && t < BOOT_OPEN) { const o = easeIO(t / BOOT_OPEN); irisMask(92 * o, 0.9 + o * 0.9); } }
     }
   }
-  for (let i = 0; i < 4; i++) { const r = document.getElementById('r' + i); r.classList.toggle('off', !st.on); r.classList.toggle('fresh', st.on && ((st.screen === 'melody' && st.prog && st.phase === 'edit') || st.screen === 'design') && !st.touched[knobPage() + i] && performance.now() - st.boot > BOOT_MS); r.style.setProperty('--p', st.on ? knobFrac(i).toFixed(3) : 0); r.style.setProperty('--c', st.on && st.screen === 'design' ? shColor(i) : RING_DEF[i]);
+  for (let i = 0; i < 4; i++) { const r = document.getElementById('r' + i); r.classList.toggle('off', !st.on); r.classList.toggle('fresh', st.on && ((st.screen === 'melody' && st.prog && st.phase === 'edit') || st.screen === 'design') && !knobUsed(i) && performance.now() - st.boot > BOOT_MS); r.style.setProperty('--p', st.on ? knobFrac(i).toFixed(3) : 0); r.style.setProperty('--c', st.on && st.screen === 'design' ? shColor(i) : RING_DEF[i]);
     let a = r.querySelector('.modarc'); if (!a) { a = document.createElement('div'); a.className = 'modarc'; r.appendChild(a); }
     const key = st.on && st.screen === 'design' ? (shapeDefs()[i] || {}).key : null, ms = key ? (st.patch.mods || []).filter(m => m.key === key && m.amt) : [];
     if (!ms.length) { a.style.display = 'none'; continue; }
@@ -2269,7 +2291,7 @@ function showVer(){ const v = VERSIONS.find(x => x.id === verSel.value); documen
 verSel.addEventListener('change', () => { const v = VERSIONS.find(x => x.id === verSel.value); if (v && v.id !== CURRENT) { location.href = (location.pathname.includes('/versions/') ? '../' : '') + v.file; } showVer(); }); showVer();
 document.getElementById('makerver').textContent = CURRENT.toUpperCase();
 const SKEY = 'altf8.saves.v1';
-function applySong(data){ Object.assign(st, JSON.parse(JSON.stringify(data))); st.patch = normPatch(st.patch); st.options = []; st.pending = null; if (st.phase === 'adapt') st.phase = 'edit'; st.arp = 0; if (!VOICINGS[st.voi]) st.voi = 0; if (!PATTERNS[st.pat]) st.pat = 0; if (!RHY[st.rhy]) st.rhy = 0; if (!data.prog) st.prog = st.bars.every(b => b.chord) ? st.bars.map(b => b.chord).concat(st.bars.map(b => b.chord)) : null; st.grab = null; st.cursor = 0; applyFilter(); evCache.key = ''; }
+function applySong(data){ Object.assign(st, JSON.parse(JSON.stringify(data))); if (!data.touched) st.touched = {}; st.patch = normPatch(st.patch); st.options = []; st.pending = null; if (st.phase === 'adapt') st.phase = 'edit'; st.arp = 0; if (!VOICINGS[st.voi]) st.voi = 0; if (!PATTERNS[st.pat]) st.pat = 0; if (!RHY[st.rhy]) st.rhy = 0; if (!data.prog) st.prog = st.bars.every(b => b.chord) ? st.bars.map(b => b.chord).concat(st.bars.map(b => b.chord)) : null; st.grab = null; st.cursor = 0; applyFilter(); evCache.key = ''; }
 // reload the page to get the newest code; keepSong carries the current song (notes, chords, sound) across the reload
 const CARRY = 'altf8.carry';
 function refreshCode(keepSong){
@@ -2284,7 +2306,7 @@ function restoreCarry(){
 }
 function loadSaves(){ try { return JSON.parse(localStorage.getItem(SKEY) || '[]'); } catch (e) { return null; } }
 function storeSaves(a){ try { localStorage.setItem(SKEY, JSON.stringify(a)); return true; } catch (e) { return false; } }
-function snapshot(){ return JSON.parse(JSON.stringify({ bars:st.bars, top2:st.top2, prog:st.prog, voi:st.voi, phase:st.phase === 'suggest' ? 'entry' : st.phase === 'adapt' ? 'edit' : st.phase, rhy:st.rhy, pat:st.pat, tempo:st.tempo, key:st.key, patch:st.patch })); }
+function snapshot(){ return JSON.parse(JSON.stringify({ bars:st.bars, top2:st.top2, touched:st.touched, prog:st.prog, voi:st.voi, phase:st.phase === 'suggest' ? 'entry' : st.phase === 'adapt' ? 'edit' : st.phase, rhy:st.rhy, pat:st.pat, tempo:st.tempo, key:st.key, patch:st.patch })); }
 function renderSaves(){
   const list = document.getElementById('snaplist'); list.innerHTML = '';
   const a = loadSaves();
