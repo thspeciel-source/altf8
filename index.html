@@ -350,7 +350,7 @@ const VERSIONS = [
   { id:'v16', file:'versions/v16.html', label:'v16 - Flat top-down look, edge-to-edge phone (2026-11-18)', note:'No side edges or drop shadows on knobs and buttons. Full screen fills under the status bar and home bar; opening from a Home Screen icon goes straight to full screen.' },
   { id:'v17', file:'versions/v17.html', label:'v17 - Note shaping: 4 buttons x 2 pages (2026-11-18)', note:'NOTE SHAPE screen: buttons 1-4 pick Source, Envelope, Filter + Drive, Motion + FX; press again for page 2. Each knob shows a close-up, the whole note or the harmonics, in its own color.' },
   { id:'v18', file:'versions/v18.html', label:'v18 - 8-bar loops, adaptive chords, feel/rhythm/arp knobs (2026-11-18)', note:'Chord finder suggests 8-chord loops (chord 8 can resolve, or 7 and 8 change) in plain, 7th, sus and add9 colors. After keeping chords, the knob moves only the main note; chords re-adapt, F8 keeps, B undoes. Melody knobs: 1 chord lengths + swing/note length/humanize, 2 rhythm + accents, 3 arpeggio + voicing, 4 tempo.' },
-  { id:'v19', file:'index.html', label:'v19 - iPhone sound unlock, new play/pause badge (2026-11-18)', note:'Sound starts on any tap or knob release on iPhone, not only Play. Play/pause shows an outlined badge that comes out of the corner and dissolves.' }
+  { id:'v19', file:'index.html', label:'v19 - iPhone sound, play/pause badge, free resolving endings (2026-11-18)', note:'Sound starts on any tap or knob release on iPhone. Play/pause badge comes out of the corner and dissolves. Changed endings (chord 8, or 7 and 8) pick the best resolution back to chord 1, even if it needs a different top note; those show in pink.' }
 ];
 const CURRENT = 'v19';
 /* ---- synth engine constants (v12) ---- */
@@ -861,7 +861,7 @@ function findChords(mels){
   for (const b of bases) { const k = b.p.map(chordName).join(' '); if (!seenB.has(k)) { seenB.add(k); uniq.push(b); } if (uniq.length >= 12) break; }
   const toward = (c, target) => { const iv = (target.root - c.root + 12) % 12; return iv === 5 ? 3 : iv === 7 ? 1 : 0; };
   const sevOf = c => c.deg < 0 ? 10 : ((sc[(c.deg + 6) % 7] - sc[c.deg]) + 12) % 12 || 10;
-  const fits = (c, i) => chordPcs(c).includes(mels[i % 4] % 12);
+  const fits = (c, i) => chordPcs(c).includes(mels[i % 4] % 12) || (i >= 4 && !triad(c.root, c.q).includes(mels[i % 4] % 12));
   const color = (pr, style) => {
     let changed = false;
     const out = pr.map((c, i) => {
@@ -878,14 +878,19 @@ function findChords(mels){
   for (const b of uniq) {
     const p = b.p, endings = [['', p.concat(p), 0]];
     // chord 8 resolves back toward chord 1
+    // any chord in the key (or the dominant of chord 1) may end the loop; the top note follows the chord
+    const pool = dia.filter(d => d.q !== 'dim').concat([{ root:(p[0].root + 7) % 12, q:'maj', deg:-2 }]);
+    const melFit = (c, i) => triad(c.root, c.q).includes(mels[i] % 12) ? 0.5 : 0;
     let best = null, bs = 0;
-    for (const r of cands[3]) { if (sameChord(r, p[3]) || r.q === 'dim') continue; const s = toward(r, p[0]) + (r.deg === 4 ? 1.5 : 0) + (r.deg === 3 ? 0.5 : 0) - (r.deg < 0 ? 2 : 0); if (s > bs) { bs = s; best = r; } }
+    for (const r of pool) { if (sameChord(r, p[3]) || sameChord(r, p[0]) || sameChord(r, p[2])) continue;
+      const s = toward(r, p[0]) + (r.deg === 4 || r.deg === -2 ? 1.5 : 0) + (r.deg === 3 || r.deg === 1 ? 0.5 : 0) + melFit(r, 3); if (s > bs) { bs = s; best = r; } }
     if (best) endings.push(['RESOLVE', p.concat([p[0], p[1], p[2], best]), 0.3]);
     // chords 7 and 8 change: a new ending for the second half
     let b78 = null, s78 = -9;
-    for (const c7 of cands[2]) for (const c8 of cands[3]) {
-      if (sameChord(c7, p[2]) && sameChord(c8, p[3])) continue; if (c7.q === 'dim' || c8.q === 'dim' || sameChord(c7, c8)) continue;
-      const s = toward(c8, p[0]) * 1.2 + toward(c7, c8) * 0.6 + (sameChord(c7, p[2]) ? 0 : 0.5) - (c7.deg < 0 || c8.deg < 0 ? 2 : 0);
+    for (const c7 of pool) for (const c8 of pool) {
+      if (sameChord(c7, p[2]) && sameChord(c8, p[3])) continue; if (sameChord(c7, c8) || sameChord(c8, p[0])) continue;
+      const pre = c7.deg === 1 || c7.deg === 3 ? 1 : 0;   // ii or IV leading into the last chord
+      const s = toward(c8, p[0]) * 1.2 + toward(c7, c8) * 0.8 + pre + (sameChord(c7, p[2]) ? 0 : 0.5) - (sameChord(c7, p[1]) ? 1.5 : 0) + melFit(c7, 2) + melFit(c8, 3);
       if (s > s78) { s78 = s; b78 = [c7, c8]; }
     }
     if (b78) endings.push(['NEW ENDING', p.concat([p[0], p[1], b78[0], b78[1]]), -0.2]);
@@ -1139,9 +1144,12 @@ let step = 0, nextT = 0, uiQ = [], curStep = -1;
 const stepDur = () => 60 / st.tempo / 4;
 function barNotes(slot){
   const B = st.bars[slot % 4]; if (!B.mel) return [];
-  const mel = { midi:B.mel.midi, mel:true }, pr = curProg();
-  if (!pr || !pr[slot]) return [mel];
-  return [mel].concat(voicing(B.mel.midi, pr[slot]).map(m => ({ midi:m })));
+  const pr = curProg();
+  if (!pr || !pr[slot]) return [{ midi:B.mel.midi, mel:true }];
+  let top = B.mel.midi, alt = false;
+  if (slot >= 4 && !chordPcs(pr[slot]).includes(top % 12)) { alt = true;
+    for (const d of [1, -1, 2, -2, 3, -3, 4, -4, 5, -5, 6]) if (chordPcs(pr[slot]).includes((top + d + 120) % 12)) { top += d; break; } }
+  return [{ midi:top, mel:true, alt }].concat(voicing(top, pr[slot]).map(m => ({ midi:m })));
 }
 function schedule(s, t){
   const P = PATTERNS[st.pat], R = RHY[st.rhy], A = ARPS[st.arp] || ARPS[0], hu = P.human || 0;
@@ -1567,7 +1575,7 @@ function drawMelody(now){
     const ch = pr[sg.slot]; if (!ch) continue;
     const cname = chordName(ch), x = colX(sg.start);
     const differs = sg.slot >= 4 && !sameChord(ch, pr[sg.slot - 4]);
-    if (x >= lastName && !(sugg && !blink)) { txt(cname, x, 11, sugg ? C.sug : differs ? C.acc : C.auto); lastName = x + cname.length * 4 + 1; }
+    if (x >= lastName && !(sugg && !blink)) { txt(cname, x, 11, sugg || differs ? C.sug : C.auto); lastName = x + cname.length * 4 + 1; }
   }
   // brackets around the selected bar's main note (first half) when you can move it
   if ((st.phase === 'edit' || st.phase === 'adapt') && st.mode === 'notes' && !st.menu && st.bars[st.sel].mel) {
@@ -1579,11 +1587,11 @@ function drawMelody(now){
     const bn = barNotes(e.bar); if (!bn.length) continue;
     const x0 = colX(e.start), x1 = colX(e.start + e.len), w = Math.max(1, x1 - x0 - (x1 - x0 >= 3 ? 1 : 0));
     let list;
-    if (A.mode) { const ms = arpNotes(bn, A); const m = ms[arpIndex(ms.length, A.mode, e.k)]; list = [{ midi:m, mel:bn.some(n => n.mel && n.midi === m) }]; }
+    if (A.mode) { const ms = arpNotes(bn, A); const m = ms[arpIndex(ms.length, A.mode, e.k)]; const top = bn.find(n => n.mel && n.midi === m); list = [{ midi:m, mel:!!top, alt:top && top.alt }]; }
     else list = bn;
     for (const n of list) {
       const y = yOf(n.midi); if (y <= 18 || y >= 110) continue;
-      let c = n.mel ? C.acc : sugg ? (blink ? C.sug : null) : C.auto;
+      let c = n.mel ? (n.alt ? C.sug : C.acc) : sugg ? (blink ? C.sug : null) : C.auto;
       if (st.phase === 'adapt' && n.mel && e.bar % 4 === st.pending.bar) c = blink ? C.sel : C.acc;
       if (allSel && c) c = blink ? C.sel : c;
       if (c) px(x0, y, w, 2, c);
