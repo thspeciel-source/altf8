@@ -22,11 +22,16 @@
     background:conic-gradient(var(--c,var(--cyan)) calc(var(--p,0) * 1turn), #3a3f4a 0); cursor:ns-resize; box-shadow:0 0 6px -1px var(--c,var(--cyan)); }
   .ring.off { box-shadow:none; }
   .ring.off { background:conic-gradient(#3a3f4a 1turn,#3a3f4a 0); }
-  .knob { width:32px; height:32px; border-radius:50%; background:radial-gradient(circle at 35% 30%,#5b606b,#262a31); position:relative; box-shadow:0 2px 3px rgba(0,0,0,.5); }
-  .knob::after { content:''; position:absolute; left:50%; top:3px; width:3px; height:9px; margin-left:-1.5px; border-radius:2px; background:#e8ebf2; }
+  /* brushed aluminum knobs: the shine stays put, only the indicator line turns (--rot) */
+  .knob { width:34px; height:34px; border-radius:50%; position:relative;
+    background:radial-gradient(circle,rgba(255,255,255,0) 58%,rgba(0,0,0,.07) 100%),conic-gradient(from 15deg,#c6c9cf,#f6f7f9 7%,#aeb2b9 16%,#e4e6ea 26%,#bcc0c6 36%,#fbfbfc 47%,#b1b5bc 57%,#e2e4e8 67%,#c0c3c9 77%,#f4f5f7 88%,#c6c9cf);
+    box-shadow:0 0 0 1px #8f939a, 0 2px 0 #7b7f87, 0 4px 6px rgba(0,0,0,.4), inset 0 0 0 1.5px rgba(255,255,255,.55); }
+  .knob::after { content:''; position:absolute; left:50%; top:2px; width:2px; height:9px; margin-left:-1px; border-radius:1px; background:#1c1e22;
+    transform-origin:50% 15px; transform:rotate(var(--rot,0deg)); }
   #mainknob { position:absolute; left:196px; top:318px; width:88px; height:88px; border-radius:50%; cursor:ns-resize;
-    background:radial-gradient(circle at 35% 30%,#666b77,#23262c 70%); box-shadow:0 4px 8px rgba(0,0,0,.5), inset 0 0 0 4px #1b1e23; }
-  #mainknob::after { content:''; position:absolute; left:50%; top:8px; width:5px; height:14px; margin-left:-2.5px; border-radius:3px; background:var(--acc); }
+    background:radial-gradient(circle,rgba(255,255,255,0) 60%,rgba(0,0,0,.08) 100%),conic-gradient(from 15deg,#c6c9cf,#f6f7f9 7%,#aeb2b9 16%,#e4e6ea 26%,#bcc0c6 36%,#fbfbfc 47%,#b1b5bc 57%,#e2e4e8 67%,#c0c3c9 77%,#f4f5f7 88%,#c6c9cf);
+    box-shadow:0 0 0 1.5px #8a8e95, 0 5px 0 #7d8189, 0 6px 0 #6c7078, 0 10px 18px rgba(0,0,0,.42), inset 0 0 0 3px rgba(255,255,255,.6), inset 0 0 0 4px rgba(120,124,132,.35); }
+  #mainknob::after { content:''; position:absolute; left:50%; top:6px; width:3px; height:18px; margin-left:-1.5px; border-radius:1.5px; background:#1c1e22; transform-origin:50% 38px; transform:rotate(var(--rot,0deg)); }
   .bar { position:absolute; top:274px; width:52px; height:28px; border-radius:6px; background:linear-gradient(#4a4f5a,#2b2f37); color:#cfd6e6; font-size:11px; font-weight:700; display:flex; align-items:center; justify-content:center; cursor:pointer; box-shadow:0 3px 0 #16181c; }
   .bar.sel { background:linear-gradient(#ffe27a,#e8b820); color:#2a2100; }
   .bar:active,.btn:active,.bar.down,.btn.down { transform:translateY(2px); box-shadow:0 1px 0 #16181c; }
@@ -66,6 +71,8 @@
   #status { font-size:12.5px; color:var(--acc); margin-top:6px; min-height:18px; }
   ul.help { margin:6px 0 0; padding-left:18px; color:var(--muted); font-size:12.5px; }
   ul.help li { margin:3px 0; }
+  #hint { margin-top:10px; min-height:20px; font:600 12.5px/1.4 ui-monospace,Menlo,monospace; color:var(--acc); text-align:center; letter-spacing:.03em; }
+  body.fs #hint { display:none; }
   /* ---------- v14 phone full screen ---------- */
   #device { -webkit-user-select:none; -webkit-touch-callout:none; }
   #fsBtn { margin-top:10px; background:var(--acc); color:#2a2100; border-color:var(--acc); font-weight:700; }
@@ -76,7 +83,10 @@
   body.fs #side, body.fs #devcol > div:first-child, body.fs .cap, body.fs .kbd { display:none; }
   body.fs #fsExit { display:block; }
   body.fs #app { padding:0; }
-  body.fs #device { position:fixed; left:50%; top:50%; margin:0; transform:translate(-50%,-50%) scale(var(--fs,1)); }
+  body.fs #device { position:fixed; left:50%; top:50%; margin:0; height:var(--devh,510px); transform:translate(-50%,-50%) scale(var(--fs,1)); }
+  body.fs #pwrled, body.fs #play, body.fs #scrwrap, body.fs .ring { translate:0 var(--fst,0px); }
+  body.fs .bar, body.fs .btn, body.fs #mainknob { translate:0 var(--fsl,0px); }
+  body.fs #brand { right:auto; left:50%; translate:-50% 0; }
 </style>
 </head>
 <body>
@@ -113,6 +123,7 @@
       <span class="kbd" style="left:100px;top:398px">Backspace</span>
     </div>
     <div class="cap">Drawn at real size: 62 x 102 mm, like an original iPod. Screen about 2.5 in, drawn at 112 x 112 pixels. Headphone jack bottom-left.</div>
+    <div id="hint" aria-live="polite"></div>
   </div>
 
   <div id="side">
@@ -239,9 +250,10 @@ const VERSIONS = [
   { id:'v11', file:'versions/v11.html', label:'v11 - Notes fill the screen (2026-11-17)', note:'Right column removed. The notes, header and button cells use the full screen width, and the 4 buttons are wider to stay lined up with their bars.' },
   { id:'v12', file:'versions/v12.html', label:'v12 - Synth engine + mod matrix (2026-11-18)', note:'Unison, detune and fine tune; a second filter; two LFOs, a second envelope and two step sequencers routed through an 8-slot mod matrix on a new MOD screen.' },
   { id:'v13', file:'versions/v13.html', label:'v13 - Screen fan + play/pause animation (2026-11-18)', note:'Hold Play to open a fan of the 6 screens from the top-right corner; the knob moves the yellow selection and letting go opens it. Play/pause slides an icon in from the same corner.' },
-  { id:'v14', file:'index.html', label:'v14 - Phone full screen (2026-11-18)', note:'Full screen button: only the device is shown, scaled to fill the phone screen. Tap the x in the corner to leave.' }
+  { id:'v14', file:'versions/v14.html', label:'v14 - Phone full screen (2026-11-18)', note:'Full screen button: only the device is shown, scaled to fill the phone screen. Tap the x in the corner to leave.' },
+  { id:'v15', file:'index.html', label:'v15 - Clean melody screen + aluminum knobs (2026-11-18)', note:'Melody screen has no text or button strip at the bottom; prompts show under the device instead. Brushed aluminum knobs. Full screen stretches to the phone and spreads out the controls.' }
 ];
-const CURRENT = 'v14';
+const CURRENT = 'v15';
 /* ---- synth engine constants (v12) ---- */
 const UNI_MAX = 7;
 const FTYPES = ['lowpass','highpass','bandpass','notch'], FNAME = ['LP','HP','BP','NOTCH'];
@@ -621,7 +633,7 @@ function barList(b){ const B = st.bars[b], l = B.notes.map((n, i) => ({ midi:n.m
 
 function mainTurn(dir){
   if (!st.on) return;
-  st.mainAngle += dir * 15; document.getElementById('mainknob').style.transform = 'rotate(' + st.mainAngle + 'deg)';
+  st.mainAngle += dir * 15; document.getElementById('mainknob').style.setProperty('--rot', st.mainAngle + 'deg');
   if (held.play) { held.playUsed = true; if (!st.fan || st.fan.closing) openFan(); st.fan.sel = clamp(st.fan.sel + dir, 0, SCREENS.length - 1); return; }
   if (st.screen === 'settings') { if (st.setEdit) changeSetting(dir); else st.setCur = (st.setCur + dir + 4) % 4; return; }
   if (st.screen === 'filter') { st.fSel = 1 - st.fSel; return; }
@@ -711,7 +723,7 @@ function knobDefs(){
 }
 function setKnob(i, dir){
   if (!st.on) return;
-  st.kAngles[i] += dir * 18; document.getElementById('k' + i).style.transform = 'rotate(' + st.kAngles[i] + 'deg)';
+  st.kAngles[i] += dir * 18; document.getElementById('k' + i).style.setProperty('--rot', st.kAngles[i] + 'deg');
   knobDefs()[i].step(dir);
   st.lastKnob = i;
   applyFilter(); applyLive();
@@ -958,10 +970,10 @@ function drawMelody(now){
   if (all.length) {
     const mx = Math.max(...all), mn = Math.min(...all);
     if (mx > st.viewTop) st.viewTop = mx;
-    if (mn < st.viewTop - 34) st.viewTop = Math.max(mx, mn + 34);
+    if (mn < st.viewTop - 45) st.viewTop = Math.max(mx, mn + 45);
   }
   const top = st.viewTop, yOf = m => 19 + (top - m) * 2;
-  for (let m = top - 34; m <= top; m++) if (m % 12 === 0) { const y = yOf(m) + 1; px(1, y, 110, 1, C.grid); }
+  for (let m = top - 45; m <= top; m++) if (m % 12 === 0) { const y = yOf(m) + 1; px(1, y, 110, 1, C.grid); }
   const blink = Math.floor(now / 350) % 2 === 0;
   const colX = st2 => Math.floor(st2 / 16) * 28 + 2 + Math.floor((st2 % 16) * 1.5);
   const allSel = st.mode === 'rhythm' || st.mode === 'pattern';
@@ -970,7 +982,7 @@ function drawMelody(now){
   for (let b = 0; b < 4; b++) for (let k = 0; k < 16; k += 4) px(colX(b * 16 + k), 17, 2, 1, C.grid);
   if (curStep >= 0) px(colX(curStep), 17, 2, 1, C.play);
   // selection lines over the chosen chord's time span (or everything in rhythm/pattern)
-  for (const sg of segs) if (allSel || sg.slot === st.sel) for (let k = 0; k < sg.len; k++) { const g = (sg.start + k) % LOOP; px(colX(g), 9, 2, 1, allSel ? C.sel : C.acc); px(colX(g), 90, 2, 1, allSel ? C.sel : C.acc); }
+  for (const sg of segs) if (allSel || sg.slot === st.sel) for (let k = 0; k < sg.len; k++) { const g = (sg.start + k) % LOOP; px(colX(g), 9, 2, 1, allSel ? C.sel : C.acc); px(colX(g), 110, 2, 1, allSel ? C.sel : C.acc); }
   // chord names and melody note names at the first time each chord appears
   let lastName = -99, lastLab = -99;
   const seen = new Set();
@@ -984,7 +996,6 @@ function drawMelody(now){
     let label = '';
     if (sg.slot === st.sel && st.phase === 'edit' && st.mode === 'notes') { const list = barList(sg.slot); if (list.length) label = noteName(list[Math.min(st.cursor, list.length - 1)].midi); }
     else if (B.mel) label = noteName(B.mel.midi);
-    if (label && x >= lastLab) { txt(label, x, 92, sg.slot === st.sel ? C.txt : C.mut); lastLab = x + label.length * 4 + 1; }
   }
   // edit cursor brackets around the selected chord's first span
   if (st.phase === 'edit' && st.mode === 'notes' && !st.menu) {
@@ -1000,7 +1011,7 @@ function drawMelody(now){
     const grabRef = st.grab && e.bar === st.sel ? st.grab.ref : null;
     for (const n of notes) {
       if (!n.c) continue;
-      const y = yOf(n.midi); if (y <= 18 || y >= 89) continue;
+      const y = yOf(n.midi); if (y <= 18 || y >= 110) continue;
       const c = grabRef !== null && n.ref === grabRef ? (blink ? C.sel : n.c) : (allSel ? (blink ? C.sel : n.c) : n.c);
       if (n.em && y > 19) px(colX(e.start), y - 2, 1, 1, C.sel);
       for (let k = 0; k < e.len; k++) {
@@ -1022,16 +1033,16 @@ function drawMelody(now){
 function menuRegion(m){
   if (m === 'METRONOME') return [0, 0, 112, 8];
   if (m === 'CHORDS') return [0, 8, 112, 9];
-  if (m === 'RHYTHM') return [0, 17, 112, 72];
-  if (m === 'NOTES') return [st.sel * 28 + 1, 19, 27, 68];
-  return [0, 89, 112, 9];
+  if (m === 'RHYTHM') return [0, 17, 112, 82];
+  if (m === 'NOTES') return [st.sel * 28 + 1, 19, 27, 78];
+  return [0, 100, 112, 12];
 }
 function outline(x, y, w, h, c, dotted){
   for (let i = 0; i < w; i++) if (!dotted || i % 2 === 0) { px(x + i, y, 1, 1, c); px(x + i, y + h - 1, 1, 1, c); }
   for (let i = 0; i < h; i++) if (!dotted || i % 2 === 0) { px(x, y + i, 1, 1, c); px(x + w - 1, y + i, 1, 1, c); }
 }
 function drawMenu(now){
-  g.fillStyle = 'rgba(11,16,32,0.72)'; g.fillRect(0, 0, 112, 98);
+  g.fillStyle = 'rgba(11,16,32,0.72)'; g.fillRect(0, 0, 112, 112);
   const cur = MODES[st.menuIdx], nxt = MODES[(st.menuIdx + 1) % MODES.length];
   const nr = menuRegion(nxt); outline(nr[0], nr[1], nr[2], nr[3], C.mut, true);
   const r = menuRegion(cur); outline(r[0], r[1], r[2], r[3], Math.floor(now / 300) % 2 ? SEG.a : C.sel, false);
@@ -1293,8 +1304,17 @@ function drawPlayPause(now){
   if (P2.playing) { for (let r = 0; r <= 10; r++) px(97 + ox, 3 + r - ox, Math.min(r, 10 - r) + 1, 1, c); }
   else { px(96 + ox, 3 - ox, 3, 11, c); px(101 + ox, 3 - ox, 3, 11, c); }
 }
+// what the bottom of the screen used to say, shown under the device instead (melody screen is kept clean)
+let hintTxt = null;
+function setHint(t){
+  if (!st.on) t = '';
+  else if (st.screen === 'melody' && st.mode === 'notes' && !st.menu && st.phase === 'edit' && st.grab) t += '   |   buttons: OCT+  OCT-  ACC  DEL';
+  else if (st.screen !== 'melody') t = '';
+  if (t === hintTxt) return; hintTxt = t; document.getElementById('hint').textContent = t;
+}
 function draw(){
   const now = performance.now();
+  if (!st.on) setHint('');
   px(0, 0, 112, 112, '#000');
   if (st.on) {
     if (now - st.boot < 1100) { px(0, 0, 112, 112, C.bg); txt('ALTF8', 26, 46, C.acc, 3); txt('READY', 46, 66, C.mut); }
@@ -1303,7 +1323,7 @@ function draw(){
       const prompt = st.screen === 'melody' ? drawMelody(now) : st.screen === 'design' ? drawDesign(now) : st.screen === 'settings' ? drawSettings(now) : drawSynth(now);
       const full = st.screen === 'design' || (st.screen === 'melody' && st.prevStart && now - st.lastEdit < 2000);
       if (full) { px(0, 0, 112, 112, C.bg); drawShape(now, 2, 2, 108, 108); }
-      else drawButtonBar();
+      else if (st.screen !== 'melody') drawButtonBar();
       if (st.shut) {
         const f = Math.min(1, (now - st.shut.t0) / SHUT_MS);
         px(10, 38, 92, 36, C.acc); px(11, 39, 90, 34, C.bg);
@@ -1317,7 +1337,10 @@ function draw(){
         lines.forEach((ln, i) => txt(ln, Math.round(56 - ln.length * 2), 49 + i * 8, C.txt));
       }
       const showMsg = st.msg && now - st.msgT < 1400;
-      if (st.fan && !st.fan.closing) { if (!full) px(0, 98, 112, 7, C.bg); stxt('pr', 'LET GO: ' + SCREEN_NAME[SCREENS[st.fan.sel]], 27, 1, 99, C.acc); }
+      const clean = st.screen === 'melody';
+      setHint(st.fan && !st.fan.closing ? 'Let go: ' + SCREEN_NAME[SCREENS[st.fan.sel]] : showMsg ? st.msg : prompt);
+      if (clean) {}
+      else if (st.fan && !st.fan.closing) { if (!full) px(0, 98, 112, 7, C.bg); stxt('pr', 'LET GO: ' + SCREEN_NAME[SCREENS[st.fan.sel]], 27, 1, 99, C.acc); }
       else if (!full) stxt('pr', showMsg ? st.msg : prompt, 27, 1, 99, showMsg ? C.acc : C.txt);
       else if (showMsg) { px(0, 0, 112, 7, C.bg); txt(st.msg, Math.max(1, Math.round(56 - st.msg.length * 2)), 1, C.acc); }
       drawPlayPause(now); drawFan(now);
@@ -1392,7 +1415,10 @@ renderSaves();
 /* ================= v14 phone full screen ================= */
 function fitFs(){
   const vv = window.visualViewport, W = vv ? vv.width : innerWidth, H = vv ? vv.height : innerHeight;
-  document.body.style.setProperty('--fs', Math.min(W / 310, (H - 24) / 510).toFixed(3));
+  const sc = Math.min(W / 310, H / 540), devH = Math.max(540, H / sc), extra = devH - 540, b = document.body.style;
+  b.setProperty('--fs', sc.toFixed(3)); b.setProperty('--devh', devH.toFixed(1) + 'px');
+  // spread the spare height: some above the screen, more between the screen and the buttons
+  b.setProperty('--fst', (16 + extra * 0.3).toFixed(1) + 'px'); b.setProperty('--fsl', (18 + extra * 0.55).toFixed(1) + 'px');
 }
 function enterFs(){
   document.body.classList.add('fs'); fitFs(); wakeAudio();
