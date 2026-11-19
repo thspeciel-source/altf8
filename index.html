@@ -393,9 +393,10 @@ const VERSIONS = [
   { id:'v22', file:'versions/v22.html', label:'v22 - Source page always zoomed in (2026-11-18)', note:'On the Sound screen, button 1 (Source, both pages) shows the close-up all the time instead of zooming in and out with each knob turn.' },
   { id:'v23', file:'versions/v23.html', label:'v23 - Sparkle intro with shutter transition, tap F8 to start (2026-11-18)', note:'Power-on shows the logo with sparkles, then a hexagon-shaped opening closes over it and reopens onto the screen. A quick tap on F8 now powers on too, which lets iPhone start sound right away; a blocked chime plays as soon as sound unlocks.' },
   { id:'v24', file:'versions/v24.html', label:'v24 - Hold F8 to add motion, generated second half, blue F8 (2026-11-18)', note:'On the Sound screen, hold F8 and turn a knob to connect a moving source to it (the main knob picks LFO 1, LFO 2, ENV 2, SEQ 1 or SEQ 2); a thin arc on the ring shows it moving and a tip in the bottom-left says what to do next. Chord bars 5-8 can be a whole new half and are always generated (all pink). The selected bar glows, an F8 badge blinks top-right when F8 is ready, and F8 is blue.' },
-  { id:'v25', file:'index.html', label:'v25 - Moved notes keep without F8 (2026-11-18)', note:'After moving a bar\'s main note, pressing another bar keeps the change and its adapted chords; F8 no longer needs to confirm it. B still undoes it until you move on.' }
+  { id:'v25', file:'versions/v25.html', label:'v25 - Moved notes keep without F8 (2026-11-18)', note:'After moving a bar\'s main note, pressing another bar keeps the change and its adapted chords; F8 no longer needs to confirm it. B still undoes it until you move on.' },
+  { id:'v26', file:'index.html', label:'v26 - B reopens chord suggestions (2026-11-18)', note:'With chords set, B goes back to the pink suggestions: your current progression is option 1 and the main knob browses new ones.' }
 ];
-const CURRENT = 'v25';
+const CURRENT = 'v26';
 /* ---- synth engine constants (v12) ---- */
 const UNI_MAX = 7;
 const FTYPES = ['lowpass','highpass','bandpass','notch'], FNAME = ['LP','HP','BP','NOTCH'];
@@ -1515,6 +1516,13 @@ function bTap(){
     st.optIdx = st.optIdx % st.options.length; flash('REJECTED'); return;
   }
   if (st.phase === 'adapt') { const pd = st.pending; st.bars[pd.bar].mel.midi = pd.oldMidi; st.pending = null; st.phase = 'edit'; flash('UNDONE'); preview(pd.oldMidi); return; }
+  // with chords set, B reopens the suggestions: what you have now is option 1, turn the knob for new ones
+  if (st.phase === 'edit' && st.prog && allSet()) {
+    const cur = st.prog.slice(); runChordFinder();
+    const k = cur.map(chordName).join(' ');
+    st.options = [{ chords:cur, score:1e9, tag:'CURRENT' }].concat(st.options.filter(o => o.chords.map(chordName).join(' ') !== k));
+    st.optIdx = 0; flash('NOW: OPTION 1'); return;
+  }
 }
 function bHold(){
   if (st.on && st.screen === 'mod' && st.modTab === 'mtx') { Object.assign(st.patch.mtx[st.mtxRow], { src:0, dst:0, amt:0, via:0 }); flash('SLOT ' + (st.mtxRow + 1) + ' CLEARED'); return; }
