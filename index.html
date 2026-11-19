@@ -19,7 +19,7 @@
   /* ---------- device ---------- */
   #devcol { display:flex; flex-direction:column; align-items:center; max-width:340px; }
   #device { position:relative; width:310px; height:510px; border-radius:22px; margin-top:14px;
-    background:repeating-linear-gradient(90deg,rgba(255,255,255,.07) 0 1px,rgba(0,0,0,.035) 1px 2px,rgba(255,255,255,0) 2px 3px),linear-gradient(160deg,#e3e6ea 0%,#bfc4cb 38%,#d6dade 62%,#a9aeb6 100%); box-shadow:0 18px 40px rgba(0,0,0,.55), inset 0 2px 0 rgba(255,255,255,.6), inset 0 -3px 0 rgba(0,0,0,.15); user-select:none; touch-action:none; }
+    background:linear-gradient(155deg,#c9cdd3 0%,#9ea3ab 22%,#d3d6db 40%,#a4a9b1 58%,#7f848c 80%,#a3a8b0 100%); box-shadow:0 18px 40px rgba(0,0,0,.55), inset 0 2px 0 rgba(255,255,255,.6), inset 0 -3px 0 rgba(0,0,0,.15); user-select:none; touch-action:none; }
   #scrwrap { position:absolute; left:14px; top:30px; width:236px; height:236px; background:#0a0c12; border-radius:9px; padding:6px; box-shadow:inset 0 2px 6px rgba(0,0,0,.8); }
   #scr { width:224px; height:224px; image-rendering:pixelated; image-rendering:crisp-edges; display:block; border-radius:3px; }
   #play { position:absolute; right:12px; top:-11px; width:74px; height:22px; border-radius:9px 9px 3px 3px; background:linear-gradient(#3b3f48,#24272e); color:#cfd6e6; font-size:10px; font-weight:700; letter-spacing:.06em; display:flex; align-items:center; justify-content:center; cursor:pointer; box-shadow:0 -2px 0 rgba(255,255,255,.08) inset; }
@@ -55,7 +55,7 @@
   #bbtn { left:110px; background:radial-gradient(circle at 40% 35%,#6f7682,#3a3f49); color:#fff; }
   #jack { position:absolute; left:34px; bottom:-5px; width:16px; height:10px; border-radius:0 0 8px 8px; background:#111; }
   /* engraved lettering on the metal shell: dark cut with a light lower edge */
-  #brand, #maker { position:absolute; bottom:14px; font:700 13px/1 ui-monospace,Menlo,monospace; color:#8a8f97; letter-spacing:.08em; text-shadow:0 1px 0 rgba(255,255,255,.75), 0 -1px 0 rgba(0,0,0,.28); }
+  #brand, #maker { position:absolute; bottom:14px; font:700 13px/1 ui-monospace,Menlo,monospace; color:#6c7179; letter-spacing:.08em; text-shadow:0 1px 0 rgba(255,255,255,.55), 0 -1px 0 rgba(0,0,0,.35); }
   #brand { right:18px; }
   #maker { left:18px; font-size:9px; letter-spacing:.12em; }
   .kbd { position:absolute; font:700 9px/1 ui-monospace,Menlo,monospace; color:#5d5748; background:rgba(255,255,255,.55); border-radius:3px; padding:2px 3px; pointer-events:none; }
@@ -91,7 +91,7 @@
   #device { -webkit-user-select:none; -webkit-touch-callout:none; }
   #fsBtn { margin-top:10px; background:var(--acc); color:#2a2100; border-color:var(--acc); font-weight:700; }
   #fsExit { display:none; position:fixed; z-index:10; bottom:max(12px, env(safe-area-inset-bottom)); right:max(12px, env(safe-area-inset-right)); width:36px; height:36px; padding:0; border-radius:50%; font-size:20px; line-height:1; background:rgba(38,43,53,.8); }
-  body.fs { overflow:hidden; overscroll-behavior:none; touch-action:none; min-height:100dvh; background:repeating-linear-gradient(90deg,rgba(255,255,255,.07) 0 1px,rgba(0,0,0,.035) 1px 2px,rgba(255,255,255,0) 2px 3px) fixed,linear-gradient(160deg,#e3e6ea 0%,#bfc4cb 38%,#d6dade 62%,#a9aeb6 100%) fixed; }
+  body.fs { overflow:hidden; overscroll-behavior:none; touch-action:none; min-height:100dvh; background:linear-gradient(155deg,#c9cdd3 0%,#9ea3ab 22%,#d3d6db 40%,#a4a9b1 58%,#7f848c 80%,#a3a8b0 100%) fixed; }
   body.fs #device { border-radius:0; box-shadow:none; background:transparent; }
   body.fs #fsExit { background:rgba(38,43,53,.55); }
   body.fs #side, body.fs #devcol > div:first-child, body.fs .cap, body.fs .kbd { display:none; }
@@ -117,8 +117,8 @@
     -webkit-mask:radial-gradient(circle, transparent 52%, #000 54%, #000 90%, transparent 92%); mask:radial-gradient(circle, transparent 52%, #000 54%, #000 90%, transparent 92%); }
   #mainknob::after { background:repeating-conic-gradient(rgba(30,33,40,.6) 0deg 3deg, transparent 3deg 15deg);
     -webkit-mask:radial-gradient(circle, transparent 66%, #000 68%, #000 89%, transparent 91%); mask:radial-gradient(circle, transparent 66%, #000 68%, #000 89%, transparent 91%); }
-  html:has(body.fs) { background:#c4c8ce; }
-  body.fs { background-color:#c4c8ce; }
+  html:has(body.fs) { background:#a4a9b1; }
+  body.fs { background-color:#a4a9b1; }
   body.fs #jack { display:none; }
 </style>
 </head>
@@ -401,7 +401,7 @@ const VERSIONS = [
   { id:'v24', file:'versions/v24.html', label:'v24 - Hold F8 to add motion, generated second half, blue F8 (2026-11-18)', note:'On the Sound screen, hold F8 and turn a knob to connect a moving source to it (the main knob picks LFO 1, LFO 2, ENV 2, SEQ 1 or SEQ 2); a thin arc on the ring shows it moving and a tip in the bottom-left says what to do next. Chord bars 5-8 can be a whole new half and are always generated (all pink). The selected bar glows, an F8 badge blinks top-right when F8 is ready, and F8 is blue.' },
   { id:'v25', file:'versions/v25.html', label:'v25 - Moved notes keep without F8 (2026-11-18)', note:'After moving a bar\'s main note, pressing another bar keeps the change and its adapted chords; F8 no longer needs to confirm it. B still undoes it until you move on.' },
   { id:'v26', file:'versions/v26.html', label:'v26 - B reopens chord suggestions (2026-11-18)', note:'With chords set, B goes back to the pink suggestions: your current progression is option 1 and the main knob browses new ones.' },
-  { id:'v27', file:'index.html', label:'v27 - Metal shell, knob hints, tap knobs (2026-11-18)', note:'Brushed-metal shell with engraved AltF8 and RTP INC. + version lettering. Knobs blink until you first turn them on each page; tap a knob to move one step (top half up, bottom half down; left/right half on the main knob). The F8 badge says what F8 will do. Bars 5-8 turn blue once the chords are kept.' }
+  { id:'v27', file:'index.html', label:'v27 - Smooth metal shell, knob hints, tap knobs (2026-11-18)', note:'Smooth shiny metal shell with engraved AltF8 and RTP INC. + version lettering. Knobs blink until you first turn them on each page; tap a knob to move one step (top half up, bottom half down; left/right half on the main knob). The F8 badge says what F8 will do. Bars 5-8 turn blue once the chords are kept.' }
 ];
 const CURRENT = 'v27';
 /* ---- synth engine constants (v12) ---- */
