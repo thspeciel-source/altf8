@@ -276,7 +276,7 @@ const PATTERNS = [
 const RHY = [
   { name:'SUSTAIN', hits:[], cap:64, end:{ hits:[0,12], acc:{12:0.75} } },
   { name:'HALF NOTES', hits:[0,8], cap:64, acc:{0:1,8:0.8}, end:{ hits:[0,4,8], acc:{0:1,4:0.7,8:1} } },
-  { name:'QUARTERS ON 1 AND 3', hits:[0,4,8,12], cap:64, acc:{0:1,4:0.62,8:0.9,12:0.62}, end:{ hits:[0,4,8], cap:4, stop:true, acc:{0:1,4:0.7,8:1} } },
+  { name:'QUARTERS, STRONG 1 + 3', hits:[0,4,8,12], cap:64, acc:{0:1,4:0.62,8:0.9,12:0.62}, end:{ hits:[0,4,8], cap:4, stop:true, acc:{0:1,4:0.7,8:1} } },
   { name:'BACKBEAT QUARTERS', hits:[0,4,8,12], cap:64, acc:{0:0.65,4:1,8:0.65,12:1}, end:{ hits:[0,4,8,10,12,14], cap:2, acc:{0:1,4:1,8:0.75,10:0.8,12:0.9}, dflt:1 } },
   { name:'DRIVING EIGHTHS', hits:[0,2,4,6,8,10,12,14], cap:64, acc:{0:1,4:0.85,8:0.95,12:0.85}, dflt:0.62, end:{ hits:[0,2,4,6,8], cap:2, stop:true, acc:{0:1,8:1}, dflt:0.7 } },
   { name:'PUMPING OFFBEAT 8THS', hits:[0,2,4,6,8,10,12,14], cap:64, acc:{2:1,6:1,10:1,14:1}, dflt:0.55, end:{ hits:[2,6,10,12], cap:2, acc:{12:1}, dflt:0.8 } },
@@ -433,9 +433,10 @@ const VERSIONS = [
   { id:'v29', file:'versions/v29.html', label:'v29 - Edit bars 5-8, moving second-half melody (2026-11-18)', note:'The generated top notes of bars 5-8 now move as an arch (up through 5-6, settling on chord 8). Once chords are kept, press a bar button again to jump to its twin in bars 5-8 (the button turns pink) and turn the main knob to set that top note; press again to go back. Hold B there to return the note to auto.' },
   { id:'v30', file:'versions/v30.html', label:'v30 - Clear purple shell, MOD screen removed (2026-11-18)', note:'The shell is frosted translucent purple plastic with the circuit board blurred behind it. The MOD screen is gone from the screen donut, which now has three slices: Melody, Sound and Setup.' },
   { id:'v31', file:'versions/v31.html', label:'v31 - Update buttons, metal rims (2026-11-18)', note:'Metallic rims around the screen and every button. Two buttons next to Full screen: Update, keep my song (reloads the newest code and brings your notes, chords and sound along) and Update fresh. On the device, Settings > UPDATE + F8 does the keep-my-song update, so it works in full screen too.' },
-  { id:'v32', file:'index.html', label:'v32 - Knobs blink after chords are set (2026-11-18)', note:'On the melody screen the side knobs only start blinking once you have kept a chord pattern with F8.' }
+  { id:'v32', file:'versions/v32.html', label:'v32 - Knobs blink after chords are set (2026-11-18)', note:'On the melody screen the side knobs only start blinking once you have kept a chord pattern with F8.' },
+  { id:'v33', file:'index.html', label:'v33 - Tasteful chord colors, options start at 5 (2026-11-18)', note:'7ths now go only on the dominant and ii, sus only on a dominant near the end of a phrase, add9 only on I and IV, so most chords stay plain. Add9 is written C2 and sus4 as GSUS. Chord options open at number 5 with the best one there and the next-best on both sides; the list stops at its ends instead of wrapping to the least likely options.' }
 ];
-const CURRENT = 'v32';
+const CURRENT = 'v33';
 /* ---- synth engine constants (v12) ---- */
 const UNI_MAX = 7;
 const FTYPES = ['lowpass','highpass','bandpass','notch'], FNAME = ['LP','HP','BP','NOTCH'];
@@ -889,10 +890,10 @@ function chordPcs(c){
   return b;
 }
 function chordName(c){
-  if (c.x === 's2' || c.x === 's4') return NN[c.root] + (c.x === 's2' ? 'S2' : 'S4');
+  if (c.x === 's2' || c.x === 's4') return NN[c.root] + (c.x === 's2' ? 'SUS2' : 'SUS');
   let n = NN[c.root] + (c.q === 'min' ? 'm' : c.q === 'dim' ? 'o' : '');
   if (c.x === '7') n += c.q === 'maj' && c.sev === 11 ? 'M7' : '7';
-  else if (c.x === 'a9') n += '+9';
+  else if (c.x === 'a9') n += '2';   // C2 = C add 9, the usual pop-chart spelling (a + would read as augmented)
   return n;
 }
 const sameChord = (a, b) => !!a && !!b && a.root === b.root && a.q === b.q && (a.x || '') === (b.x || '');
@@ -968,9 +969,12 @@ function findChords(mels){
     let changed = false;
     const out = pr.map((c, i) => {
       let n = null;
-      if (style === '7' && c.q !== 'dim') n = Object.assign({}, c, { x:'7', sev:sevOf(c) });
-      if (style === 'sus' && c.q !== 'dim' && (c.deg === 4 || c.deg === 0)) n = Object.assign({}, c, { x:c.deg === 4 ? 's4' : 's2' });
-      if (style === 'a9' && c.q === 'maj') n = Object.assign({}, c, { x:'a9' });
+      // colors go only where they are idiomatic, so most chords stay plain triads:
+      // 7ths on the dominant (V7, or the V of chord 1) and on ii; sus4 on a dominant at the end of a phrase; add9 on I and IV
+      const dom = (c.deg === 4 || c.deg === -2) && c.q === 'maj';
+      if (style === '7' && (dom || (c.deg === 1 && c.q === 'min'))) n = Object.assign({}, c, { x:'7', sev:sevOf(c) });
+      if (style === 'sus' && dom && i % 4 >= 2) n = Object.assign({}, c, { x:'s4' });
+      if (style === 'a9' && c.q === 'maj' && (c.deg === 0 || c.deg === 3)) n = Object.assign({}, c, { x:'a9' });
       if (n && fits(n, i)) { changed = true; return n; }
       return c;
     });
@@ -1358,7 +1362,7 @@ function mainTurn(dir){
   if (st.mode === 'rhythm') { st.rhy = (st.rhy + dir + RHY.length) % RHY.length; return; }
   if (st.mode === 'pattern') { st.pat = (st.pat + dir + PATTERNS.length) % PATTERNS.length; return; }
   const B = st.bars[st.sel % 4];
-  if (st.phase === 'suggest') { const n = st.options.length; st.optIdx = (st.optIdx + dir + n) % n; return; }
+  if (st.phase === 'suggest') { const i2 = st.optIdx + dir; if (i2 < 0 || i2 >= st.options.length) { flash(i2 < 0 ? 'FIRST OPTION' : 'LAST OPTION'); return; } st.optIdx = i2; return; }
   // bars 5-8: the knob moves that bar's top note straight away (no adapting, nothing to confirm)
   if (st.sel >= 4) { if (!st.prog) return; const k = st.sel - 4, cur = barNotes(st.sel)[0].midi, m = stepPitch(cur, dir);
     if (m === cur) { flash(dir > 0 ? 'HIGHEST NOTE' : 'LOWEST NOTE'); return; } st.top2[k] = m; preview(m); return; }
@@ -1536,10 +1540,19 @@ function selBar(i){
 }
 const MODES = ['METRONOME', 'CHORDS', 'RHYTHM', 'NOTES', 'PATTERN'];
 function openMenu(){ st.menu = true; st.menuIdx = Math.max(0, MODES.indexOf(st.mode.toUpperCase())); st.grab = null; }
+// the best option sits at number 5, with the next-best ones on both sides, so a turn either way stays musical;
+// the list stops at both ends instead of wrapping around to the least likely options
+const OPT_START = 4;
+function arrangeOptions(list){
+  if (list.length <= OPT_START + 1) return { list, idx:0 };
+  const back = [], fwd = [];
+  for (let i = 1; i < list.length; i++) (back.length < OPT_START && i % 2 === 0 ? back : fwd).push(list[i]);
+  return { list:back.reverse().concat([list[0]], fwd), idx:back.length };
+}
 function runChordFinder(){
   if (!allSet()) { flash('SET 4 NOTES FIRST'); return false; }
   const r = findChords(st.bars.map(b => b.mel.midi));
-  st.options = r.options; st.optIdx = 0; st.phase = 'suggest'; flash('KEY ' + NN[r.key.root] + ' ' + r.key.mode.toUpperCase()); return true;
+  const ar = arrangeOptions(r.options); st.options = ar.list; st.optIdx = ar.idx; st.phase = 'suggest'; flash('KEY ' + NN[r.key.root] + ' ' + r.key.mode.toUpperCase()); return true;
 }
 function enterMode(){
   const m = MODES[st.menuIdx];
@@ -1585,10 +1598,10 @@ function bTap(){
   if (st.phase === 'adapt') { const pd = st.pending; st.bars[pd.bar].mel.midi = pd.oldMidi; st.pending = null; st.phase = 'edit'; flash('UNDONE'); preview(pd.oldMidi); return; }
   // with chords set, B reopens the suggestions: what you have now is option 1, turn the knob for new ones
   if (st.phase === 'edit' && st.prog && allSet()) {
-    const cur = st.prog.slice(); runChordFinder();
+    const cur = st.prog.slice(), r0 = findChords(st.bars.map(b => b.mel.midi)).options; st.phase = 'suggest';
     const k = cur.map(chordName).join(' ');
-    st.options = [{ chords:cur, score:1e9, tag:'CURRENT' }].concat(st.options.filter(o => o.chords.map(chordName).join(' ') !== k));
-    st.optIdx = 0; flash('NOW: OPTION 1'); return;
+    const ar = arrangeOptions([{ chords:cur, score:1e9, tag:'CURRENT' }].concat(r0.filter(o => o.chords.map(chordName).join(' ') !== k)));
+    st.options = ar.list; st.optIdx = ar.idx; flash('YOURS: OPTION ' + (ar.idx + 1)); return;
   }
 }
 function bHold(){
