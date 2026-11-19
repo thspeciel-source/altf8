@@ -159,7 +159,7 @@
         <tr><td>Bar buttons 1-4</td><td><kbd>1</kbd><kbd>2</kbd><kbd>3</kbd><kbd>4</kbd></td></tr>
         <tr><td>F8: confirm / find chords. Hold: power on</td><td><kbd>Enter</kbd></td></tr>
         <tr><td>Power off: hold Play + F8 together until the bar fills</td><td>hold <kbd>Space</kbd> + <kbd>Enter</kbd></td></tr>
-        <tr><td>B: reject / cancel. Otherwise opens the selector menu (Notes, Rhythm, Pattern, Chords). Hold: delete note</td><td><kbd>Backspace</kbd></td></tr>
+        <tr><td>B: reject a suggestion or undo a pending change. Hold in note entry: delete the note</td><td><kbd>Backspace</kbd></td></tr>
         <tr><td>Play / pause</td><td><kbd>Space</kbd></td></tr>
         <tr><td>Switch screen: hold Play to open the fan from the top-right corner, turn the knob (the picked screen turns yellow), let go to open it</td><td>hold <kbd>Space</kbd>, <kbd>&larr;</kbd><kbd>&rarr;</kbd>, release</td></tr>
       </table>
@@ -176,13 +176,13 @@
       <ul class="help">
         <li>Melody screen: pick a bar (1-4), turn the main knob to set its pitch, go to the next bar. With 4 pitches set, press F8 to find chords.</li>
         <li>Suggestions blink. F8 keeps one, B rejects it, the knob scrolls through the others. Press Play to hear them.</li>
-        <li>After confirming: pick a bar, turn the knob to a note, F8 to grab it, turn to move it, F8 to place or B to cancel. Hold B to delete.</li>
+        <li>After keeping chords: pick a bar (1-4) and turn the knob to move its main note; the chords re-adapt, F8 keeps the change, B undoes it. F8 with nothing pending reopens the chord suggestions.</li>
         <li>Yellow = notes you placed. Cyan = notes placed by the chord finder.</li>
         <li>The loop is 8 bars: your 4 chords, then the 4 again (the suggestions may change chord 8, or 7 and 8). After you keep chords, the knob moves only the main note of the selected bar; the chords re-adapt, F8 keeps the change, B undoes it.</li>
         <li>On the note design screen, Play plays the note once; press Play again within 2 seconds to loop it, and once more to stop.</li>
-        <li>Press B (when not rejecting or cancelling) to open the selector menu at the top. Turn the knob to pick NOTES, RHYTHM, PATTERN or CHORDS, then press F8.</li>
-        <li>PATTERN sets how long each of the 4 chords lasts across the loop. RHYTHM sets how each chord is split into hits. All notes light up and change live as you turn the knob; F8 keeps it, B goes back to the menu.</li>
-        <li>CHORDS reopens the chord finder suggestions at any time.</li>
+        <li>The metronome is on the Settings screen.</li>
+        <li>Knob 1 shares the bars between the chords (beats per chord), knob 2 picks the rhythm (each one has its own ending in bar 8), knob 3 the arpeggio.</li>
+
         <li>Tempo, key, cutoff and resonance are on the settings screen: knob to pick, F8 to edit, knob to change, F8 when done.</li>
       </ul>
     </div>
@@ -216,45 +216,47 @@ const MAJ = [0,2,4,5,7,9,11], MIN = [0,2,3,5,7,8,10];
 const KEYS = ['CHROM'].concat(NN.map(n => n + ' MAJ'), NN.map(n => n + ' MIN'));
 // PATTERN = how long each of the 4 chords lasts across the 4-bar loop (harmonic rhythm), on a 16th grid.
 // Each entry is [chord slot, length in 16ths]; off < 0 starts every change early (anticipation).
-// CHORD LENGTHS + FEEL (knob 1 on the melody screen): how long each of the 4 chords lasts (per 4-bar half, 16th grid),
-// plus the feel: swing/shuffle (late offbeats), note length (gate) and humanize (small timing and loudness wobble).
-// Each seq entry is [chord slot, length in 16ths]; off < 0 starts every change early.
+// CHORD LENGTHS (knob 1 on the melody screen): how the 16 beats of each 4-bar half are shared between the 4 chords,
+// always starting on the downbeat and in order (no shifting, no doubling). Names give the beats per chord.
+// A few presets also carry a feel: swing/shuffle (late offbeats), note length (gate) and humanize.
+const B4 = beats => beats.map((b, i) => [i, b * 4]);
 const PATTERNS = [
-  { name:'ONE PER BAR', off:0, seq:[[0,16],[1,16],[2,16],[3,16]] },
-  { name:'ONE PER BAR SWING', off:0, seq:[[0,16],[1,16],[2,16],[3,16]], swing:0.6 },
-  { name:'ONE PER BAR STACCATO', off:0, seq:[[0,16],[1,16],[2,16],[3,16]], gate:0.4 },
-  { name:'TWO PER BAR', off:0, seq:[[0,8],[1,8],[2,8],[3,8],[0,8],[1,8],[2,8],[3,8]] },
-  { name:'TWO PER BAR SHUFFLE', off:0, seq:[[0,8],[1,8],[2,8],[3,8],[0,8],[1,8],[2,8],[3,8]], swing:1 },
-  { name:'PUSHED 8TH', off:-2, seq:[[0,16],[1,16],[2,16],[3,16]] },
-  { name:'PUSHED 8TH LOOSE', off:-2, seq:[[0,16],[1,16],[2,16],[3,16]], human:0.7 },
-  { name:'PUSHED BEAT', off:-4, seq:[[0,16],[1,16],[2,16],[3,16]] },
-  { name:'HOLD THE FIRST LEGATO', off:0, seq:[[0,32],[1,16],[2,8],[3,8]], gate:1.08 },
-  { name:'SPEED UP TO END', off:0, seq:[[0,24],[1,24],[2,8],[3,8]] },
-  { name:'SLOW DOWN LEGATO', off:0, seq:[[0,8],[1,8],[2,24],[3,24]], gate:1.08 },
-  { name:'LONG SHORT STACCATO', off:0, seq:[[0,24],[1,8],[2,24],[3,8]], gate:0.45 },
-  { name:'SHORT LONG SWING', off:0, seq:[[0,8],[1,24],[2,8],[3,24]], swing:0.5 },
-  { name:'LATE CHANGES 16 SWING', off:0, seq:[[0,20],[1,12],[2,20],[3,12]], swing:0.6, grid:16 },
-  { name:'TURNAROUND', off:0, seq:[[0,16],[1,16],[2,24],[3,8]] },
-  { name:'LOOSE AND HUMAN', off:0, seq:[[0,16],[1,16],[2,16],[3,16]], swing:0.3, human:1 }
+  { name:'EVEN 4-4-4-4', off:0, seq:B4([4, 4, 4, 4]) },
+  { name:'DOTTED WHOLE + HALF 6-2-6-2', off:0, seq:B4([6, 2, 6, 2]) },
+  { name:'HALF + DOTTED WHOLE 2-6-2-6', off:0, seq:B4([2, 6, 2, 6]) },
+  { name:'SYNCOPATED 5-3-5-3', off:0, seq:B4([5, 3, 5, 3]) },
+  { name:'SYNCOPATED 3-5-3-5', off:0, seq:B4([3, 5, 3, 5]) },
+  { name:'LONG FIRST 8-4-2-2', off:0, seq:B4([8, 4, 2, 2]) },
+  { name:'LONG LAST 2-2-4-8', off:0, seq:B4([2, 2, 4, 8]) },
+  { name:'DOTTED LEAD 6-4-4-2', off:0, seq:B4([6, 4, 4, 2]) },
+  { name:'TWO LONG TWO SHORT 6-6-2-2', off:0, seq:B4([6, 6, 2, 2]) },
+  { name:'3-3-2 THEN HOLD 3-3-2-8', off:0, seq:B4([3, 3, 2, 8]) },
+  { name:'PASSING CHORDS 7-1-7-1', off:0, seq:B4([7, 1, 7, 1]) },
+  { name:'EVEN SWING', off:0, seq:B4([4, 4, 4, 4]), swing:0.6 },
+  { name:'EVEN SHUFFLE', off:0, seq:B4([4, 4, 4, 4]), swing:1 },
+  { name:'EVEN STACCATO', off:0, seq:B4([4, 4, 4, 4]), gate:0.4 },
+  { name:'6-2-6-2 LEGATO', off:0, seq:B4([6, 2, 6, 2]), gate:1.08 },
+  { name:'EVEN LOOSE AND HUMAN', off:0, seq:B4([4, 4, 4, 4]), swing:0.3, human:1 }
 ];
 // RHYTHM + ACCENTS (knob 2): when each chord is hit (16th positions in a bar; a chord change is always a hit),
 // how long a hit may ring (cap, 16ths) and how hard each position is played (acc, missing = dflt).
+// end = the last bar of the 8-bar loop: a more conclusive figure (stop = rest after the last hit, otherwise it rings out).
 const RHY = [
-  { name:'SUSTAIN', hits:[], cap:64 },
-  { name:'HALF NOTES', hits:[0,8], cap:64, acc:{0:1,8:0.8} },
-  { name:'QUARTERS ON 1 AND 3', hits:[0,4,8,12], cap:64, acc:{0:1,4:0.62,8:0.9,12:0.62} },
-  { name:'BACKBEAT QUARTERS', hits:[0,4,8,12], cap:64, acc:{0:0.65,4:1,8:0.65,12:1} },
-  { name:'DRIVING EIGHTHS', hits:[0,2,4,6,8,10,12,14], cap:64, acc:{0:1,4:0.85,8:0.95,12:0.85}, dflt:0.62 },
-  { name:'PUMPING OFFBEAT 8THS', hits:[0,2,4,6,8,10,12,14], cap:64, acc:{2:1,6:1,10:1,14:1}, dflt:0.55 },
-  { name:'EIGHTHS 3-3-2 ACCENT', hits:[0,2,4,6,8,10,12,14], cap:64, acc:{0:1,6:1,12:1}, dflt:0.58 },
-  { name:'CHARLESTON', hits:[0,6], cap:64, acc:{0:1,6:0.85} },
-  { name:'TRESILLO 3+3+2', hits:[0,6,12], cap:64, acc:{0:1,6:0.85,12:0.9} },
-  { name:'BOSSA', hits:[0,3,6,10,13], cap:3, acc:{0:1,6:0.9}, dflt:0.72 },
-  { name:'POP SYNCOPATION', hits:[0,3,6,10,12], cap:64, acc:{0:1,6:1}, dflt:0.75 },
-  { name:'SIXTEENTH GROOVE', hits:[0,3,6,8,11,14], cap:2, acc:{0:1,8:0.9}, dflt:0.68 },
-  { name:'OFFBEAT STABS', hits:[2,6,10,14], cap:1 },
-  { name:'REGGAE SKANK', hits:[4,12], cap:1 },
-  { name:'GALLOP', hits:[0,2,3,4,6,7,8,10,11,12,14,15], cap:1, acc:{0:1,4:0.85,8:0.95,12:0.85}, dflt:0.6 }
+  { name:'SUSTAIN', hits:[], cap:64, end:{ hits:[0,12], acc:{12:0.75} } },
+  { name:'HALF NOTES', hits:[0,8], cap:64, acc:{0:1,8:0.8}, end:{ hits:[0,4,8], acc:{0:1,4:0.7,8:1} } },
+  { name:'QUARTERS ON 1 AND 3', hits:[0,4,8,12], cap:64, acc:{0:1,4:0.62,8:0.9,12:0.62}, end:{ hits:[0,4,8], cap:4, stop:true, acc:{0:1,4:0.7,8:1} } },
+  { name:'BACKBEAT QUARTERS', hits:[0,4,8,12], cap:64, acc:{0:0.65,4:1,8:0.65,12:1}, end:{ hits:[0,4,8,10,12,14], cap:2, acc:{0:1,4:1,8:0.75,10:0.8,12:0.9}, dflt:1 } },
+  { name:'DRIVING EIGHTHS', hits:[0,2,4,6,8,10,12,14], cap:64, acc:{0:1,4:0.85,8:0.95,12:0.85}, dflt:0.62, end:{ hits:[0,2,4,6,8], cap:2, stop:true, acc:{0:1,8:1}, dflt:0.7 } },
+  { name:'PUMPING OFFBEAT 8THS', hits:[0,2,4,6,8,10,12,14], cap:64, acc:{2:1,6:1,10:1,14:1}, dflt:0.55, end:{ hits:[2,6,10,12], cap:2, acc:{12:1}, dflt:0.8 } },
+  { name:'EIGHTHS 3-3-2 ACCENT', hits:[0,2,4,6,8,10,12,14], cap:64, acc:{0:1,6:1,12:1}, dflt:0.58, end:{ hits:[0,6,12], acc:{0:1,6:1,12:1} } },
+  { name:'CHARLESTON', hits:[0,6], cap:64, acc:{0:1,6:0.85}, end:{ hits:[0,6,12], acc:{0:1,6:0.85,12:1} } },
+  { name:'TRESILLO 3+3+2', hits:[0,6,12], cap:64, acc:{0:1,6:0.85,12:0.9}, end:{ hits:[0,3,6,12], acc:{0:1,3:0.7,6:0.85,12:1} } },
+  { name:'BOSSA', hits:[0,3,6,10,13], cap:3, acc:{0:1,6:0.9}, dflt:0.72, end:{ hits:[0,3,6,8], cap:3, acc:{0:1,8:1}, dflt:0.75 } },
+  { name:'POP SYNCOPATION', hits:[0,3,6,10,12], cap:64, acc:{0:1,6:1}, dflt:0.75, end:{ hits:[0,3,6,8], acc:{0:1,8:1}, dflt:0.8 } },
+  { name:'SIXTEENTH GROOVE', hits:[0,3,6,8,11,14], cap:2, acc:{0:1,8:0.9}, dflt:0.68, end:{ hits:[0,3,6,8,11,12,13,14], cap:1, acc:{0:1,8:1,14:1}, dflt:0.7 } },
+  { name:'OFFBEAT STABS', hits:[2,6,10,14], cap:1, end:{ hits:[2,6,8], cap:1, acc:{8:1}, dflt:0.85 } },
+  { name:'REGGAE SKANK', hits:[4,12], cap:1, end:{ hits:[4,8], cap:1, acc:{8:1} } },
+  { name:'GALLOP', hits:[0,2,3,4,6,7,8,10,11,12,14,15], cap:1, acc:{0:1,4:0.85,8:0.95,12:0.85}, dflt:0.6, end:{ hits:[0,2,3,4,6,7,8], cap:1, acc:{0:1,8:1}, dflt:0.7 } }
 ];
 // ARPEGGIO + VOICING (knob 3): play one chord note per hit instead of the whole chord.
 // mode = note order, rate = 16ths per note, spread = voicing (close, open drop-2, wide, bass note added), oct = octaves.
@@ -315,12 +317,23 @@ function chordSegments(){
 function patternEvents(){
   const key = st.pat + ':' + st.rhy + ':' + st.arp;
   if (evCache.key === key) return evCache.list;
-  const R = RHY[st.rhy], A = ARPS[st.arp] || ARPS[0], segs = chordSegments(), out = [];
+  const R = RHY[st.rhy], A = ARPS[st.arp] || ARPS[0], segs = chordSegments(), out = [], END = LOOP - 16;
   for (const sg of segs) {
     const starts = [];
-    for (let k = 0; k < sg.len; k++) { const g = sg.start + k; if (k === 0 || (A.mode ? k % A.rate === 0 : R.hits.includes(((g % 16) + 16) % 16))) starts.push(k); }
-    starts.forEach((k, i) => { const next = i + 1 < starts.length ? starts[i + 1] : sg.len, g = (sg.start + k) % LOOP;
-      out.push({ start:g, len:Math.min(next - k, A.mode ? A.rate : R.cap), bar:sg.slot, k:i, pos:g % 16 }); });
+    for (let k = 0; k < sg.len; k++) {
+      const g = sg.start + k, last = g >= END, pos = ((g % 16) + 16) % 16;
+      if (k === 0) { starts.push(k); continue; }
+      if (A.mode) { if (last ? pos === 0 : k % A.rate === 0) starts.push(k); }
+      else if ((last && R.end ? R.end.hits : R.hits).includes(pos)) starts.push(k);
+    }
+    starts.forEach((k, i) => {
+      const next = i + 1 < starts.length ? starts[i + 1] : sg.len, g = (sg.start + k) % LOOP, last = g >= END;
+      let len;
+      if (A.mode) len = last ? next - k : Math.min(next - k, A.rate);
+      else if (last && R.end) len = (i + 1 === starts.length && !R.end.stop) ? next - k : Math.min(next - k, R.end.cap || R.cap);
+      else len = Math.min(next - k, R.cap);
+      out.push({ start:g, len, bar:sg.slot, k:i, pos:g % 16, last, full:!!(A.mode && last) });
+    });
   }
   out.sort((x, y) => x.start - y.start);
   evCache = { key, list:out, segs };
@@ -350,9 +363,10 @@ const VERSIONS = [
   { id:'v16', file:'versions/v16.html', label:'v16 - Flat top-down look, edge-to-edge phone (2026-11-18)', note:'No side edges or drop shadows on knobs and buttons. Full screen fills under the status bar and home bar; opening from a Home Screen icon goes straight to full screen.' },
   { id:'v17', file:'versions/v17.html', label:'v17 - Note shaping: 4 buttons x 2 pages (2026-11-18)', note:'NOTE SHAPE screen: buttons 1-4 pick Source, Envelope, Filter + Drive, Motion + FX; press again for page 2. Each knob shows a close-up, the whole note or the harmonics, in its own color.' },
   { id:'v18', file:'versions/v18.html', label:'v18 - 8-bar loops, adaptive chords, feel/rhythm/arp knobs (2026-11-18)', note:'Chord finder suggests 8-chord loops (chord 8 can resolve, or 7 and 8 change) in plain, 7th, sus and add9 colors. After keeping chords, the knob moves only the main note; chords re-adapt, F8 keeps, B undoes. Melody knobs: 1 chord lengths + swing/note length/humanize, 2 rhythm + accents, 3 arpeggio + voicing, 4 tempo.' },
-  { id:'v19', file:'index.html', label:'v19 - iPhone sound, play/pause badge, free resolving endings (2026-11-18)', note:'Sound starts on any tap or knob release on iPhone. Play/pause badge comes out of the corner and dissolves. Changed endings (chord 8, or 7 and 8) pick the best resolution back to chord 1, even if it needs a different top note; those show in pink.' }
+  { id:'v19', file:'versions/v19.html', label:'v19 - iPhone sound, play/pause badge, free resolving endings (2026-11-18)', note:'Sound starts on any tap or knob release on iPhone. Play/pause badge comes out of the corner and dissolves. Changed endings (chord 8, or 7 and 8) pick the best resolution back to chord 1, even if it needs a different top note; those show in pink.' },
+  { id:'v20', file:'index.html', label:'v20 - Full-height notes, no B menu, conclusive bar 8 (2026-11-18)', note:'Chord names at the very top, notes fill the screen. No selector menu: B rejects/undoes, F8 reopens chord suggestions, metronome is in Settings. Knob 1 now only shares the bars between chords (beats per chord). Every rhythm has its own ending in bar 8; arpeggios end on a held chord.' }
 ];
-const CURRENT = 'v19';
+const CURRENT = 'v20';
 /* ---- synth engine constants (v12) ---- */
 const UNI_MAX = 7;
 const FTYPES = ['lowpass','highpass','bandpass','notch'], FNAME = ['LP','HP','BP','NOTCH'];
@@ -1157,8 +1171,8 @@ function schedule(s, t){
   for (const e of patternEvents()) if (e.start === s) {
     const tt = t + swingDelay(P, s), dur = e.len * stepDur() * (e.len <= 1 ? 0.6 : 0.95) * (P.gate || 1);
     const bn = barNotes(e.bar); if (!bn.length) continue;
-    if (A.mode) { const ms = arpNotes(bn, A), m = ms[arpIndex(ms.length, A.mode, e.k)]; voice(m, Math.max(t, tt + jit()), dur, (e.k % 4 === 0 ? 0.95 : 0.78) * vj(), 0); }
-    else { const acc = R.acc ? (R.acc[e.pos] !== undefined ? R.acc[e.pos] : (R.dflt || 0.8)) : 1;
+    if (A.mode && !e.full) { const ms = arpNotes(bn, A), m = ms[arpIndex(ms.length, A.mode, e.k)]; voice(m, Math.max(t, tt + jit()), dur, (e.k % 4 === 0 ? 0.95 : 0.78) * vj(), 0); }
+    else { const RA = e.last && R.end && !A.mode ? R.end : R, acc = RA.acc ? (RA.acc[e.pos] !== undefined ? RA.acc[e.pos] : (RA.dflt || 0.8)) : 1;
       bn.forEach((n, li) => voice(n.midi, Math.max(t, tt + jit()), dur, (n.mel ? 1 : 0.55) * acc * vj(), li)); }
   }
   if (st.metro && s % 4 === 0) kick(t, s % 16 === 0);
@@ -1200,7 +1214,7 @@ function mainTurn(dir){
   if (!st.on) return;
   st.mainAngle += dir * 15; document.getElementById('mainknob').style.setProperty('--rot', st.mainAngle + 'deg');
   if (held.play) { held.playUsed = true; if (!st.fan || st.fan.closing) openFan(); st.fan.sel = (st.fan.sel + dir + FAN.length) % FAN.length; return; }
-  if (st.screen === 'settings') { if (st.setEdit) changeSetting(dir); else st.setCur = (st.setCur + dir + 4) % 4; return; }
+  if (st.screen === 'settings') { if (st.setEdit) changeSetting(dir); else st.setCur = (st.setCur + dir + SETTINGS.length) % SETTINGS.length; return; }
   if (st.screen === 'filter') { st.fSel = 1 - st.fSel; return; }
   if (st.screen === 'mod') { modTurn(dir); return; }
   if (st.screen === 'design') { const P = st.patch; P.wave = SH_WAVES[(Math.max(0, SH_WAVES.indexOf(P.wave)) + dir + 3) % 3]; st.viewKind = 'close'; st.viewKey = 'wave'; st.viewT = performance.now(); st.lastKnob = st.shTab === 0 && st.shPage === 0 ? 0 : -1; if (performance.now() - st.lastEdit > 2000) previewDesign(); st.lastEdit = performance.now(); return; }
@@ -1302,20 +1316,22 @@ function setKnob(i, dir){
   st.lastEdit = now;
 }
 function knobFrac(i){ return clamp(knobDefs()[i].frac(), 0, 1); }
-const SETTINGS = ['TEMPO', 'KEY', 'CUTOFF 1', 'RESO 1'];
+const SETTINGS = ['TEMPO', 'KEY', 'CUTOFF 1', 'RESO 1', 'METRONOME'];
 function changeSetting(dir){
   const P = st.patch, c = st.setCur;
   if (c === 0) st.tempo = Math.max(60, Math.min(200, st.tempo + dir * 2));
   if (c === 1) st.key = (st.key + dir + KEYS.length) % KEYS.length;
   if (c === 2) { P.cutoff = Math.max(40, Math.min(16000, P.cutoff * Math.pow(1.1, dir))); applyFilter(); }
   if (c === 3) { P.reso = Math.max(0.5, Math.min(18, Math.round((P.reso + dir * 0.5) * 10) / 10)); applyFilter(); }
-  if (c >= 1) previewBar();
+  if (c === 4) st.metro = !st.metro;
+  if (c >= 1 && c < 4) previewBar();
 }
 function settingValue(c){
   const P = st.patch;
   if (c === 0) return st.tempo + ' BPM';
   if (c === 1) return KEYS[st.key];
   if (c === 2) return P.cutoff >= 1000 ? (P.cutoff / 1000).toFixed(1) + 'K' : Math.round(P.cutoff) + '';
+  if (c === 4) return st.metro ? 'ON' : 'OFF';
   return P.reso.toFixed(1);
 }
 function grabbedNote(){ const B = st.bars[st.sel]; return st.grab.ref === 'mel' ? B.mel : B.notes[st.grab.ref]; }
@@ -1381,20 +1397,19 @@ function f8Tap(){
     st.bars.forEach((B, i) => { B.chord = st.prog[i]; B.notes = voicing(B.mel.midi, st.prog[i]).map(m => ({ midi:m, auto:true })); });
     st.phase = 'edit'; flash('CHANGE KEPT'); return;
   }
+  if (st.phase === 'edit') runChordFinder();
 }
 function bTap(){
   if (!st.on) return;
   if (st.screen === 'settings') { st.setEdit = false; return; }
   if (st.screen !== 'melody') return;
-  if (st.menu) { st.menu = false; return; }
-  if (st.mode !== 'notes') { openMenu(); return; }
+  st.menu = false; st.mode = 'notes';
   if (st.phase === 'suggest') {
     st.options.splice(st.optIdx, 1);
     if (!st.options.length) { st.phase = 'entry'; flash('NO MORE OPTIONS'); return; }
     st.optIdx = st.optIdx % st.options.length; flash('REJECTED'); return;
   }
   if (st.phase === 'adapt') { const pd = st.pending; st.bars[pd.bar].mel.midi = pd.oldMidi; st.pending = null; st.phase = 'edit'; flash('UNDONE'); preview(pd.oldMidi); return; }
-  openMenu();
 }
 function bHold(){
   if (st.on && st.screen === 'mod' && st.modTab === 'mtx') { Object.assign(st.patch.mtx[st.mtxRow], { src:0, dst:0, amt:0, via:0 }); flash('SLOT ' + (st.mtxRow + 1) + ' CLEARED'); return; }
@@ -1544,30 +1559,30 @@ function env(t, P){ const a = ATK[P.a], d = DEC[P.d], s = P.s, r = REL[P.r], hol
 // menu: every item sits on the part of the screen it controls; current one outlined, next one dotted
 function drawMelody(now){
   // no permanent header: a label shows only while a knob turns or a rhythm/pattern list is open
-  if (st.mode === 'rhythm') stxt('hd', 'R:' + RHY[st.rhy].name, 27, 1, 1, C.acc);
-  else if (st.mode === 'pattern') stxt('hd', 'P:' + PATTERNS[st.pat].name, 27, 1, 1, C.acc);
-  else if (st.lastKnob >= 0 && now - st.lastEdit < 1500 && !st.menu) { const d = knobDefs()[st.lastKnob]; stxt('hd', (st.lastKnob === 3 ? 'TEMPO ' : '') + d.val(), 27, 1, 1, C.acc); }
+  const knobLabel = st.lastKnob >= 0 && now - st.lastEdit < 1500 ? knobDefs()[st.lastKnob] : null;
   if (st.playing && ac) { while (uiQ.length && uiQ[0].t <= ac.currentTime) curStep = uiQ.shift().s; }
   // pitch window: fixed, scrolls only when a note leaves it
   const A = ARPS[st.arp] || ARPS[0], all = [];
   for (let sl = 0; sl < 8; sl++) { const bn = barNotes(sl); (A.mode ? arpNotes(bn, A) : bn.map(n => n.midi)).forEach(m => all.push(m)); }
+  // fit the notes to the whole height (rows 10-109): zoom and center, easing so moves stay readable
   if (all.length) {
-    const mx = Math.max(...all), mn = Math.min(...all);
-    if (mx > st.viewTop) st.viewTop = mx;
-    if (mn < st.viewTop - 45) st.viewTop = Math.max(mx, mn + 45);
-  }
-  const top = st.viewTop, yOf = m => 19 + (top - m) * 2;
-  for (let m = top - 45; m <= top; m++) if (m % 12 === 0) { const y = yOf(m) + 1; px(1, y, 110, 1, C.grid); }
+    const mx = Math.max(...all), mn = Math.min(...all), span = Math.max(16, mx - mn + 4);
+    const tPs = Math.min(6, 100 / span), tTop = mx + (100 / tPs - (mx - mn)) / 2;
+    if (!st.vPs) { st.vPs = tPs; st.vTop = tTop; }
+    st.vPs += (tPs - st.vPs) * 0.2; st.vTop += (tTop - st.vTop) * 0.2;
+  } else if (!st.vPs) { st.vPs = 2; st.vTop = 84; }
+  const yOf = m => Math.round(10 + (st.vTop - m) * st.vPs), nh = clamp(Math.round(st.vPs) - 1, 2, 4);
+  for (let m = Math.floor(st.vTop - 100 / st.vPs); m <= st.vTop; m++) if (m % 12 === 0) { const y = yOf(m) + 1; if (y > 9 && y < 110) px(1, y, 110, 1, C.grid); }
   const blink = Math.floor(now / 350) % 2 === 0, sugg = st.phase === 'suggest' || st.phase === 'adapt';
   const colX = s => 1 + Math.floor(s * 110 / LOOP);
   const allSel = st.mode === 'rhythm' || st.mode === 'pattern';
   patternEvents(); const segs = evCache.segs, pr = curProg();
   // 8 bars across the screen: beat ticks, a faint line between the two halves, playhead
-  for (let b = 0; b < 8; b++) for (let k = 0; k < 16; k += 4) px(colX(b * 16 + k), 17, 1, 1, k ? C.grid : C.dim);
-  for (let y = 19; y < 108; y += 3) px(colX(64), y, 1, 1, C.grid);
-  if (curStep >= 0) px(colX(curStep), 16, 1, 2, C.play);
+  for (let b = 0; b < 8; b++) for (let k = 0; k < 16; k += 4) px(colX(b * 16 + k), 8, 1, 1, k ? C.grid : C.dim);
+  for (let y = 10; y < 110; y += 3) px(colX(64), y, 1, 1, C.grid);
+  if (curStep >= 0) px(colX(curStep), 7, 1, 2, C.play);
   // selection lines over the selected bar's chord, in both halves
-  for (const sg of segs) if (allSel || sg.slot % 4 === st.sel) { const c = allSel ? C.sel : C.acc; px(colX(sg.start), 9, Math.max(1, colX(sg.start + sg.len) - colX(sg.start)), 1, c); px(colX(sg.start), 110, Math.max(1, colX(sg.start + sg.len) - colX(sg.start)), 1, c); }
+  for (const sg of segs) if (allSel || sg.slot % 4 === st.sel) { const c = allSel ? C.sel : C.acc; px(colX(sg.start), 6, Math.max(1, colX(sg.start + sg.len) - colX(sg.start)), 1, c); px(colX(sg.start), 111, Math.max(1, colX(sg.start + sg.len) - colX(sg.start)), 1, c); }
   // chord names at the first time each of the 8 chords appears; second-half chords that differ are yellow
   let lastName = -99; const seen = new Set();
   if (pr) for (const sg of segs.slice().sort((x, y) => x.start - y.start)) {
@@ -1575,35 +1590,35 @@ function drawMelody(now){
     const ch = pr[sg.slot]; if (!ch) continue;
     const cname = chordName(ch), x = colX(sg.start);
     const differs = sg.slot >= 4 && !sameChord(ch, pr[sg.slot - 4]);
-    if (x >= lastName && !(sugg && !blink)) { txt(cname, x, 11, sugg || differs ? C.sug : C.auto); lastName = x + cname.length * 4 + 1; }
+    if (x >= lastName && !(sugg && !blink)) { txt(cname, x, 0, sugg || differs ? C.sug : C.auto); lastName = x + cname.length * 4 + 1; }
   }
   // brackets around the selected bar's main note (first half) when you can move it
   if ((st.phase === 'edit' || st.phase === 'adapt') && st.mode === 'notes' && !st.menu && st.bars[st.sel].mel) {
     const sg = segs.find(z => z.slot === st.sel);
-    if (sg) { const y = yOf(st.bars[st.sel].mel.midi); px(colX(sg.start) - 1, y - 1, 1, 4, C.sel); px(colX(sg.start + sg.len), y - 1, 1, 4, C.sel); }
+    if (sg) { const y = yOf(st.bars[st.sel].mel.midi); px(colX(sg.start) - 1, y - 1, 1, nh + 2, C.sel); px(colX(sg.start + sg.len), y - 1, 1, nh + 2, C.sel); }
   }
   // notes, drawn where they play; arpeggios show only the note each hit plays
   for (const e of patternEvents()) {
     const bn = barNotes(e.bar); if (!bn.length) continue;
     const x0 = colX(e.start), x1 = colX(e.start + e.len), w = Math.max(1, x1 - x0 - (x1 - x0 >= 3 ? 1 : 0));
     let list;
-    if (A.mode) { const ms = arpNotes(bn, A); const m = ms[arpIndex(ms.length, A.mode, e.k)]; const top = bn.find(n => n.mel && n.midi === m); list = [{ midi:m, mel:!!top, alt:top && top.alt }]; }
+    if (A.mode && !e.full) { const ms = arpNotes(bn, A); const m = ms[arpIndex(ms.length, A.mode, e.k)]; const top = bn.find(n => n.mel && n.midi === m); list = [{ midi:m, mel:!!top, alt:top && top.alt }]; }
     else list = bn;
     for (const n of list) {
-      const y = yOf(n.midi); if (y <= 18 || y >= 110) continue;
+      const y = yOf(n.midi); if (y <= 9 || y >= 110) continue;
       let c = n.mel ? (n.alt ? C.sug : C.acc) : sugg ? (blink ? C.sug : null) : C.auto;
       if (st.phase === 'adapt' && n.mel && e.bar % 4 === st.pending.bar) c = blink ? C.sel : C.acc;
       if (allSel && c) c = blink ? C.sel : c;
-      if (c) px(x0, y, w, 2, c);
+      if (c) px(x0, y, w, nh, c);
     }
   }
-  if (st.menu) { drawMenu(now); return 'F8:OK NEXT:' + MODES[(st.menuIdx + 1) % MODES.length]; }
-  if (st.mode !== 'notes') return 'KNOB F8:KEEP B:MENU';
+  // while a knob turns, its value covers the chord names for a moment
+  if (knobLabel) { px(0, 0, 112, 6, C.bg); stxt('hd', (st.lastKnob === 3 ? 'TEMPO ' : '') + knobLabel.val(), 27, 1, 0, C.acc); }
   const n = st.bars.filter(b => b.mel).length;
-  if (st.phase === 'entry') return n < 4 ? 'KNOB:PITCH ' + n + '/4  B:MENU' : 'F8:FIND CHORDS';
+  if (st.phase === 'entry') return n < 4 ? 'KNOB:PITCH ' + n + '/4' : 'F8:FIND CHORDS';
   if (st.phase === 'suggest') return 'KNOB:MORE F8:OK B:NO ' + (st.optIdx + 1) + '/' + st.options.length + ' ' + (st.options[st.optIdx].tag || '');
   if (st.phase === 'adapt') return 'F8:KEEP CHANGE  B:UNDO';
-  return 'KNOB:MOVE NOTE  1-4:BAR';
+  return 'KNOB:MOVE NOTE  1-4:BAR  F8:NEW CHORDS';
 }
 function menuRegion(m){
   if (m === 'METRONOME') return [0, 0, 112, 8];
@@ -1841,7 +1856,7 @@ function drawSettings(now){
     txt((cur ? '>' : ' ') + n, 1, y, cur ? C.txt : C.mut);
     txt(settingValue(i), 50, y, cur && st.setEdit && Math.floor(now / 300) % 2 ? C.sel : C.acc);
   });
-  drawOverlay(now, [0, 3, 1, 2][st.setCur], 4, 40, 104, 54);
+  drawOverlay(now, [0, 3, 1, 2, 0][st.setCur], 4, 47, 104, 48);
   return st.setEdit ? 'KNOB:CHANGE F8:DONE' : 'KNOB:PICK F8:EDIT';
 }
 // slide-in amount for corner overlays: 0 -> 1 -> 0
