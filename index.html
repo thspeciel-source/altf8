@@ -389,7 +389,7 @@ const VERSIONS = [
   { id:'v20', file:'versions/v20.html', label:'v20 - Full-height notes, no B menu, conclusive bar 8 (2026-11-18)', note:'Chord names at the very top, notes fill the screen. No selector menu: B rejects/undoes, F8 reopens chord suggestions, metronome is in Settings. Knob 1 now only shares the bars between chords (beats per chord). Every rhythm has its own ending in bar 8; arpeggios end on a held chord.' },
   { id:'v21', file:'versions/v21.html', label:'v21 - Voicing knob, gentler chord lengths, F8 blink (2026-11-18)', note:'Knob 3 is voicing spread (close, drop 2/3, wide, inversions, bass note). Knob 1 presets stay close to even, some with small gaps. F8 blinks when it has something to do; suggestion counter in the bottom-left.' },
   { id:'v22', file:'versions/v22.html', label:'v22 - Source page always zoomed in (2026-11-18)', note:'On the Sound screen, button 1 (Source, both pages) shows the close-up all the time instead of zooming in and out with each knob turn.' },
-  { id:'v23', file:'index.html', label:'v23 - Shutter + sparkle power-on, tap F8 to start (2026-11-18)', note:'Power-on opens like a camera shutter onto the logo, then sparkles twinkle around it. A quick tap on F8 now powers on too, which lets iPhone start sound right away; a blocked chime plays as soon as sound unlocks.' }
+  { id:'v23', file:'index.html', label:'v23 - Sparkle intro with shutter transition, tap F8 to start (2026-11-18)', note:'Power-on shows the logo with sparkles, then a hexagon-shaped opening closes over it and reopens onto the screen. A quick tap on F8 now powers on too, which lets iPhone start sound right away; a blocked chime plays as soon as sound unlocks.' }
 ];
 const CURRENT = 'v23';
 /* ---- synth engine constants (v12) ---- */
@@ -1939,42 +1939,36 @@ function setHint(t){
   else if (st.screen !== 'melody') t = '';
   if (t === hintTxt) return; hintTxt = t; document.getElementById('hint').textContent = t;
 }
-const BOOT_MS = 1900;
-const SPARKS = [[20,38,560],[92,36,640],[30,74,720],[84,72,800],[56,30,870],[14,58,940],[100,56,1010],[44,80,1080],[70,84,1150],[56,22,1220],[24,30,1290],[90,82,1360],[8,90,1430],[104,20,1480]];
-function drawBoot(t){
-  // logo underneath
+// power-on: the logo shows with sparkles, then a hexagon-shaped opening closes over it and reopens onto the screen
+const BOOT_LOGO = 1150, BOOT_CLOSE = 380, BOOT_OPEN = 480, BOOT_MS = BOOT_LOGO + BOOT_CLOSE + BOOT_OPEN;
+const SPARKS = [[20,38,180],[92,36,260],[30,74,340],[84,72,420],[56,30,500],[14,58,570],[100,56,640],[44,80,710],[70,84,780],[56,22,850],[24,30,910],[90,82,970]];
+function drawLogo(t){
   px(0, 0, 112, 112, C.bg); txt('ALTF8', 26, 46, C.acc, 3);
-  if (t > 900) txt('READY', 46, 66, C.mut);
-  // sparkles: little 4-point stars that grow, flash white at the center and shrink
+  if (t > 450) txt('READY', 46, 66, C.mut);
   for (const [x, y, t0] of SPARKS) {
     const u = (t - t0) / 360; if (u < 0 || u > 1) continue;
     const r = Math.round(Math.sin(u * Math.PI) * 3), c = u < 0.5 ? SEG.a : C.txt;
     px(x, y, 1, 1, '#ffffff');
     for (let k = 1; k <= r; k++) { const cc = k === r ? C.mut : c; px(x - k, y, 1, 1, cc); px(x + k, y, 1, 1, cc); px(x, y - k, 1, 1, cc); px(x, y + k, 1, 1, cc); }
-    if (r >= 2) { px(x - 1, y - 1, 1, 1, C.dim); px(x + 1, y - 1, 1, 1, C.dim); px(x - 1, y + 1, 1, 1, C.dim); px(x + 1, y + 1, 1, 1, C.dim); }
-  }
-  // camera shutter: six blades around a hexagonal opening that widens and turns
-  const o = clamp((t - 120) / 820, 0, 1), e = o < 0.5 ? 4 * o * o * o : 1 - Math.pow(-2 * o + 2, 3) / 2;
-  if (e >= 1) return;
-  const R = e * 92, th = e * Math.PI / 3, cx = 56, cy = 56, sixty = Math.PI / 3;
-  for (let y = 0; y < 112; y++) for (let x = 0; x < 112; x++) {
-    const dx = x + 0.5 - cx, dy = y + 0.5 - cy, d = Math.hypot(dx, dy);
-    let a = Math.atan2(dy, dx) - th; a = ((a % sixty) + sixty) % sixty;
-    const edge = R * Math.cos(Math.PI / 6) / Math.cos(a - Math.PI / 6);
-    if (d < edge) continue;
-    // blade seams curve outward from each corner of the opening
-    let b = Math.atan2(dy, dx) - th - (d - edge) * 0.018; b = ((b % sixty) + sixty) % sixty;
-    const seam = Math.min(b, sixty - b) * d < 0.7, rim = d < edge + 1.2;
-    const shade = 1 - Math.min(1, d / 90) * 0.35, base = b < sixty / 2 ? [32, 37, 48] : [44, 50, 64];
-    px(x, y, 1, 1, rim ? '#8a96b5' : seam ? '#4a5368' : rgbHex(base.map(v => v * shade)));
   }
 }
+// black everywhere outside a hexagon of circumradius R turned by th (no blades drawn, just the shape)
+function irisMask(R, th){
+  const cx = 56, cy = 56, sixty = Math.PI / 3;
+  for (let y = 0; y < 112; y++) for (let x = 0; x < 112; x++) {
+    const dx = x + 0.5 - cx, dy = y + 0.5 - cy, d = Math.hypot(dx, dy);
+    if (d * 0.866 < R * 0.866 - 1 && d < R * 0.866) continue;   // well inside: skip the angle math
+    let a = Math.atan2(dy, dx) - th; a = ((a % sixty) + sixty) % sixty;
+    if (d >= R * Math.cos(Math.PI / 6) / Math.cos(a - Math.PI / 6)) px(x, y, 1, 1, '#000');
+  }
+}
+const easeIO = o => o < 0.5 ? 4 * o * o * o : 1 - Math.pow(-2 * o + 2, 3) / 2;
 function draw(){
   const now = performance.now();
   if (!st.on) setHint('');
   px(0, 0, 112, 112, '#000');
   if (st.on) {
-    if (now - st.boot < BOOT_MS) drawBoot(now - st.boot);
+    if (now - st.boot < BOOT_LOGO + BOOT_CLOSE) { const t = now - st.boot; drawLogo(t); if (t > BOOT_LOGO) { const o = easeIO((t - BOOT_LOGO) / BOOT_CLOSE); irisMask(92 * (1 - o), o * 0.9); } }
     else {
       px(0, 0, 112, 112, C.bg);
       const prompt = st.screen === 'melody' ? drawMelody(now) : st.screen === 'design' ? drawDesign(now) : st.screen === 'settings' ? drawSettings(now) : drawSynth(now);
@@ -2001,6 +1995,7 @@ function draw(){
       else if (!full) stxt('pr', showMsg ? st.msg : prompt, 27, 1, 99, showMsg ? C.acc : C.txt);
       else if (showMsg) { px(0, 0, 112, 7, C.bg); txt(st.msg, Math.max(1, Math.round(56 - st.msg.length * 2)), 1, C.acc); }
       drawPlayPause(now); drawFan(now);
+      { const t = now - st.boot - BOOT_LOGO - BOOT_CLOSE; if (t >= 0 && t < BOOT_OPEN) { const o = easeIO(t / BOOT_OPEN); irisMask(92 * o, 0.9 + o * 0.9); } }
     }
   }
   for (let i = 0; i < 4; i++) { const r = document.getElementById('r' + i); r.classList.toggle('off', !st.on); r.style.setProperty('--p', st.on ? knobFrac(i).toFixed(3) : 0); r.style.setProperty('--c', st.on && st.screen === 'design' ? shColor(i) : RING_DEF[i]); }
