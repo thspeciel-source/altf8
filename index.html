@@ -513,9 +513,10 @@ const VERSIONS = [
   { id:'v44', file:'versions/v44.html', label:'v44 - Stronger motion nudges (2026-11-18)', note:'Hold F8 + K1-4: the first nudge on a new connection jumps straight to 50% (or -50% turning left); each further notch moves it 10%.' },
   { id:'v45', file:'versions/v45.html', label:'v45 - Tone and Space buttons, reverb + echo (2026-11-19)', note:'Button 3 is TONE: filter (type first, then cutoff, reso, key track) and grit (drive, fold, crush, downsample). Button 4 is SPACE: pan, chorus, flanger, phaser, then room (room type, echo time, reverb, echo). Feel is now velocity, glide, tune and level. Built-in vibrato, LFO rate, pitch env, filter env and tremolo are gone: move tune, level, pan or anything else with hold-F8 motion instead. Discrete choices sit on the first knob.' },
   { id:'v46', file:'versions/v46.html', label:'v46 - Mix, tracks, drum recorder, bass, arpeggiator, world chords (2026-11-19)', note:'New MIX screen (screen menu: MIX, PATTERN, SHAPE): up to 4 tracks shown 4 bars at a time, DIAL picks a track, F8 opens its pattern, K1-K4 set volumes; buttons: 1 add a track (pads, melody, bass or drums presets), 2 mute, 3 automation curves (AUTO 1/2, also motion sources), 4 delete (press twice). SHAPE and its effects follow the selected track. Drums: DIAL picks a drum, F8 hits it and records while playing with smart quantize; B undoes the last pass. Bass follows the pad chords (8 patterns). Melody is an arpeggiator over the pad chords (11 patterns, rates incl. triplets, octaves, gate, swing, accents, skips, pedal). Settings removed: Play + B shuts off, Play + F8 saves. Chord options: fewer and vetted, plus world and modal loops (Royal Road, Mandopop 4536251, Canon, Chinese gong/yu modes, highlife, aeolian, Dorian, Phrygian, Hijaz, Mixolydian, endless ii-V...). Knob 1 adds back-and-forth chord sequencing; knob 2 adds 10 rhythms (habanera, son clave, afrobeat, dembow, two-step...).' },
-  { id:'v47', file:'index.html', label:'v47 - Hand-set second-half notes turn yellow (2026-11-19)', note:'A top note in bars 5-8 that you moved yourself is drawn yellow like your first-half notes; generated ones stay blue (pink while browsing).' }
+  { id:'v47', file:'versions/v47.html', label:'v47 - Hand-set second-half notes turn yellow (2026-11-19)', note:'A top note in bars 5-8 that you moved yourself is drawn yellow like your first-half notes; generated ones stay blue (pink while browsing).' },
+  { id:'v48', file:'index.html', label:'v48 - Drum presets, rolls and step editing; better bass and melody presets (2026-11-19)', note:'Drums: buttons 1-4 load presets (grooves, hats, fills and rolls, percussion; press again for the next). K1 moves a step cursor and K2 sets that step: hit, accent, ghost or a x2/x3/x4 roll. Hold B on an empty drum, then again, to clear everything. On SHAPE, DIAL picks the drum and only that drum plays while you edit it; button 1 = drum (tune, decay, tone, level), button 2 = kit (kit, swing, humanize). Bass: 16 patterns ordered calm to busy (anticipated root, step into next, Motown, one drop, synco funk, pedal...). Melody arp: 15 patterns (steps, converge, double, scale run...), natural accents on the beat, and each preset sound starts with a pattern that suits it.' }
 ];
-const CURRENT = 'v47';
+const CURRENT = 'v48';
 /* ---- synth engine constants (v12) ---- */
 const UNI_MAX = 7;
 const FTYPES = ['lowpass','highpass','bandpass','notch'], FNAME = ['LP','HP','BP','NOTCH'];
@@ -567,7 +568,7 @@ function normPatch(p){
 // each button is a color family; each knob gets its own shade (button 1 runs yellow to red)
 const SH_FAM = [['#ffd23f','#ffab2e','#ff7a2e','#ff4a3d'], ['#a6f4ff','#34d6e8','#22a6dc','#2f7ff0'],
                 ['#c8ff7a','#7dff6a','#38e08c','#19c2a2'], ['#ffb3ef','#ff4fd8','#d940e3','#a64df7']];
-const DRUM_TABS = [['DRUM'], ['DRUM'], ['FILTER', 'GRIT'], ['SPACE', 'ROOM']];
+const DRUM_TABS = [['DRUM'], ['KIT'], ['FILTER', 'GRIT'], ['SPACE', 'ROOM']];
 function shTabs(){ return selTrack().type === 'drums' ? DRUM_TABS : SH_TABS; }
 const SH_TABS = [['SOURCE', 'SOURCE', 'FEEL'], ['ENVELOPE', 'MOD 1', 'MOD 2', 'MOD 3', 'MOD 4'], ['FILTER', 'GRIT'], ['SPACE', 'ROOM']];
 const RING_DEF = ['#ffd23f', '#34d6e8', '#7dff6a', '#ff4fd8'];
@@ -594,7 +595,7 @@ const pct = v => Math.round(v) + '%';
 // knobs on the NOTE SHAPE screen. view: 'close' (zooms in while turning), 'time' (whole note), 'harm' (harmonics)
 function shapeDefs(){
   const P = st.patch, S = P.sh, tab = st.shTab, pg = st.shPage;
-  if (selTrack().type === 'drums' && tab < 2) return drumShapeDefs();
+  if (selTrack().type === 'drums' && tab < 2) return drumShapeDefs(tab);
   const K = (key, view, d) => Object.assign(d, { key, view });
   const amt = (name, k, view, max) => K(k, view, kNum(name, () => S[k], v => S[k] = v, 0, max || 100, 4, pct));
   if (tab === 0 && pg === 0) return [
@@ -1484,7 +1485,7 @@ function chime(down){
 // on the Sound screen, once a chord pattern exists, edits are heard on your pattern instead of a single test note
 function hasPattern(){ return !!(st.prog && allSet() && (st.phase === 'edit' || st.phase === 'adapt')); }
 function previewDesign(){
-  if (st.on && ac && !st.playing && selTrack().type === 'drums' && !(st.screen === 'design' && hasPattern())) { drumHit(st.drLane, ac.currentTime + 0.01, 0.9, selTrack()); st.prevStart = performance.now(); st.prevDur = 0.4; return; }
+  if (st.on && ac && !st.playing && selTrack().type === 'drums') { drumHit(st.drLane, ac.currentTime + 0.01, 0.9, selTrack()); st.prevStart = performance.now(); st.prevDur = 0.4; return; }
   if (st.on && ac && !st.playing && st.screen === 'design' && hasPattern()) {
     st.playing = true; st.autoPlay = true; step = 0; nextT = ac.currentTime + 0.06; uiQ = []; resetSeqs(nextT); return;
   }
@@ -1547,10 +1548,11 @@ const KITS = ['808', 'ACOUSTIC', 'LOFI', 'ELECTRO'];
 function drumDefaults(metro){
   const steps = DR_LANES.map(() => Array(16).fill(0));
   if (metro) { steps[0][0] = 1; [0, 4, 8, 12].forEach(i => steps[2][i] = 1); }
-  return { kit:0, swing:0, steps, lvl:DR_LANES.map(() => 80), tune:DR_LANES.map(() => 0), decay:DR_LANES.map(() => 100) };
+  return { kit:0, swing:0, hum:0, steps, lvl:DR_LANES.map(() => 80), tune:DR_LANES.map(() => 0), decay:DR_LANES.map(() => 100), tone:DR_LANES.map(() => 50) };
 }
-const BASS_PATS = ['ROOT HOLD', 'ROOT 8THS', 'ROOT + FIFTH', 'OCTAVE BOUNCE', 'WALKING', 'OFFBEAT PUMP', 'FOLLOW THE PADS', 'TRESILLO 3-3-2'];
-const ARP_PATS = ['UP', 'DOWN', 'UP-DOWN', 'DOWN-UP', 'RANDOM', 'AS VOICED', 'INSIDE OUT', 'ALBERTI', 'PICKING', 'BROKEN', 'CHORD STABS'];
+// ordered calm to busy, then grooves, then the special ones
+const BASS_PATS = ['ROOT HOLD', 'ROOT HALVES', 'ANTICIPATED ROOT', 'ROOT + FIFTH', 'STEP INTO NEXT', 'ROOT 8THS', 'OCTAVE BOUNCE', 'ARPEGGIO 1-3-5-8', 'MOTOWN', 'WALKING', 'OFFBEAT PUMP', 'ONE DROP', 'TRESILLO 3-3-2', 'SYNCO FUNK', 'FOLLOW THE PADS', 'PEDAL ON THE KEY'];
+const ARP_PATS = ['UP', 'DOWN', 'UP-DOWN', 'DOWN-UP', 'STEPS 1-3-2-4', 'CONVERGE', 'INSIDE OUT', 'AS VOICED', 'ALBERTI', 'PICKING', 'BROKEN', 'DOUBLE', 'SCALE RUN', 'RANDOM', 'CHORD STABS'];
 const ARP_RATES = [['1/4', 4], ['1/8', 2], ['1/8 TRIPLET', 4 / 3], ['1/16', 1], ['1/16 TRIPLET', 2 / 3], ['1/32', 0.5]];
 const ARP_ACC = [['OFF', 0], ['EVERY 2', 2], ['EVERY 3', 3], ['EVERY 4', 4]], ARP_SKIP = [['OFF', 0], ['EVERY 3RD', 3], ['EVERY 4TH', 4], ['RANDOM', -1]], ARP_PEDAL = ['OFF', 'TOP NOTE', 'ROOT'];
 // the instrument menu (mix, button 1): each entry is a type plus a starting sound
@@ -1559,14 +1561,14 @@ const INSTR = [
   { type:'pad', name:'GLASS PAD', p:{ wave:0, a:7, d:6, s:0.7, r:8, cutoff:6000, sh:{ add:45, verb:50 } } },
   { type:'pad', name:'DARK PAD', p:{ wave:3, a:6, d:6, s:0.8, r:7, cutoff:700, reso:3, sh:{ sub:30, verb:35 } } },
   { type:'pad', name:'CLASSIC PAD', p:{} },
-  { type:'melody', name:'PLUCK', p:{ wave:2, a:0, d:4, s:0, r:4, cutoff:3000, reso:2, sh:{ echo:25 } } },
-  { type:'melody', name:'BELL', p:{ wave:0, a:0, d:6, s:0, r:6, cutoff:9000, sh:{ fm:40, verb:30 } } },
-  { type:'melody', name:'SOFT LEAD', p:{ wave:1, a:2, d:5, s:0.8, r:4, cutoff:4000, sh:{ glide:20, echo:30 } } },
-  { type:'melody', name:'CHIP', p:{ wave:3, a:0, d:3, s:0.6, r:2, cutoff:9000, sh:{ crush:30 } } },
-  { type:'bass', name:'SUB BASS', p:{ wave:0, a:1, d:5, s:0.9, r:3, cutoff:600, sh:{ sub:60 } } },
-  { type:'bass', name:'SAW BASS', p:{ wave:2, a:0, d:5, s:0.7, r:3, cutoff:900, reso:4, sh:{ drive:20 } } },
-  { type:'bass', name:'PLUCK BASS', p:{ wave:3, a:0, d:4, s:0.3, r:3, cutoff:1200, reso:2 } },
-  { type:'bass', name:'FM BASS', p:{ wave:0, a:0, d:5, s:0.6, r:3, cutoff:2500, sh:{ fm:50 } } },
+  { type:'melody', name:'PLUCK', arp:{ pat:2, rate:3, oct:2, gate:45 }, p:{ wave:2, a:0, d:4, s:0, r:4, cutoff:3000, reso:2, sh:{ echo:25 } } },
+  { type:'melody', name:'BELL', arp:{ pat:9, rate:1, oct:2, gate:80 }, p:{ wave:0, a:0, d:6, s:0, r:6, cutoff:9000, sh:{ fm:40, verb:30 } } },
+  { type:'melody', name:'SOFT LEAD', arp:{ pat:4, rate:1, oct:1, gate:90 }, p:{ wave:1, a:2, d:5, s:0.8, r:4, cutoff:4000, sh:{ glide:20, echo:30 } } },
+  { type:'melody', name:'CHIP', arp:{ pat:0, rate:3, oct:2, gate:40 }, p:{ wave:3, a:0, d:3, s:0.6, r:2, cutoff:9000, sh:{ crush:30 } } },
+  { type:'bass', name:'SUB BASS', bass:{ pat:1, oct:0, gate:90 }, p:{ wave:0, a:1, d:5, s:0.9, r:3, cutoff:600, sh:{ sub:60 } } },
+  { type:'bass', name:'SAW BASS', bass:{ pat:5, oct:0, gate:80 }, p:{ wave:2, a:0, d:5, s:0.7, r:3, cutoff:900, reso:4, sh:{ drive:20 } } },
+  { type:'bass', name:'PLUCK BASS', bass:{ pat:6, oct:0, gate:60 }, p:{ wave:3, a:0, d:4, s:0.3, r:3, cutoff:1200, reso:2 } },
+  { type:'bass', name:'FM BASS', bass:{ pat:13, oct:0, gate:70 }, p:{ wave:0, a:0, d:5, s:0.6, r:3, cutoff:2500, sh:{ fm:50 } } },
   { type:'drums', name:'808 KIT', kit:0 }, { type:'drums', name:'ACOUSTIC KIT', kit:1 }, { type:'drums', name:'LOFI KIT', kit:2 }, { type:'drums', name:'ELECTRO KIT', kit:3 }
 ];
 st.tracks = [
@@ -1578,67 +1580,101 @@ function makeTrack(I){
   const tr = { id:st.nextId++, type:I.type, name:I.name, vol:75, mute:false };
   if (I.type === 'drums') { tr.patch = drumPatch(); tr.dr = drumDefaults(false); tr.dr.kit = I.kit; tr.dr.steps[0][0] = tr.dr.steps[0][8] = 1; tr.dr.steps[1][4] = tr.dr.steps[1][12] = 1; [0, 2, 4, 6, 8, 10, 12, 14].forEach(i => tr.dr.steps[2][i] = 1); }
   else tr.patch = patchFrom(I.p);
-  if (I.type === 'bass') tr.bass = { pat:1, oct:0, gate:85 };
-  if (I.type === 'melody') tr.arp = { pat:0, rate:3, oct:1, gate:60, swing:0, acc:0, skip:0, pedal:0 };
+  if (I.type === 'bass') tr.bass = Object.assign({ pat:0, oct:0, gate:85 }, I.bass || {});
+  if (I.type === 'melody') tr.arp = Object.assign({ pat:0, rate:1, oct:2, gate:70, swing:0, acc:0, skip:0, pedal:0 }, I.arp || {});
   return tr;
 }
 // ---------- bass: follows the pads' chords ----------
-function rootNear(pc, lo){ let m = lo + ((pc - lo) % 12 + 12) % 12; return m; }
+// the key the pads are in (for pedal tones and passing notes)
+function songKey(){ const ki = keyInfo(st.key); if (ki.mode !== 'chrom') return ki; return detectKey(st.bars.filter(b => b.mel).map(b => b.mel.midi % 12)); }
+function rootNear(pc, lo){ return lo + ((pc - lo) % 12 + 12) % 12; }
 function bassEvents(tr){
   const pr = curProg(); if (!pr) return [];
-  const B = tr.bass, key = 'b' + B.pat + B.oct + B.gate + st.pat + st.rhy + pr.map(chordName).join();
+  const B = tr.bass, key = 'b' + B.pat + B.oct + B.gate + st.pat + st.rhy + st.key + pr.map(chordName).join();
   if (tr._ek === key) return tr._ev;
-  const out = [], segs = chordSegments().slice().sort((a, b) => a.start - b.start), lo = B.oct ? 40 : 28, g = B.gate / 100;
+  const out = [], segs = chordSegments().slice().sort((a, b) => a.start - b.start), lo = B.oct ? 40 : 28, g = B.gate / 100, name = BASS_PATS[B.pat];
+  // the pedal sits on the loop's home chord (chord 1), which is where these loops feel at rest
+  const ki = songKey(), sc = scaleOf(ki).map(x => (x + ki.root) % 12), tonic = rootNear(pr[0].root, lo);
+  let antic = false;
   segs.forEach((sg, si) => {
     const ch = pr[sg.slot]; if (!ch) return;
-    const r = rootNear(ch.root, lo), fifth = r + 7, nxt = pr[segs[(si + 1) % segs.length].slot], third = r + (ch.q === 'min' ? 3 : 4);
-    const add = (k, len, m, v) => { if (k < sg.len) out.push({ start:(sg.start + k) % LOOP, len:Math.max(0.5, Math.min(len, sg.len - k) * g), midi:m, vel:v || 0.9 }); };
-    const P = B.pat;
-    if (P === 0) add(0, sg.len, r);
-    else if (P === 1) for (let k = 0; k < sg.len; k += 2) add(k, 2, r, k % 4 ? 0.7 : 0.95);
-    else if (P === 2) for (let k = 0, i = 0; k < sg.len; k += 4, i++) add(k, 4, i % 2 ? fifth : r);
-    else if (P === 3) for (let k = 0, i = 0; k < sg.len; k += 2, i++) add(k, 2, i % 2 ? r + 12 : r, i % 2 ? 0.75 : 0.95);
-    else if (P === 4) { const tgt = nxt ? rootNear(nxt.root, lo) : r, walk = [r, third, fifth]; const n = Math.max(1, Math.floor(sg.len / 4));
-      for (let i = 0; i < n; i++) add(i * 4, 4, i === n - 1 && n > 1 ? (tgt > r ? tgt - 1 : tgt + 1) : walk[i % 3]); }
-    else if (P === 5) for (let k = 2; k < sg.len; k += 4) add(k, 2, r);
-    else if (P === 6) patternEvents().filter(e => e.bar === sg.slot).forEach(e => out.push({ start:e.start, len:Math.max(0.5, e.on * g), midi:r, vel:0.9 }));
-    else for (let k = 0; k < sg.len; k++) { if ([0, 6, 12].includes((sg.start + k) % 16)) add(k, 3, r); }
+    const r = rootNear(ch.root, lo), third = r + (ch.q === 'min' || ch.q === 'dim' ? 3 : 4), fifth = r + (ch.q === 'dim' ? 6 : 7);
+    const nx = pr[segs[(si + 1) % segs.length].slot], nr0 = nx ? rootNear(nx.root, lo) : r, nr = Math.abs(nr0 - 12 - r) < Math.abs(nr0 - r) ? nr0 - 12 : nr0;
+    const beat = k => ((sg.start + k) % 4) === 0, v = k => beat(k) ? 0.95 : 0.74;
+    const add = (k, len, m, vel) => { if (k >= 0 && k < sg.len) out.push({ start:(sg.start + k) % LOOP, len:Math.max(0.5, Math.min(len, sg.len - k) * g), midi:m, vel:vel || v(k) }); };
+    const each = (n, fn) => { for (let k = 0; k < sg.len; k += n) fn(k, k / n | 0); };
+    const at = (poss, fn) => { for (let k = 0; k < sg.len; k++) { const p = (sg.start + k) % 16; if (poss.includes(p)) fn(k, p); } };
+    const wasAntic = antic; antic = false;
+    switch (name) {
+      case 'ROOT HOLD': add(0, sg.len, r); break;
+      case 'ROOT HALVES': add(0, 8, r); if (sg.len >= 12) add(8, sg.len - 8, r, 0.8); break;
+      case 'ROOT 8THS': each(2, k => add(k, 2, r)); break;
+      case 'ANTICIPATED ROOT': { // the next root arrives an 8th early and rings on into its chord
+        const nxt = segs[(si + 1) % segs.length];
+        if (!wasAntic) add(0, sg.len - (sg.len >= 6 ? 2 : 0), r);
+        if (sg.len >= 6 && nx) { out.push({ start:(sg.start + sg.len - 2) % LOOP, len:Math.max(1, (2 + Math.max(0, nxt.len - 2)) * g), midi:nr, vel:0.95 }); antic = true; }
+        break; }
+      case 'ROOT + FIFTH': each(4, (k, i) => add(k, 4, i % 2 ? (fifth - 12 >= lo - 3 ? fifth - 12 : fifth) : r)); break;
+      case 'OCTAVE BOUNCE': each(2, (k, i) => add(k, 2, i % 2 ? r + 12 : r, i % 2 ? 0.72 : 0.95)); break;
+      case 'MOTOWN': each(2, (k, i) => add(k, 2, [r, r + 7, r + 12, r + 7][i % 4], i % 2 ? 0.6 : 0.92)); break;
+      case 'WALKING': { const n = Math.max(1, sg.len / 4 | 0), walk = [r, third, fifth, r + 12];
+        for (let i = 0; i < n; i++) add(i * 4, 4, i === n - 1 && n > 1 ? (nr > r ? nr - 1 : nr + 1) : walk[i % 4]); break; }
+      case 'STEP INTO NEXT': { const n = Math.max(1, sg.len / 4 | 0); add(0, n > 1 ? (n - 1) * 4 : sg.len, r);
+        if (n > 1) { let m = nr + (nr > r ? -1 : 1); while (!sc.includes(((m % 12) + 12) % 12)) m += nr > r ? -1 : 1; add((n - 1) * 4, 4, m, 0.8); } break; }
+      case 'ARPEGGIO 1-3-5-8': each(2, (k, i) => add(k, 2, [r, third, fifth, r + 12][i % 4])); break;
+      case 'OFFBEAT PUMP': for (let k = 2; k < sg.len; k += 4) add(k, 2, r, 0.85); break;
+      case 'ONE DROP': at([8, 14], (k, p) => add(k, p === 8 ? 5 : 2, r, p === 8 ? 0.95 : 0.7)); break;
+      case 'TRESILLO 3-3-2': at([0, 6, 12], k => add(k, 3, r)); break;
+      case 'SYNCO FUNK': at([0, 3, 6, 10, 12], (k, p) => add(k, 2, p === 6 ? r + 12 : p === 12 ? fifth : r, p === 0 ? 0.95 : 0.78)); break;
+      case 'FOLLOW THE PADS': patternEvents().filter(e => e.bar === sg.slot).forEach(e => out.push({ start:e.start, len:Math.max(0.5, e.on * g), midi:r, vel:0.9 })); break;
+      case 'PEDAL ON THE KEY': each(2, k => add(k, 2, tonic, beat(k) ? 0.9 : 0.66)); break;
+    }
   });
   tr._ek = key; tr._ev = out; return out;
 }
 // ---------- melody: the arpeggiator plays the pads' chords ----------
 function arpEvents(tr){
   const pr = curProg(); if (!pr) return [];
-  const A = tr.arp, key = 'a' + JSON.stringify(A) + st.pat + st.voi + JSON.stringify(st.top2) + pr.map(chordName).join() + st.bars.map(b => b.mel && b.mel.midi).join();
+  const A = tr.arp, key = 'a' + JSON.stringify(A) + st.pat + st.voi + st.key + JSON.stringify(st.top2) + pr.map(chordName).join() + st.bars.map(b => b.mel && b.mel.midi).join();
   if (tr._ek === key) return tr._ev;
-  const out = [], rate = ARP_RATES[A.rate][1], gate = A.gate / 100, nAcc = ARP_ACC[A.acc][1], nSkip = ARP_SKIP[A.skip][1];
+  const out = [], rate = ARP_RATES[A.rate][1], gate = A.gate / 100, nAcc = ARP_ACC[A.acc][1], nSkip = ARP_SKIP[A.skip][1], name = ARP_PATS[A.pat];
+  const ki = songKey(), sc = scaleOf(ki).map(x => (x + ki.root) % 12);
   chordSegments().forEach(sg => {
     let base = barNotes(sg.slot).map(n => n.midi); if (!base.length) return;
-    const voiced = base.slice(); base.sort((a, b) => a - b);
-    while (base[0] < 57) base = base.map(m => m + 12); while (base[0] > 69) base = base.map(m => m - 12);
-    let pool = []; for (let o = 0; o < A.oct; o++) base.forEach(m => pool.push(m + 12 * o));
-    const n = pool.length, mid = Math.floor(n / 2);
+    // keep the arp in a melody register (around A3-A4), the same notes as the pad chord
+    const voiced0 = base.slice(); base.sort((a, b) => a - b);
+    let sh = 0; while (base[0] + sh < 57) sh += 12; while (base[0] + sh > 69) sh -= 12; base = base.map(m => m + sh);
+    const voiced = voiced0.map(m => m + sh);
+    const pool = []; for (let o = 0; o < A.oct; o++) base.forEach(m => pool.push(m + 12 * o));
+    const n = pool.length, mid = n >> 1;
+    let run = null;
+    if (name === 'SCALE RUN') { run = []; for (let m = pool[0]; m <= pool[n - 1]; m++) if (sc.includes(m % 12)) run.push(m); for (let m = pool[n - 1] - 1; m > pool[0]; m--) if (sc.includes(m % 12)) run.push(m); }
     const pick = k => {
-      switch (A.pat) {
-        case 0: return pool[k % n];
-        case 1: return pool[n - 1 - k % n];
-        case 2: { const c = Math.max(1, 2 * n - 2), i = k % c; return pool[i < n ? i : c - i]; }
-        case 3: { const c = Math.max(1, 2 * n - 2), i = k % c; return pool[n - 1 - (i < n ? i : c - i)]; }
-        case 4: { const h = Math.sin((k + 1) * 12.9898 + sg.slot * 78.233) * 43758.5453; return pool[Math.floor((h - Math.floor(h)) * n)]; }
-        case 5: { const v = voiced.map(m => m + (pool[0] - base[0])); return v[k % v.length]; }
-        case 6: { const ord = []; for (let i = 0; i < n; i++) ord.push(pool[i % 2 ? mid + (i + 1) / 2 | 0 : mid - (i / 2 | 0)]); return ord[k % n] || pool[0]; }
-        case 7: return pool[[0, Math.min(2, n - 1), Math.min(1, n - 1), Math.min(2, n - 1)][k % 4]];
-        case 8: return pool[[0, Math.min(2, n - 1), Math.min(3, n - 1), Math.min(2, n - 1)][k % 4]];
-        case 9: return pool[[0, 1, 2, 1].map(i => Math.min(i, n - 1))[k % 4]];
+      switch (name) {
+        case 'UP': return pool[k % n];
+        case 'DOWN': return pool[n - 1 - k % n];
+        case 'UP-DOWN': { const c = Math.max(1, 2 * n - 2), i = k % c; return pool[i < n ? i : c - i]; }
+        case 'DOWN-UP': { const c = Math.max(1, 2 * n - 2), i = k % c; return pool[n - 1 - (i < n ? i : c - i)]; }
+        case 'STEPS 1-3-2-4': { const i = k % 2 ? (k + 3) / 2 : k / 2; return pool[i % n]; }
+        case 'CONVERGE': { const i = k % n; return pool[i % 2 ? n - 1 - (i >> 1) : i >> 1]; }
+        case 'INSIDE OUT': { const ord = [mid]; for (let o = 1; ord.length < n; o++) { if (mid + o < n) ord.push(mid + o); if (mid - o >= 0 && ord.length < n) ord.push(mid - o); } return pool[ord[k % n]]; }
+        case 'AS VOICED': return voiced[k % voiced.length];
+        case 'ALBERTI': return pool[[0, Math.min(2, n - 1), Math.min(1, n - 1), Math.min(2, n - 1)][k % 4]];
+        case 'PICKING': return pool[[0, Math.min(2, n - 1), Math.min(3, n - 1), Math.min(1, n - 1)][k % 4]];
+        case 'BROKEN': return pool[[0, 1, 2, 1].map(i => Math.min(i, n - 1))[k % 4]];
+        case 'DOUBLE': return pool[(k >> 1) % n];
+        case 'SCALE RUN': return run[k % run.length];
+        case 'RANDOM': { const h = Math.sin((k + 1) * 12.9898 + sg.slot * 78.233) * 43758.5453; return pool[Math.floor((h - Math.floor(h)) * n)]; }
         default: return null;
       }
     };
     for (let k = 0, pos = 0; pos < sg.len - 0.01; k++, pos += rate) {
       if (nSkip > 0 && k % nSkip === nSkip - 1) continue;
       if (nSkip < 0) { const h = Math.sin((k + 3) * 7.13 + sg.slot) * 9999; if (h - Math.floor(h) < 0.25) continue; }
-      const vel = nAcc ? (k % nAcc === 0 ? 1 : 0.62) : 0.85, len = Math.max(0.3, rate * gate);
-      let notes = A.pat === 10 ? base.slice() : [pick(k)];
-      if (A.pedal && k % 2 === 1 && A.pat !== 10) notes = [A.pedal === 1 ? pool[n - 1] + 12 : pool[0]];
+      // a gentle natural accent on the beat, or the chosen accent pattern
+      const onBeat = Math.abs(((sg.start + pos) % 4)) < 0.01, vel = nAcc ? (k % nAcc === 0 ? 1 : 0.62) : onBeat ? 0.9 : 0.74, len = Math.max(0.3, rate * gate);
+      let notes = name === 'CHORD STABS' ? base.slice() : [pick(k)];
+      if (A.pedal && k % 2 === 1 && name !== 'CHORD STABS') notes = [A.pedal === 1 ? pool[n - 1] + (A.oct > 1 ? 0 : 12) : pool[0]];
       out.push({ start:sg.start + pos, len, notes, vel });
     }
   });
@@ -1649,7 +1685,8 @@ function arpEvents(tr){
 const KIT_P = [ { kd:0.55, kf:[150, 42], sn:1800, hh:7500, bright:1 }, { kd:0.32, kf:[120, 55], sn:2200, hh:8500, bright:1.1 }, { kd:0.3, kf:[125, 50], sn:1400, hh:5200, bright:0.6 }, { kd:0.22, kf:[190, 45], sn:2600, hh:9500, bright:1.2 } ];
 function drumHit(lane, t, vel, tr, dest){
   if (!ac) return; if (ac.state !== 'running') ac.resume();
-  const D = tr.dr, K = KIT_P[D.kit] || KIT_P[0], lv = D.lvl[lane] / 100 * vel, tn = Math.pow(2, D.tune[lane] / 12), dc = D.decay[lane] / 100, out = dest || (nodesOf(tr) || {}).inp; if (!out) return;
+  const D = tr.dr; if (!D.tone) D.tone = DR_LANES.map(() => 50);
+  const K0 = KIT_P[D.kit] || KIT_P[0], br = Math.pow(2, (D.tone[lane] - 50) / 50), K = Object.assign({}, K0, { sn:K0.sn * br, hh:Math.min(15000, K0.hh * br), bright:K0.bright * (0.7 + br * 0.3) }), lv = D.lvl[lane] / 100 * vel, tn = Math.pow(2, D.tune[lane] / 12), dc = D.decay[lane] / 100, out = dest || (nodesOf(tr) || {}).inp; if (!out) return;
   const env = (g, peak, dec, a) => { g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(peak, t + (a || 0.002)); g.gain.setTargetAtTime(0, t + (a || 0.002), dec / 4); };
   const end = t + 2.5, stopAt = n => { n.start(t); n.stop(end); };
   const noise = (type, f, q) => { const ns = ac.createBufferSource(); ns.buffer = noiseBuf; ns.loop = true; const fl = ac.createBiquadFilter(); fl.type = type; fl.frequency.value = f; fl.Q.value = q || 0.8; ns.connect(fl); stopAt(ns); return fl; };
@@ -1686,7 +1723,10 @@ function schedule(s, t){
       for (const e of arpEvents(tr)) if (Math.floor(e.start + 1e-6) === s) { const sw = Math.abs((e.start % 2) - 1) < 0.01 ? A.swing / 100 * 0.5 * stepDur() : 0;
         e.notes.forEach(m => voice(m, t + (e.start - s) * stepDur() + sw, e.len * stepDur() * 0.95, e.vel, 'm' + tr.id, tr.patch, N.inp)); } }
     else if (tr.type === 'drums') { const D = tr.dr, pos = s % 16, sw = pos % 2 ? D.swing / 100 * 0.5 * stepDur() : 0;
-      D.steps.forEach((row, lane) => { if (row[pos]) drumHit(lane, t + sw, row[pos] > 1 ? 1 : 0.85, tr, N.inp); }); }
+      D.steps.forEach((row, lane) => { const v = row[pos]; if (!v) return;
+        const hj = () => D.hum ? (Math.random() - 0.5) * 0.02 * D.hum / 100 : 0, hv = () => 1 - (D.hum ? Math.random() * 0.3 * D.hum / 100 : 0);
+        if (v >= 4) { const n = v - 2; for (let k = 0; k < n; k++) drumHit(lane, t + sw + k * stepDur() / n, (k ? 0.62 : 0.85) * hv(), tr, N.inp); }
+        else drumHit(lane, Math.max(t, t + sw + hj()), (v === 2 ? 1 : v === 3 ? 0.42 : 0.82) * hv(), tr, N.inp); }); }
   }
   uiQ.push({ s, t });
 }
@@ -1744,6 +1784,7 @@ function mainTurn(dir){
   st.mainAngle += dir * 15; document.getElementById('mainknob').style.setProperty('--rot', st.mainAngle + 'deg');
   if (held.play) { held.playUsed = true; if (!st.fan || st.fan.closing) openFan(); st.fan.sel = (st.fan.sel + dir + FAN.length) % FAN.length; return; }
   if (st.screen === 'mix') { mixTurn(dir); return; }
+  if (st.screen === 'design' && selTrack().type === 'drums' && st.shTab < 2) { st.drLane = (st.drLane + dir + DR_LANES.length) % DR_LANES.length; initAudio(); if (ac) drumHit(st.drLane, ac.currentTime + 0.01, 0.85, selTrack()); return; }
   if (st.screen === 'drums') { st.drLane = (st.drLane + dir + DR_LANES.length) % DR_LANES.length; initAudio(); if (ac) drumHit(st.drLane, ac.currentTime + 0.01, 0.8, selTrack()); return; }
   if (st.screen === 'bass' || st.screen === 'arp') { flash('NOTES FOLLOW THE PADS'); return; }
   if (st.screen === 'design' && st.modHold) {
@@ -1813,8 +1854,10 @@ function knobDefs(){
       kNum('OCTAVES', () => A.oct, v => A.oct = v, 1, 3, 1, v => v + ' OCT'), kNum('GATE', () => A.gate, v => A.gate = v, 10, 100, 5, pct)];
     return [kNum('SWING', () => A.swing, v => A.swing = v, 0, 60, 5, pct), kList('ACCENT', () => A.acc, v => A.acc = v, ARP_ACC.length, i => ARP_ACC[i][0]),
       kList('SKIP', () => A.skip, v => A.skip = v, ARP_SKIP.length, i => ARP_SKIP[i][0]), kList('PEDAL', () => A.pedal, v => A.pedal = v, ARP_PEDAL.length, i => ARP_PEDAL[i])]; }
-  if (sc === 'drums') { const D = selTrack().dr; return [kList('KIT', () => D.kit, v => D.kit = v, KITS.length, i => KITS[i]), kNum('SWING', () => D.swing, v => D.swing = v, 0, 60, 5, pct),
-    kNum(DR_LANES[st.drLane] + ' LEVEL', () => D.lvl[st.drLane], v => D.lvl[st.drLane] = v, 0, 100, 5, pct), kNum('TEMPO', () => st.tempo, v => { st.tempo = v; applyFx(); }, 60, 200, 2, v => v + ' BPM')]; }
+  if (sc === 'drums') { const D = selTrack().dr, row = () => D.steps[st.drLane];
+    return [kList('STEP', () => st.drStep || 0, v => st.drStep = v, 16, i => DR_SHORT[st.drLane] + ' STEP ' + (i + 1) + ': ' + HIT_NAMES[D.steps[st.drLane][i]]),
+      kList(DR_SHORT[st.drLane] + ' STEP ' + ((st.drStep || 0) + 1), () => row()[st.drStep || 0], v => { pushUndo(selTrack(), [st.drLane]); row()[st.drStep || 0] = v; }, HIT_NAMES.length, i => HIT_NAMES[i]),
+      kNum('SWING', () => D.swing, v => D.swing = v, 0, 60, 5, pct), kNum('TEMPO', () => st.tempo, v => { st.tempo = v; applyFx(); }, 60, 200, 2, v => v + ' BPM')]; }
   if (sc === 'design') return shapeDefs();
   if (sc === 'osc') return [
     kNum('UNISON', () => P.uni, v => P.uni = v, 1, UNI_MAX, 1, v => v + (v === 1 ? ' VOICE' : ' VOICES')),
@@ -1873,7 +1916,7 @@ function setKnob(i, dir){
   applyFilter(); applyLive();
   const now = performance.now();
   if (st.screen === 'melody') { if (i < 3) previewBar(); else applyFx(); st.lastEdit = now; return; }
-  if (['mix', 'bass', 'arp', 'drums'].includes(st.screen)) { if (st.screen === 'drums' && i < 3 && ac && !st.playing) drumHit(i === 2 ? st.drLane : 0, ac.currentTime + 0.01, 0.9, selTrack()); st.lastEdit = now; return; }
+  if (['mix', 'bass', 'arp', 'drums'].includes(st.screen)) { if (st.screen === 'drums' && i < 2 && ac && !st.playing) previewCell(); st.lastEdit = now; return; }
   if (now - st.lastEdit > 2000 || !st.prevStart) previewDesign();
   st.lastEdit = now;
 }
@@ -1952,7 +1995,8 @@ function selBar(i){
   if (!st.on) return;
   if (st.screen === 'mix') { mixButton(i); return; }
   if (st.screen === 'arp') { if (i < 2) st.arpPg = i; return; }
-  if (st.screen === 'bass' || st.screen === 'drums') return;
+  if (st.screen === 'drums') { applyDrumPreset(i); return; }
+  if (st.screen === 'bass') return;
   if (st.screen === 'filter') { if (i < 2) st.fSel = i; return; }
   if (st.screen === 'design') { if (st.shTab === i) st.shPage = (st.shPage + 1) % shTabs()[i].length; else { st.shTab = i; st.shPage = 0; } st.lastKnob = -1; st.viewKind = 'time'; st.viewKey = ''; return; }
   if (st.screen === 'mod') {
@@ -2042,7 +2086,10 @@ function bTap(){
   }
 }
 function bHold(){
-  if (st.on && st.screen === 'drums') { const D = selTrack().dr; D.steps[st.drLane].fill(0); flash(DR_SHORT[st.drLane] + ' CLEARED'); return; }
+  if (st.on && st.screen === 'drums') { const tr = selTrack(), D = tr.dr, now = performance.now();
+    if (st.clearArm && now - st.clearArm < 4000) { pushUndo(tr, DR_LANES.map((_, i) => i)); D.steps.forEach(r => r.fill(0)); st.clearArm = 0; flash('ALL DRUMS CLEARED'); return; }
+    if (D.steps[st.drLane].some(v => v)) { pushUndo(tr, [st.drLane]); D.steps[st.drLane].fill(0); flash(DR_SHORT[st.drLane] + ' CLEARED'); return; }
+    st.clearArm = now; flash('CLEAR ALL? HOLD B AGAIN'); return; }
   if (st.on && st.screen === 'mod' && st.modTab === 'mtx') { Object.assign(st.patch.mtx[st.mtxRow], { src:0, dst:0, amt:0, via:0 }); flash('SLOT ' + (st.mtxRow + 1) + ' CLEARED'); return; }
   if (st.on && st.screen === 'mod' && st.modTab === 'seq') { st.patch.seq[st.seqSel].steps.fill(0); flash('SEQ ' + (st.seqSel + 1) + ' CLEARED'); return; }
   if (!st.on || st.screen !== 'melody' || st.menu || st.mode !== 'notes') return;
@@ -2294,16 +2341,59 @@ function drawDrums(now){
     if (sel) px(0, y - 1, 112, 12, '#1a2240');
     txt(DR_SHORT[lane], 1, y + 3, sel ? C.acc : C.mut);
     for (let k = 0; k < 16; k++) { const x = 15 + k * 6, v = D.steps[lane][k];
-      px(x, y, 5, 10, v ? col : k % 4 ? C.grid : C.dim); if (v && !sel) px(x, y, 5, 10, col); }
+      if (!v) px(x, y, 5, 10, k % 4 ? C.grid : C.dim);
+      else if (v === 3) { px(x, y, 5, 10, C.grid); px(x, y + 5, 5, 5, col); }
+      else if (v >= 4) { px(x, y, 5, 10, C.grid); const n = v - 2; for (let r = 0; r < n; r++) px(x + Math.floor(r * 5 / n), y, Math.max(1, Math.floor(5 / n) - (n > 2 ? 0 : 1)), 10, col); }
+      else { px(x, y, 5, 10, col); if (v === 2) px(x, y, 5, 2, C.txt); }
+      if (sel && k === (st.drStep || 0) && Math.floor(now / 300) % 2) outline(x - 1, y - 1, 7, 12, C.acc, false); }
   });
   if (st.playing && curStep >= 0) { const k = curStep % 16; px(15 + k * 6, 8, 5, 1, C.play); px(15 + k * 6, 105, 5, 1, C.play); }
   return '';
 }
 // SHAPE with a drum track selected: the first two buttons edit each drum's sound
-function drumShapeDefs(){
-  const D = selTrack().dr, L = () => st.drLane;
-  return [kList('DRUM', () => st.drLane, v => st.drLane = v, DR_LANES.length, i => DR_LANES[i]), kNum('TUNE', () => D.tune[L()], v => D.tune[L()] = v, -12, 12, 1, v => (v > 0 ? '+' : '') + v + ' ST'),
-    kNum('DECAY', () => D.decay[L()], v => D.decay[L()] = v, 25, 200, 5, pct), kNum('LEVEL', () => D.lvl[L()], v => D.lvl[L()] = v, 0, 100, 5, pct)].map((d, i) => Object.assign(d, { key:'dk' + i, view:'time' }));
+function drumShapeDefs(tab){
+  const D = selTrack().dr, L = () => st.drLane; if (!D.tone) D.tone = DR_LANES.map(() => 50); if (D.hum == null) D.hum = 0;
+  if (tab === 1) return [kList('KIT', () => D.kit, v => D.kit = v, KITS.length, i => KITS[i]), kNum('SWING', () => D.swing, v => D.swing = v, 0, 60, 5, pct),
+    kNum('HUMANIZE', () => D.hum, v => D.hum = v, 0, 100, 5, pct), NOKNOB].map((d, i) => d === NOKNOB ? d : Object.assign(d, { key:'dkit' + i, view:'time' }));
+  return [kNum('TUNE', () => D.tune[L()], v => D.tune[L()] = v, -12, 12, 1, v => (v > 0 ? '+' : '') + v + ' ST'), kNum('DECAY', () => D.decay[L()], v => D.decay[L()] = v, 25, 200, 5, pct),
+    kNum('TONE', () => D.tone[L()], v => D.tone[L()] = v, 0, 100, 5, v => v < 50 ? 'DARK ' + (50 - v) * 2 : v > 50 ? 'BRIGHT ' + (v - 50) * 2 : 'NEUTRAL'),
+    kNum('LEVEL', () => D.lvl[L()], v => D.lvl[L()] = v, 0, 100, 5, pct)].map((d, i) => Object.assign(d, { key:'dk' + i, view:'time' }));
+}
+const HIT_NAMES = ['OFF', 'HIT', 'ACCENT', 'GHOST', 'ROLL x2', 'ROLL x3', 'ROLL x4'];
+function previewCell(){ const tr = selTrack(), v = tr.dr.steps[st.drLane][st.drStep || 0]; if (!ac || !v) return; const t = ac.currentTime + 0.01;
+  if (v >= 4) { const n = v - 2; for (let k = 0; k < n; k++) drumHit(st.drLane, t + k * stepDur() / n, k ? 0.62 : 0.85, tr); } else drumHit(st.drLane, t, v === 2 ? 1 : v === 3 ? 0.42 : 0.82, tr); }
+// undo for drum edits (presets, step edits, clears) uses the same stack as recording passes
+function pushUndo(tr, lanes){ st.recPass = (st.recPass || 0) + 1; st.recUndo = st.recUndo || []; st.recLast = 0;
+  lanes.forEach(l => tr.dr.steps[l].forEach((v, i) => st.recUndo.push({ tr:tr.id, lane:l, i, prev:v, pass:st.recPass }))); }
+// pattern presets on buttons 1-4: grooves, hats, fills and rolls, percussion. Each press goes to the next one.
+// letters: x hit, X accent, g ghost, 2/3/4 roll, . rest, - leave as it is
+const DR_PRE = [
+  ['GROOVE', [['ROCK', { 0:'x.......x.x.....', 1:'....x.......x...', 2:'x.x.x.x.x.x.x.x.', 3:'................', 4:'................' }],
+    ['POP', { 0:'x.....x.x.......', 1:'....x.......x...', 2:'x.x.x.x.x.x.x.x.', 3:'..............x.', 4:'................' }],
+    ['HOUSE', { 0:'x...x...x...x...', 1:'................', 2:'x.x.x.x.x.x.x.x.', 3:'..x...x...x...x.', 4:'....x.......x...' }],
+    ['BOOM BAP', { 0:'x......x..x.....', 1:'....x..g....x...', 2:'x.x.x.x.x.x.x.x.', 3:'................', 4:'................' }],
+    ['TRAP', { 0:'x......x........', 1:'................', 2:'x.x.x.x3x.x.x4x.', 3:'................', 4:'........x.......' }],
+    ['FUNK', { 0:'x..x..x...x..x..', 1:'....x..g.g..x..g', 2:'xxxxxxxxxxxxxxxx', 3:'................', 4:'................' }],
+    ['BOSSA', { 0:'x..x..x.x..x..x.', 1:'................', 2:'x.x.x.x.x.x.x.x.', 3:'................', 4:'................', 6:'x..x..x...x..x..' }],
+    ['REGGAETON', { 0:'x...x...x...x...', 1:'...x..x....x..x.', 2:'x.x.x.x.x.x.x.x.', 3:'................', 4:'................' }],
+    ['DISCO', { 0:'x...x...x...x...', 1:'....x.......x...', 2:'x.x.x.x.x.x.x.x.', 3:'..x...x...x...x.', 4:'................' }],
+    ['BREAKBEAT', { 0:'x.x.......xx....', 1:'....x..g.g..x..g', 2:'x.x.x.x.x.x.x.x.', 3:'................', 4:'................' }],
+    ['HALF-TIME', { 0:'x.........x.....', 1:'........x.......', 2:'x.x.x.x.x.x.x.x.', 3:'................', 4:'................' }]]],
+  ['HATS', [['8THS', { 2:'x.x.x.x.x.x.x.x.', 3:'................' }], ['16THS', { 2:'XxxxXxxxXxxxXxxx', 3:'................' }],
+    ['OFFBEAT OPEN', { 2:'x...x...x...x...', 3:'..x...x...x...x.' }], ['TRAP ROLLS', { 2:'x.x.x.x3x.x.4.x2', 3:'................' }],
+    ['SHUFFLE', { 2:'x..x.xx..x.xx..x', 3:'................' }], ['QUARTERS', { 2:'x...x...x...x...', 3:'................' }], ['NO HATS', { 2:'................', 3:'................' }]]],
+  ['FILL', [['SNARE ROLL', { 1:'------------4444' }], ['TOM RUN', { 5:'------------xxxx', 1:'------------....' }], ['SNARE BUILD', { 1:'--------x.x.xxxx' }],
+    ['FLAM ON 4', { 1:'------------2---' }], ['CRASH OF HATS', { 3:'x---------------' }], ['NO FILL', { 1:'------------....', 5:'------------....' }]]],
+  ['PERC', [['SHAKER 16THS', { 7:'xgxgxgxgxgxgxgxg' }], ['CLAP 2 + 4', { 4:'....x.......x...' }], ['RIM CLAVE', { 6:'x..x..x...x.x...' }],
+    ['TOM GROOVE', { 5:'......x.......x.' }], ['CONGA-ISH', { 5:'..x..x....x.x...', 6:'x.....x.........' }], ['NO PERC', { 4:'................', 5:'................', 6:'................', 7:'................' }]]]
+];
+function applyDrumPreset(i){
+  const tr = selTrack(), D = tr.dr, cat = DR_PRE[i]; st.drPre = st.drPre || [-1, -1, -1, -1];
+  st.drPre[i] = (st.drPre[i] + 1) % cat[1].length; const [nm, lanes] = cat[1][st.drPre[i]];
+  pushUndo(tr, Object.keys(lanes).map(Number));
+  const code = { x:1, X:2, g:3, '2':4, '3':5, '4':6, '.':0 };
+  Object.entries(lanes).forEach(([l, str]) => { for (let k = 0; k < 16; k++) { const ch = str[k]; if (ch !== '-') D.steps[l][k] = code[ch] ?? 0; } });
+  flash(cat[0] + ': ' + nm);
 }
 function drawDrumKit(now){
   const D = selTrack().dr, hot = st.lastKnob >= 0 && now - st.lastEdit < 1500;
@@ -2311,8 +2401,12 @@ function drawDrumKit(now){
   if (hot) { const d = shapeDefs()[st.lastKnob]; if (d) { txt(d.name, 1, 1, shColor(st.lastKnob)); const v = String(d.val()); txt(v, 111 - v.length * 4, 1, C.txt); } }
   else { const tb = shTabs(); txt(tb[st.shTab][st.shPage] + ' (' + (st.shPage + 1) + '/' + tb[st.shTab].length + ')', 1, 1, SH_FAM[st.shTab][0]); }
   px(0, 7, 112, 1, C.dim);
+  if (st.shTab === 1) { txt(KITS[D.kit] + ' KIT', 8, 22, TYPE_COL.drums, 2);
+    [['SWING', D.swing / 60], ['HUMANIZE', (D.hum || 0) / 100]].forEach(([nm, f], i) => { txt(nm, 8, 52 + i * 16, C.mut); px(48, 53 + i * 16, 56, 3, C.grid); px(48, 53 + i * 16, Math.round(56 * f), 3, SH_FAM[1][i + 1]); });
+    txt('DIAL: HEAR EACH DRUM', 8, 96, C.dim); return; }
   DR_LANES.forEach((nm, lane) => { const y = 10 + lane * 12, sel = lane === st.drLane;
     if (sel) px(0, y - 1, 112, 11, '#1a2240');
+    if (D.tone) { px(48, y + 8, 60, 1, C.grid); px(48, y + 8, Math.round(60 * D.tone[lane] / 100), 1, SH_FAM[0][2]); }
     txt(nm, 2, y + 2, sel ? C.acc : C.mut);
     px(48, y + 1, 60, 3, C.grid); px(48, y + 1, Math.round(60 * D.lvl[lane] / 100), 3, TYPE_COL.drums);
     px(48, y + 5, 60, 2, C.grid); px(48, y + 5, Math.round(60 * D.decay[lane] / 200), 2, C.auto);
@@ -2723,7 +2817,7 @@ function setHint(t){
   if (!st.on) t = '';
   else if (st.screen === 'melody' && st.mode === 'notes' && !st.menu && st.phase === 'edit' && st.grab) t += '   |   buttons: OCT+  OCT-  ACC  DEL';
   else if (st.screen === 'mix') t = 'MIX: DIAL picks a track, F8 opens it, K1-K4 = volume of each track. Buttons: 1 add a track, 2 mute, 3 automation (K1-K4 shape the curve at bars 1/3/5/7; press again for auto 2), 4 delete (press twice). Hold PLAY + B: shut off. Hold PLAY + F8: save.';
-  else if (st.screen === 'drums') t = 'DRUMS: DIAL picks a drum, F8 hits it. While playing, hits are recorded and smart-quantized (F8 when stopped starts playback). B: undo the last pass. Hold B: clear that drum. K1 kit, K2 swing, K3 drum level, K4 tempo.';
+  else if (st.screen === 'drums') t = 'DRUMS: DIAL picks a drum, F8 hits it (records while playing, smart-quantized; F8 when stopped starts playback). K1 moves the step cursor, K2 sets that step: off, hit, accent, ghost, roll x2/x3/x4. K3 swing, K4 tempo. Buttons: 1 grooves, 2 hats, 3 fills/rolls, 4 percussion (press again for the next). B: undo. Hold B: clear that drum; on an empty drum, hold B twice to clear everything. Kit, humanize and each drum\'s tune/decay/tone/level are on SHAPE.';
   else if (st.screen === 'bass') t = 'BASS: follows the pad chords. K1 pattern, K2 octave, K3 note length, K4 tempo.';
   else if (st.screen === 'arp') t = 'MELODY (arpeggiator over the pad chords). Button 1: K1 pattern, K2 rate, K3 octaves, K4 gate. Button 2: K1 swing, K2 accent, K3 skip steps, K4 pedal note.';
   else if (st.screen === 'design') t = 'buttons: 1 source (press again: source 2, feel)  2 envelope (press again: mod 1-4)  3 tone (filter, grit)  4 space (pan + FX, room: reverb and echo).   Hold F8, nudge K1-K4, then DIAL picks what moves it: note envelope or mod 1-4';
