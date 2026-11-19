@@ -481,9 +481,10 @@ const VERSIONS = [
   { id:'v37', file:'versions/v37.html', label:'v37 - One notch per setting (2026-11-18)', note:'Knobs with a list of settings now move one setting per notch (a tap or the same amount of turning every time); the ring fills one notch per setting and short lists wrap back to the first setting before a full turn. In full screen the circuit board fades smoothly into solid purple at the edges.' },
   { id:'v38', file:'versions/v38.html', label:'v38 - Fewer clicks, smooth zoom (2026-11-18)', note:'Notes that get cut short now fade from their current level instead of jumping to silence, and every note rings out fully before it stops, which removes the clicks when turning knobs fast. The 4-bar zoom eases in and out.' },
   { id:'v39', file:'versions/v39.html', label:'v39 - Endings only in ending presets, darker chord options, staggered list (2026-11-18)', note:'Rhythms no longer change on the last bar unless you pick a preset with an ending (there are 5 such presets, next to their plain versions). New darker chord endings: minor iv, deceptive vi, a sad falling second half, bVI-bVII, and the andalusian walk-down in minor keys. The option list now alternates kinds: plain, dark, colored, turnaround, then again.' },
-  { id:'v40', file:'index.html', label:'v40 - Mod slots on button 2, new Sound layout (2026-11-18)', note:'Button 1 now has 3 pages: source, source 2, and feel (hold, velocity, tremolo, key track). Button 2: press again to go through MOD 1-4 after the note envelope. MOD 1 (pluck) and MOD 2 (swell) are envelopes with attack/decay/sustain/release; MOD 3 (wobble) and MOD 4 (slow sweep) repeat, with shape, speed, depth and fade-in. Each page draws its shape. Hold F8, nudge the knob you want to move, then turn the main knob to pick what moves it: the note envelope or MOD 1-4.' }
+  { id:'v40', file:'versions/v40.html', label:'v40 - Mod slots on button 2, new Sound layout (2026-11-18)', note:'Button 1 now has 3 pages: source, source 2, and feel (hold, velocity, tremolo, key track). Button 2: press again to go through MOD 1-4 after the note envelope. MOD 1 (pluck) and MOD 2 (swell) are envelopes with attack/decay/sustain/release; MOD 3 (wobble) and MOD 4 (slow sweep) repeat, with shape, speed, depth and fade-in. Each page draws its shape. Hold F8, nudge the knob you want to move, then turn the main knob to pick what moves it: the note envelope or MOD 1-4.' },
+  { id:'v41', file:'index.html', label:'v41 - SHAPE screen, page counters, F8 badge bottom-right (2026-11-18)', note:'The sound screen is now called SHAPE. Each page title shows its place, like SOURCE (1/3) or MOD 2 (3/5). The blinking F8 badge moved to the bottom-right so it no longer covers chord names, and pink chord names stay on screen while you browse options (only the notes blink).' }
 ];
-const CURRENT = 'v40';
+const CURRENT = 'v41';
 /* ---- synth engine constants (v12) ---- */
 const UNI_MAX = 7;
 const FTYPES = ['lowpass','highpass','bandpass','notch'], FNAME = ['LP','HP','BP','NOTCH'];
@@ -500,7 +501,7 @@ const SRCS = ['NONE','LFO1','LFO2','ENV1','ENV2','SEQ1','SEQ2','VELO','KEY'];
 const DSTS = [['PITCH',1200],['FINE',100],['DETUNE',100],['CUT1',4800],['CUT2',4800],['RES1',15],['RES2',15],['AMP',1],['PAN',1],['LFO1 RT',10],['LFO2 RT',10]];
 const MTX_N = 8;
 const SCREENS = ['melody','design','osc','filter','mod','settings'];
-const SCREEN_NAME = { melody:'MELODY', design:'NOTE SHAPE', osc:'OSCILLATOR', filter:'FILTERS', mod:'MODULATION', settings:'SETTINGS' };
+const SCREEN_NAME = { melody:'MELODY', design:'SHAPE', osc:'OSCILLATOR', filter:'FILTERS', mod:'MODULATION', settings:'SETTINGS' };
 const SYNTH_SCREENS = ['design','osc','filter','mod'];
 const MODTABS = ['lfo','env2','seq','mtx'];
 function defaultPatch(){
@@ -535,7 +536,7 @@ function normPatch(p){
 // each button is a color family; each knob gets its own shade (button 1 runs yellow to red)
 const SH_FAM = [['#ffd23f','#ffab2e','#ff7a2e','#ff4a3d'], ['#a6f4ff','#34d6e8','#22a6dc','#2f7ff0'],
                 ['#c8ff7a','#7dff6a','#38e08c','#19c2a2'], ['#ffb3ef','#ff4fd8','#d940e3','#a64df7']];
-const SH_TABS = [['SOURCE', 'SOURCE 2', 'FEEL'], ['ENVELOPE', 'MOD 1', 'MOD 2', 'MOD 3', 'MOD 4'], ['FILTER', 'DRIVE'], ['MOTION', 'FX']];
+const SH_TABS = [['SOURCE', 'SOURCE', 'FEEL'], ['ENVELOPE', 'MOD 1', 'MOD 2', 'MOD 3', 'MOD 4'], ['FILTER', 'DRIVE'], ['MOTION', 'FX']];
 const RING_DEF = ['#ffd23f', '#34d6e8', '#7dff6a', '#ff4fd8'];
 const SH_WAVES = [0, 2, 3], SH_WNAME = ['SINE', 'SAW', 'SQUARE'];
 // LFO rate: free rates first, then tempo-locked note values (beats per cycle)
@@ -832,7 +833,7 @@ function drawModOverlay(now){
     else txt('MOD FROM ' + MOD_NAME[src], 1, 1, col);
   }
   if (!H && !pageCanMod()) return;
-  const tip = !H ? 'HOLD F8 + KNOB: ADD MOTION' : H.m ? (H.m.amt ? 'DIAL:SOURCE  LET GO:KEEP' : 'LET GO TO REMOVE') : H.no ? 'TRY ANOTHER KNOB' : 'TURN THE KNOB TO MOVE';
+  const tip = !H ? 'HOLD F8 + KNOB: MOTION' : H.m ? (H.m.amt ? 'DIAL:SOURCE LET GO:KEEP' : 'LET GO TO REMOVE') : H.no ? 'TRY ANOTHER KNOB' : 'TURN THE KNOB TO MOVE';
   px(0, 105, tip.length * 4 + 1, 7, C.bg); txt(tip, 1, 106, H ? col : C.mut);
 }
 // value of a mod slot (or the note's own envelope) t seconds into a note held for 'hold' seconds
@@ -860,7 +861,7 @@ function drawModSlot(k, now){
 function drawSound(now){
   const defs = shapeDefs(), hot = st.lastKnob >= 0 && now - st.lastEdit < 1500 && defs[st.lastKnob];
   if (hot) { const d = defs[st.lastKnob], v = String(d.val()); txt(d.name, 1, 1, shColor(st.lastKnob)); txt(v, 111 - v.length * 4, 1, C.txt); }
-  else { txt(SH_TABS[st.shTab][st.shPage], 1, 1, SH_FAM[st.shTab][0]); for (let i = 0; i < 4; i++) px(79 + i * 5, 2, 3, 3, shColor(i)); const np = SH_TABS[st.shTab].length; for (let q = 0; q < np; q++) px(77 - (np - q) * 3, 2, 2, 3, q === st.shPage ? C.txt : C.mut); }
+  else { const np = SH_TABS[st.shTab].length, ttl = SH_TABS[st.shTab][st.shPage] + ' (' + (st.shPage + 1) + '/' + np + ')'; txt(ttl, 1, 1, SH_FAM[st.shTab][0]); for (let i = 0; i < 4; i++) px(79 + i * 5, 2, 3, 3, shColor(i)); }
   px(0, 7, 112, 1, C.dim);
   // Source (button 1) is always shown zoomed in; elsewhere close-up knobs zoom in while turning
   if (st.shTab === 1 && st.shPage > 0) { drawModSlot(st.shPage - 1, now); return; }
@@ -1763,7 +1764,7 @@ function bHold(){
 }
 /* ---- v13 screen fan: hold Play, turn the knob, let go ---- */
 const FAN_HOLD = 300, FAN_MS = 160;
-const FAN = ['melody', 'design', 'settings'], FAN_LAB = ['MELODY', 'SOUND', 'SETUP'];
+const FAN = ['melody', 'design', 'settings'], FAN_LAB = ['MELODY', 'SHAPE', 'SETUP'];
 function openFan(){ if (!st.on || st.shut) return; held.playUsed = true; st.fan = { t:performance.now(), sel:Math.max(0, FAN.indexOf(st.screen)), closing:false }; }
 function closeFan(pick){
   if (!st.fan || st.fan.closing) return;
@@ -1949,7 +1950,7 @@ function drawMelody(now){
     const ch = pr[sg.slot]; if (!ch) continue;
     const cname = chordName(ch), x = colX(sg.start);
     const differs = sg.slot >= 4 && !sameChord(ch, pr[sg.slot - 4]);
-    if (x >= 0 && x < 108 && x >= lastName && !(sugg && !blink)) { txt(cname, x, 0, sugg ? C.sug : C.auto); lastName = x + cname.length * 4 + 1; }
+    if (x >= 0 && x < 108 && x >= lastName) { txt(cname, x, 0, sugg ? C.sug : C.auto); lastName = x + cname.length * 4 + 1; }
   }
   // brackets around the selected bar's main note (first half) when you can move it
   if ((st.phase === 'edit' || st.phase === 'adapt') && st.mode === 'notes' && !st.menu && st.bars[st.sel % 4].mel) {
@@ -2342,10 +2343,10 @@ function draw(){
   for (let i = 0; i < 4; i++) { const b = document.getElementById('b' + i); b.classList.toggle('sel', st.on && hiBar === i); b.classList.toggle('two', st.on && hiBar === i && st.screen === 'melody' && st.sel >= 4); }
   const f8Ready = st.on && ((st.screen === 'melody' && ((st.phase === 'entry' && allSet()) || st.phase === 'suggest')) || (st.screen === 'design' && !st.modHold && pageCanMod()));
   document.getElementById('f8').classList.toggle('ready', f8Ready);
-  // a small F8 badge blinks in the screen's top-right corner while F8 has something to do
+  // a small F8 badge blinks in the screen's bottom-right corner while F8 has something to do
   if (f8Ready && !st.shut && !st.pop && performance.now() - st.lastEdit > 1500 && performance.now() - st.boot > BOOT_MS && Math.floor(performance.now() / 450) % 2 === 0) {
     const word = st.screen === 'melody' ? (st.phase === 'suggest' ? 'KEEP ' : 'CHORDS ') : '', t = word + 'F8', x = 111 - t.length * 4;
-    px(x - 2, 0, 113 - x, 7, C.bg); txt(word, x, 1, C.txt); txt('F8', 103, 1, '#7cc4ff'); }
+    px(x - 2, 105, 113 - x, 7, C.bg); txt(word, x, 106, C.txt); txt('F8', 103, 106, '#7cc4ff'); }
   requestAnimationFrame(draw);
 }
 requestAnimationFrame(draw);
