@@ -401,9 +401,10 @@ const VERSIONS = [
   { id:'v24', file:'versions/v24.html', label:'v24 - Hold F8 to add motion, generated second half, blue F8 (2026-11-18)', note:'On the Sound screen, hold F8 and turn a knob to connect a moving source to it (the main knob picks LFO 1, LFO 2, ENV 2, SEQ 1 or SEQ 2); a thin arc on the ring shows it moving and a tip in the bottom-left says what to do next. Chord bars 5-8 can be a whole new half and are always generated (all pink). The selected bar glows, an F8 badge blinks top-right when F8 is ready, and F8 is blue.' },
   { id:'v25', file:'versions/v25.html', label:'v25 - Moved notes keep without F8 (2026-11-18)', note:'After moving a bar\'s main note, pressing another bar keeps the change and its adapted chords; F8 no longer needs to confirm it. B still undoes it until you move on.' },
   { id:'v26', file:'versions/v26.html', label:'v26 - B reopens chord suggestions (2026-11-18)', note:'With chords set, B goes back to the pink suggestions: your current progression is option 1 and the main knob browses new ones.' },
-  { id:'v27', file:'index.html', label:'v27 - Metal shell, knob hints, tap knobs (2026-11-18)', note:'Brushed-metal shell with engraved AltF8 and RTP INC. + version lettering. Knobs blink until you first turn them on each page; tap a knob to move one step (top half up, bottom half down; left/right half on the main knob). The F8 badge says what F8 will do. Bars 5-8 turn blue once the chords are kept.' }
+  { id:'v27', file:'versions/v27.html', label:'v27 - Metal shell, knob hints, tap knobs (2026-11-18)', note:'Brushed-metal shell with engraved AltF8 and RTP INC. + version lettering. Knobs blink until you first turn them on each page; tap a knob to move one step (top half up, bottom half down; left/right half on the main knob). The F8 badge says what F8 will do. Bars 5-8 turn blue once the chords are kept.' },
+  { id:'v28', file:'index.html', label:'v28 - F8 blinks only where motion fits (2026-11-18)', note:'On Sound pages where no knob can take motion (the envelope times, drive/fold/crush/downsample), F8 stops blinking and the hold-F8 tip is hidden.' }
 ];
-const CURRENT = 'v27';
+const CURRENT = 'v28';
 /* ---- synth engine constants (v12) ---- */
 const UNI_MAX = 7;
 const FTYPES = ['lowpass','highpass','bandpass','notch'], FNAME = ['LP','HP','BP','NOTCH'];
@@ -736,6 +737,7 @@ function drawModOverlay(now){
     else if (H.m) { txt(H.m.name, 1, 1, col); const v = MOD_NAME[src] + ' ' + (H.m.amt > 0 ? '+' : '') + H.m.amt + '%'; txt(v, 111 - v.length * 4, 1, C.txt); }
     else txt('MOD FROM ' + MOD_NAME[src], 1, 1, col);
   }
+  if (!H && !pageCanMod()) return;
   const tip = !H ? 'HOLD F8 + KNOB: ADD MOTION' : H.m ? (H.m.amt ? 'LET GO TO KEEP' : 'LET GO TO REMOVE') : H.no ? 'TRY ANOTHER KNOB' : 'TURN A KNOB  DIAL:SOURCE';
   px(0, 105, tip.length * 4 + 1, 7, C.bg); txt(tip, 1, 106, H ? col : C.mut);
 }
@@ -1426,6 +1428,8 @@ function modValue(src, now){
   if (src === 'ENV2') { const b = 60 / st.tempo, f = (sec % b) / b; return Math.exp(-f * 4); }
   const k = src === 'SEQ1' ? 0 : 1, S = st.patch.seq[k], i = Math.floor(sec / seqStepDur(k)) % S.len; return (S.steps[i] || 0) / 100;
 }
+// does any knob on this Sound page take motion? (the envelope times, drive, fold... do not)
+function pageCanMod(){ return shapeDefs().some(d => MOD_SCALE[d.key]); }
 function knobPage(){ return st.screen === 'design' ? 'd' + st.shTab + st.shPage : st.screen; }
 function knobFrac(i){ return clamp(knobDefs()[i].frac(), 0, 1); }
 const SETTINGS = ['TEMPO', 'KEY', 'CUTOFF 1', 'RESO 1', 'METRONOME'];
@@ -2110,7 +2114,7 @@ function draw(){
     a.style.display = 'block'; a.style.background = 'conic-gradient(transparent ' + lo + 'turn, ' + c + ' ' + lo + 'turn ' + Math.max(hi, lo + 0.012) + 'turn, transparent 0), conic-gradient(' + c + '59 0 1turn)'; }
   const hiBar = st.screen === 'melody' ? (st.grab && st.phase === 'edit' ? -1 : st.sel) : st.screen === 'filter' ? st.fSel : st.screen === 'mod' ? MODTABS.indexOf(st.modTab) : st.screen === 'design' ? st.shTab : -1;
   for (let i = 0; i < 4; i++) document.getElementById('b' + i).classList.toggle('sel', st.on && hiBar === i);
-  const f8Ready = st.on && ((st.screen === 'melody' && ((st.phase === 'entry' && allSet()) || st.phase === 'suggest')) || (st.screen === 'design' && !st.modHold));
+  const f8Ready = st.on && ((st.screen === 'melody' && ((st.phase === 'entry' && allSet()) || st.phase === 'suggest')) || (st.screen === 'design' && !st.modHold && pageCanMod()));
   document.getElementById('f8').classList.toggle('ready', f8Ready);
   // a small F8 badge blinks in the screen's top-right corner while F8 has something to do
   if (f8Ready && !st.shut && !st.pop && performance.now() - st.lastEdit > 1500 && performance.now() - st.boot > BOOT_MS && Math.floor(performance.now() / 450) % 2 === 0) {
