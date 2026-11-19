@@ -8,7 +8,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="AltF8">
 <meta name="theme-color" content="#16181d">
-<title>AltF8 Emulator</title>
+<title>AltF8 Emulator (Copy)</title>
 <style>
   :root { --bg:#16181d; --panel:#1f232b; --line:#2f3542; --txt:#e6e9ef; --muted:#97a0b3; --acc:#ffd23f; --cyan:#34d6e8; }
   * { box-sizing:border-box; }
@@ -26,6 +26,8 @@
   .ring { position:absolute; width:40px; height:40px; border-radius:50%; display:flex; align-items:center; justify-content:center;
     background:conic-gradient(var(--c,var(--cyan)) calc(var(--p,0) * 1turn), #3a3f4a 0); cursor:ns-resize; box-shadow:0 0 6px -1px var(--c,var(--cyan)); }
   .ring.off { box-shadow:none; }
+  .modarc { position:absolute; inset:-6px; border-radius:50%; pointer-events:none; display:none;
+    -webkit-mask:radial-gradient(circle, transparent 22.5px, #000 23px); mask:radial-gradient(circle, transparent 22.5px, #000 23px); }
   .ring.off { background:conic-gradient(#3a3f4a 1turn,#3a3f4a 0); }
   /* brushed aluminum knobs: the shine stays put, only the indicator line turns (--rot) */
   .knob { width:34px; height:34px; border-radius:50%; position:relative;
@@ -45,9 +47,9 @@
   .det.lit { background:var(--cyan); box-shadow:0 0 6px var(--cyan); }
   #slider { position:absolute; top:10px; width:22px; height:24px; margin-left:-11px; border-radius:5px; background:linear-gradient(#5a5f6a,#2d3139); box-shadow:0 2px 3px rgba(0,0,0,.5); transition:left .08s; pointer-events:none; }
   .btn { position:absolute; top:342px; width:50px; height:50px; border-radius:50%; font-weight:800; font-size:15px; display:flex; align-items:center; justify-content:center; cursor:pointer; box-shadow:0 4px 0 #16181c; }
-  #f8 { left:40px; background:radial-gradient(circle at 40% 35%,#ff7a6b,#c73a2c); color:#fff; }
+  #f8 { left:40px; background:radial-gradient(circle at 40% 35%,#7cc4ff,#2a6fd0); color:#fff; }
   #f8.ready { animation:f8blink 0.9s ease-in-out infinite; }
-  @keyframes f8blink { 0%, 100% { box-shadow:0 0 0 0 rgba(255,122,107,0); filter:brightness(1); } 50% { box-shadow:0 0 0 4px rgba(255,122,107,.55), 0 0 14px 4px rgba(255,90,70,.45); filter:brightness(1.18); } }
+  @keyframes f8blink { 0%, 100% { box-shadow:0 0 0 0 rgba(124,196,255,0); filter:brightness(1); } 50% { box-shadow:0 0 0 4px rgba(124,196,255,.55), 0 0 14px 4px rgba(70,150,255,.45); filter:brightness(1.18); } }
   #bbtn { left:110px; background:radial-gradient(circle at 40% 35%,#6f7682,#3a3f49); color:#fff; }
   #jack { position:absolute; left:34px; bottom:-5px; width:16px; height:10px; border-radius:0 0 8px 8px; background:#111; }
   #brand { position:absolute; right:18px; bottom:14px; font:700 13px/1 ui-monospace,Menlo,monospace; color:#9b9483; letter-spacing:.08em; }
@@ -389,9 +391,10 @@ const VERSIONS = [
   { id:'v20', file:'versions/v20.html', label:'v20 - Full-height notes, no B menu, conclusive bar 8 (2026-11-18)', note:'Chord names at the very top, notes fill the screen. No selector menu: B rejects/undoes, F8 reopens chord suggestions, metronome is in Settings. Knob 1 now only shares the bars between chords (beats per chord). Every rhythm has its own ending in bar 8; arpeggios end on a held chord.' },
   { id:'v21', file:'versions/v21.html', label:'v21 - Voicing knob, gentler chord lengths, F8 blink (2026-11-18)', note:'Knob 3 is voicing spread (close, drop 2/3, wide, inversions, bass note). Knob 1 presets stay close to even, some with small gaps. F8 blinks when it has something to do; suggestion counter in the bottom-left.' },
   { id:'v22', file:'versions/v22.html', label:'v22 - Source page always zoomed in (2026-11-18)', note:'On the Sound screen, button 1 (Source, both pages) shows the close-up all the time instead of zooming in and out with each knob turn.' },
-  { id:'v23', file:'index.html', label:'v23 - Sparkle intro with shutter transition, tap F8 to start (2026-11-18)', note:'Power-on shows the logo with sparkles, then a hexagon-shaped opening closes over it and reopens onto the screen. A quick tap on F8 now powers on too, which lets iPhone start sound right away; a blocked chime plays as soon as sound unlocks.' }
+  { id:'v23', file:'versions/v23.html', label:'v23 - Sparkle intro with shutter transition, tap F8 to start (2026-11-18)', note:'Power-on shows the logo with sparkles, then a hexagon-shaped opening closes over it and reopens onto the screen. A quick tap on F8 now powers on too, which lets iPhone start sound right away; a blocked chime plays as soon as sound unlocks.' },
+  { id:'v24', file:'index.html', label:'v24 - Hold F8 to add motion, generated second half, blue F8 (2026-11-18)', note:'On the Sound screen, hold F8 and turn a knob to connect a moving source to it (the main knob picks LFO 1, LFO 2, ENV 2, SEQ 1 or SEQ 2); a thin arc on the ring shows it moving and a tip in the bottom-left says what to do next. Chord bars 5-8 can be a whole new half and are always generated (all pink). The selected bar glows, an F8 badge blinks top-right when F8 is ready, and F8 is blue.' }
 ];
-const CURRENT = 'v23';
+const CURRENT = 'v24';
 /* ---- synth engine constants (v12) ---- */
 const UNI_MAX = 7;
 const FTYPES = ['lowpass','highpass','bandpass','notch'], FNAME = ['LP','HP','BP','NOTCH'];
@@ -399,6 +402,10 @@ const ROUTES = ['SERIAL','PARALLEL','F1 ONLY'];
 const LSHAPES = ['SINE','TRI','SAW','SQUARE','S+H'];
 const LSYNC = [['FREE',0],['4/1',16],['2/1',8],['1/1',4],['1/2',2],['1/4',1],['1/8',0.5],['1/8T',1/3],['1/16',0.25]];
 const SRATES = [['1/4',1],['1/8',0.5],['1/8T',1/3],['1/16',0.25],['1/16T',1/6],['1/32',0.125]];
+// hold-F8 mod connections on the Sound screen: what can move a knob, and how far 100% moves it
+const MOD_SRCS = ['LFO1', 'LFO2', 'ENV2', 'SEQ1', 'SEQ2'], MOD_NAME = { LFO1:'LFO 1', LFO2:'LFO 2', ENV2:'ENV 2', SEQ1:'SEQ 1', SEQ2:'SEQ 2' };
+const MOD_COL = { LFO1:'#7af0ff', LFO2:'#ff9ef0', ENV2:'#b4ff8a', SEQ1:'#ffb347', SEQ2:'#c9a7ff' };
+const MOD_SCALE = { cutoff:4800, reso:10, pan:1, spread:60, sub:0.8, noise:0.5, ring:1, fm:4, trem:0.5, vib:60 };
 const SRCS = ['NONE','LFO1','LFO2','ENV1','ENV2','SEQ1','SEQ2','VELO','KEY'];
 // destination name, size of a 100% amount (cents for pitch/cutoff, dB/Q for reso, gain, pan, Hz)
 const DSTS = [['PITCH',1200],['FINE',100],['DETUNE',100],['CUT1',4800],['CUT2',4800],['RES1',15],['RES2',15],['AMP',1],['PAN',1],['LFO1 RT',10],['LFO2 RT',10]];
@@ -418,7 +425,7 @@ function defaultPatch(){
     env2:{ a:1, d:5, s:0.2, r:4 },
     seq:[{ steps:[100,0,60,0,100,20,60,-40,100,0,60,0,80,40,-20,-60], len:16, rate:1, glide:0 },
          { steps:Array.from({ length:16 }, (_, i) => Math.round(-100 + i * 200 / 15)), len:16, rate:3, glide:40 }],
-    mtx, sh:shDefaults()
+    mtx, sh:shDefaults(), mods:[]
   };
 }
 function normPatch(p){
@@ -431,6 +438,7 @@ function normPatch(p){
   o.mtx = d.mtx.map((x, i) => Object.assign(x, (p.mtx || [])[i] || {}));
   if (!p.mtx) o.mtx[0] = { src:0, dst:0, amt:0, via:0 }; // songs saved before v12 keep their old sound
   o.sh = Object.assign(shDefaults(), p.sh || {});
+  o.mods = (p.mods || []).map(m => Object.assign({}, m));
   return o;
 }
 /* ================= v17 note shaping: 4 buttons x 2 pages x 4 knobs on the NOTE SHAPE screen ================= */
@@ -710,10 +718,22 @@ function waveColor(P){
 }
 const REF_COL = '#8fd8ff', REF_DIM = '#1d3a52';
 
+// hold-F8 mod: the header says what's happening and the bottom-left says what to do next
+function drawModOverlay(now){
+  const H = st.modHold, src = MOD_SRCS[st.modSrc] || 'LFO1', col = MOD_COL[src];
+  if (H) {
+    px(0, 0, 112, 7, C.bg);
+    if (H.no) txt(H.no + ' CANT MOVE', 1, 1, C.mut);
+    else if (H.m) { txt(H.m.name, 1, 1, col); const v = MOD_NAME[src] + ' ' + (H.m.amt > 0 ? '+' : '') + H.m.amt + '%'; txt(v, 111 - v.length * 4, 1, C.txt); }
+    else txt('MOD FROM ' + MOD_NAME[src], 1, 1, col);
+  }
+  const tip = !H ? 'HOLD F8 + KNOB: ADD MOTION' : H.m ? (H.m.amt ? 'LET GO TO KEEP' : 'LET GO TO REMOVE') : H.no ? 'TRY ANOTHER KNOB' : 'TURN A KNOB  DIAL:SOURCE';
+  px(0, 105, tip.length * 4 + 1, 7, C.bg); txt(tip, 1, 106, H ? col : C.mut);
+}
 function drawSound(now){
   const defs = shapeDefs(), hot = st.lastKnob >= 0 && now - st.lastEdit < 1500 && defs[st.lastKnob];
   if (hot) { const d = defs[st.lastKnob], v = String(d.val()); txt(d.name, 1, 1, shColor(st.lastKnob)); txt(v, 111 - v.length * 4, 1, C.txt); }
-  else { txt(SH_TABS[st.shTab][st.shPage], 1, 1, SH_FAM[st.shTab][0]); for (let i = 0; i < 4; i++) px(92 + i * 5, 2, 3, 3, shColor(i)); px(85, 2, 2, 3, st.shPage ? C.mut : C.txt); px(88, 2, 2, 3, st.shPage ? C.txt : C.mut); }
+  else { txt(SH_TABS[st.shTab][st.shPage], 1, 1, SH_FAM[st.shTab][0]); for (let i = 0; i < 4; i++) px(79 + i * 5, 2, 3, 3, shColor(i)); px(72, 2, 2, 3, st.shPage ? C.mut : C.txt); px(75, 2, 2, 3, st.shPage ? C.txt : C.mut); }
   px(0, 7, 112, 1, C.dim);
   // Source (button 1) is always shown zoomed in; elsewhere close-up knobs zoom in while turning
   const zoomIn = st.shTab === 0 || (st.viewKind === 'close' && now - st.viewT < 1000);
@@ -802,7 +822,7 @@ const st = {
   bars:[0,1,2,3].map(() => ({ mel:null, chord:null, notes:[] })),
   patch:defaultPatch(),
   msg:'', msgT:0, lastEdit:0, mainAngle:0, kAngles:[0,0,0,0],
-  viewTop:76, ov:null, pat:0, mode:'notes', menu:false, menuIdx:0, loopNote:false, pop:null, shut:null, setCur:0, setEdit:false, prevStart:0, prevDur:0, metro:false,
+  viewTop:76, modSrc:0, modHold:null, ov:null, pat:0, mode:'notes', menu:false, menuIdx:0, loopNote:false, pop:null, shut:null, setCur:0, setEdit:false, prevStart:0, prevDur:0, metro:false,
   fan:null, pp:null, prog:null, pending:null, arp:0, voi:0, shTab:0, shPage:0, zoom:0, viewKey:'', viewKind:'time', viewT:0, fSel:0, modTab:'lfo', lfoSel:0, seqSel:0, seqCur:0, mtxRow:0, lastKnob:-1
 };
 
@@ -934,6 +954,17 @@ function findChords(mels){
       if (s > s78) { s78 = s; b78 = [c7, c8]; }
     }
     if (b78) endings.push(['NEW ENDING', p.concat([p[0], p[1], b78[0], b78[1]]), -0.2]);
+    // a whole new second half: chords 5-8 picked freely, heading back to chord 1 for the loop
+    const halves = [];
+    for (const c5 of pool) for (const c6 of pool) for (const c7 of pool) for (const c8 of pool) {
+      const h = [c5, c6, c7, c8];
+      if (sameChord(c5, p[3]) || sameChord(c5, c6) || sameChord(c6, c7) || sameChord(c7, c8) || sameChord(c8, p[0])) continue;
+      const diff = h.filter((c, i) => !sameChord(c, p[i])).length; if (diff < 3) continue;
+      const sc2 = toward(c8, p[0]) * 1.2 + toward(c7, c8) * 0.8 + toward(c6, c7) * 0.4 + toward(c5, c6) * 0.3 + (c7.deg === 1 || c7.deg === 3 ? 0.8 : 0) + (c8.deg === 4 || c8.deg === -2 ? 1 : 0) + diff * 0.2 - (sameChord(c5, c7) ? 1.2 : 0) - (sameChord(c6, c8) ? 0.8 : 0);
+      halves.push({ h, sc2 });
+    }
+    halves.sort((u, v) => v.sc2 - u.sc2);
+    halves.slice(0, 3).forEach((x, i) => endings.push(['NEW HALF', p.concat(x.h), -0.1 - i * 0.35]));
     for (const [tag, pr, eb] of endings) {
       opts.push({ chords:pr, score:b.s + eb, tag:tag || 'REPEAT' });
       [['7', '7THS', -0.4], ['sus', 'SUS', -0.8], ['a9', 'ADD9', -0.9]].forEach(([st2, nm, cb]) => { const c = color(pr, st2); if (c) opts.push({ chords:c, score:b.s + eb + cb, tag:(tag ? tag + ' ' : '') + nm }); });
@@ -1045,13 +1076,14 @@ function voice(midi, t, dur, vel, lane){
   if (lane !== undefined && lane !== 'demo') glideLast[lane] = f0;
   // v17 source extras: ring mod / AM, sub, noise, FM, vibrato, pitch envelope
   const S = P.sh, pre = mk(ac.createGain()), lr = lrateHz(S.lrate);
-  if (S.ring > 0) { const rg = mk(ac.createGain()); rg.gain.value = 1 - S.ring / 100; const mo = src(ac.createOscillator()); mo.frequency.value = f0 * 2.5;
-    const mg = mk(ac.createGain()); mg.gain.value = S.ring / 100; mo.connect(mg); mg.connect(rg.gain); mix.connect(rg); rg.connect(pre); } else mix.connect(pre);
-  if (S.sub > 0) { const so = src(ac.createOscillator()); so.frequency.value = f0 / 2; pitchBus.connect(so.detune); const sg = mk(ac.createGain()); sg.gain.value = S.sub / 100 * 0.8; so.connect(sg); sg.connect(pre); }
-  if (S.noise > 0 && noiseBuf) { const ns = src(ac.createBufferSource()); ns.buffer = noiseBuf; ns.loop = true; const ng = mk(ac.createGain()); ng.gain.value = S.noise / 100 * 0.5; ns.connect(ng); ng.connect(pre); }
-  if (S.fm > 0) { const mo = src(ac.createOscillator()); mo.frequency.value = f0 * 2; const mg = mk(ac.createGain()); mg.gain.value = 0;
-    schedEnv(mg.gain, t, dur, 0.002, 0.25, 0.15, REL[P.r], S.fm / 100 * 4 * 2 * f0); mo.connect(mg); rec.oscs.forEach(o => mg.connect(o.frequency)); }
-  if (S.vib > 0) { const vo = src(ac.createOscillator()); vo.frequency.value = lr; const vg = mk(ac.createGain()); vg.gain.value = S.vib; vo.connect(vg); vg.connect(pitchBus); }
+  const MK = new Set((P.mods || []).map(m => m.key)), tgt = {};
+  if (S.ring > 0 || MK.has('ring')) { const rg = mk(ac.createGain()); rg.gain.value = 1 - S.ring / 100; const mo = src(ac.createOscillator()); mo.frequency.value = f0 * 2.5;
+    const mg = mk(ac.createGain()); mg.gain.value = S.ring / 100; mo.connect(mg); mg.connect(rg.gain); mix.connect(rg); rg.connect(pre); tgt.ring = mg.gain; } else mix.connect(pre);
+  if (S.sub > 0 || MK.has('sub')) { const so = src(ac.createOscillator()); so.frequency.value = f0 / 2; pitchBus.connect(so.detune); const sg = mk(ac.createGain()); sg.gain.value = S.sub / 100 * 0.8; so.connect(sg); sg.connect(pre); tgt.sub = sg.gain; }
+  if ((S.noise > 0 || MK.has('noise')) && noiseBuf) { const ns = src(ac.createBufferSource()); ns.buffer = noiseBuf; ns.loop = true; const ng = mk(ac.createGain()); ng.gain.value = S.noise / 100 * 0.5; ns.connect(ng); ng.connect(pre); tgt.noise = ng.gain; }
+  if (S.fm > 0 || MK.has('fm')) { const mo = src(ac.createOscillator()); mo.frequency.value = f0 * 2; const mg = mk(ac.createGain()); mg.gain.value = 0;
+    schedEnv(mg.gain, t, dur, 0.002, 0.25, 0.15, REL[P.r], S.fm / 100 * 4 * 2 * f0); mo.connect(mg); rec.oscs.forEach(o => mg.connect(o.frequency)); tgt.fm = mg.gain; }
+  if (S.vib > 0 || MK.has('vib')) { const vo = src(ac.createOscillator()); vo.frequency.value = lr; const vg = mk(ac.createGain()); vg.gain.value = S.vib; vo.connect(vg); vg.connect(pitchBus); tgt.vib = vg.gain; }
   if (S.penv > 0) { const pc = src(ac.createConstantSource()); pc.offset.setValueAtTime(S.penv / 100 * 2400, t); pc.offset.setTargetAtTime(0, t, 0.05); pc.connect(pitchBus); }
   // filters
   const f1 = mk(ac.createBiquadFilter()), f2 = mk(ac.createBiquadFilter());
@@ -1063,7 +1095,7 @@ function voice(midi, t, dur, vel, lane){
   else if (P.route === 1) { const h = mk(ac.createGain()); h.gain.value = 0.6; pre.connect(f1); pre.connect(f2); f1.connect(h); f2.connect(h); h.connect(g); }
   else { pre.connect(f1); f1.connect(g); }
   if (S.fenv > 0) { const fc = src(ac.createConstantSource()); fc.offset.value = 0; schedEnv(fc.offset, t, dur, 0.002, 0.3, 0.1, REL[P.r], S.fenv / 100 * 4800); fc.connect(f1.detune); }
-  if (S.trem > 0) { vca.gain.value = 1 - S.trem / 200; const to = src(ac.createOscillator()); to.frequency.value = lr; const tg = mk(ac.createGain()); tg.gain.value = S.trem / 200; to.connect(tg); tg.connect(vca.gain); }
+  if (S.trem > 0 || MK.has('trem')) { vca.gain.value = 1 - S.trem / 200; const to = src(ac.createOscillator()); to.frequency.value = lr; const tg = mk(ac.createGain()); tg.gain.value = S.trem / 200; to.connect(tg); tg.connect(vca.gain); tgt.trem = tg.gain; }
   g.connect(vca);
   let pan = null;
   if (ac.createStereoPanner) { pan = mk(ac.createStereoPanner()); pan.pan.value = S.pan / 100; vca.connect(pan); pan.connect(bus); } else vca.connect(bus);
@@ -1116,6 +1148,21 @@ function voice(midi, t, dur, vel, lane){
     else { rg.gain.value = amt; amtParam = rg.gain; }
     link(s, m.src, rg); rg.connect(to);
     rec.rows[i] = { src:m.src, dst:m.dst, via:m.via, amt:amtParam };
+  });
+  // hold-F8 connections: each one adds a source, scaled by its amount, onto the knob's sound parameter
+  tgt.cutoff = f1.detune; tgt.reso = f1.Q; tgt.spread = spreadBus; tgt.pan = pan ? pan.pan : null;
+  const modNode = {};
+  const makeModSrc = name => {
+    if (name === 'LFO1' || name === 'LFO2') { const k = name === 'LFO1' ? 0 : 1, o = src(ac.createOscillator()); o.type = WAVES[P.lfo[k].shape] || 'sine'; o.frequency.value = lfoHz(k); return o; }
+    if (name === 'ENV2') { const c = src(ac.createConstantSource()), E = P.env2; c.offset.value = 0; schedEnv(c.offset, t, dur, ATK[E.a], DEC[E.d], E.s, REL[E.r], 1); return c; }
+    return seqSrc[name === 'SEQ1' ? 0 : 1] || null;
+  };
+  (P.mods || []).forEach(m => {
+    const to = tgt[m.key]; if (!to || !m.amt) return;
+    if (!(m.src in modNode)) modNode[m.src] = makeModSrc(m.src);
+    const s = modNode[m.src]; if (!s) return;
+    const mg = mk(ac.createGain()); mg.gain.value = m.amt / 100 * MOD_SCALE[m.key] * (m.key === 'fm' ? f0 : 1);
+    link(s, SRCS.indexOf(m.src), mg); mg.connect(to);
   });
   rec.stops.forEach(s => { s.start(t); s.stop(end); });
   rec.f1 = f1; rec.f2 = f2; rec.g = g; rec.uni = n;
@@ -1187,8 +1234,13 @@ function barNotes(slot){
   const pr = curProg();
   if (!pr || !pr[slot]) return [{ midi:B.mel.midi, mel:true }];
   let top = B.mel.midi, alt = false;
-  if (slot >= 4 && !chordPcs(pr[slot]).includes(top % 12)) { alt = true;
-    for (const d of [1, -1, 2, -2, 3, -3, 4, -4, 5, -5, 6]) if (chordPcs(pr[slot]).includes((top + d + 120) % 12)) { top += d; break; } }
+  // the second half is never designed by hand: its top notes are generated from the chords (always pink)
+  if (slot >= 4) { alt = true; const pcs = chordPcs(pr[slot]);
+    const order = slot === 7 ? [0, -1, 1, -2, 2, -3, 3, -4, 4, -5, 5, 6] : slot % 2 ? [-2, 2, -1, 1, -3, 3, -4, 4, -5, 5, 0] : [2, -2, 1, -1, 3, -3, 4, -4, 5, -5, 0];
+    const want = slot === 7 ? [pr[slot].root % 12] : pcs;
+    let d0 = order.find(d => want.includes((top + d + 120) % 12));
+    if (d0 === undefined) d0 = order.find(d => pcs.includes((top + d + 120) % 12)) || 0;
+    top += d0; }
   return [{ midi:top, mel:true, alt }].concat(spreadVoicing(voicing(top, pr[slot]), pr[slot], (VOICINGS[st.voi] || VOICINGS[0]).v).map(m => ({ midi:m })));
 }
 function schedule(s, t){
@@ -1240,6 +1292,7 @@ function mainTurn(dir){
   if (!st.on) return;
   st.mainAngle += dir * 15; document.getElementById('mainknob').style.setProperty('--rot', st.mainAngle + 'deg');
   if (held.play) { held.playUsed = true; if (!st.fan || st.fan.closing) openFan(); st.fan.sel = (st.fan.sel + dir + FAN.length) % FAN.length; return; }
+  if (st.screen === 'design' && st.modHold) { st.modSrc = (st.modSrc + dir + MOD_SRCS.length) % MOD_SRCS.length; st.modHold.used = true; st.modHold.m = null; st.modHold.no = null; return; }
   if (st.screen === 'settings') { if (st.setEdit) changeSetting(dir); else st.setCur = (st.setCur + dir + SETTINGS.length) % SETTINGS.length; return; }
   if (st.screen === 'filter') { st.fSel = 1 - st.fSel; return; }
   if (st.screen === 'mod') { modTurn(dir); return; }
@@ -1331,6 +1384,7 @@ function knobDefs(){
 function setKnob(i, dir){
   if (!st.on) return;
   st.kAngles[i] += dir * 18; document.getElementById('k' + i).style.setProperty('--rot', st.kAngles[i] + 'deg');
+  if (st.screen === 'design' && st.modHold) { modKnob(i, dir); return; }
   const before = knobDefs()[i].val();
   knobDefs()[i].step(dir);
   st.lastKnob = i;
@@ -1340,6 +1394,27 @@ function setKnob(i, dir){
   if (st.screen === 'melody') { if (i < 3) previewBar(); st.lastEdit = now; return; }
   if (now - st.lastEdit > 2000 || !st.prevStart) previewDesign();
   st.lastEdit = now;
+}
+// while F8 is held on the Sound screen: a knob sets how much the chosen source moves it (left = the other way)
+function modKnob(i, dir){
+  const d = shapeDefs()[i], H = st.modHold, now = performance.now(); H.used = true; H.t = now;
+  if (!MOD_SCALE[d.key]) { H.no = d.name; H.m = null; return; }
+  H.no = null;
+  const P = st.patch; P.mods = P.mods || []; const src = MOD_SRCS[st.modSrc];
+  let m = P.mods.find(x => x.key === d.key && x.src === src);
+  if (!m) { m = { src, key:d.key, amt:0 }; P.mods.push(m); }
+  m.amt = clamp(m.amt + dir * 5, -100, 100);
+  if (!m.amt) P.mods.splice(P.mods.indexOf(m), 1);
+  H.m = { name:d.name, src, amt:m.amt };
+  if (now - st.lastEdit > 2000 || !st.prevStart) previewDesign();
+  st.lastEdit = now; st.lastKnob = -1;
+}
+// where a source is right now (-1..1), for the moving arc on the knob ring
+function modValue(src, now){
+  const sec = now / 1000;
+  if (src === 'LFO1' || src === 'LFO2') return Math.sin(2 * Math.PI * lfoHz(src === 'LFO1' ? 0 : 1) * sec);
+  if (src === 'ENV2') { const b = 60 / st.tempo, f = (sec % b) / b; return Math.exp(-f * 4); }
+  const k = src === 'SEQ1' ? 0 : 1, S = st.patch.seq[k], i = Math.floor(sec / seqStepDur(k)) % S.len; return (S.steps[i] || 0) / 100;
 }
 function knobFrac(i){ return clamp(knobDefs()[i].frac(), 0, 1); }
 const SETTINGS = ['TEMPO', 'KEY', 'CUTOFF 1', 'RESO 1', 'METRONOME'];
@@ -1474,8 +1549,8 @@ setInterval(() => { if (st.shut && performance.now() - st.shut.t0 >= SHUT_MS) po
 
 /* ================= input: holds ================= */
 const held = { play:false, playUsed:false, fanT:null, f8:null, f8Fired:false, b:null, bFired:false };
-function f8Down(){ if (held.f8) return; held.f8Fired = false; press('f8', true); if (st.on && held.play) { held.f8 = 'shut'; startShut(); return; } held.f8 = setTimeout(() => { held.f8Fired = true; if (!st.on) powerOn(); }, 800); }
-function f8Up(){ if (!held.f8) return; if (held.f8 !== 'shut') clearTimeout(held.f8); held.f8 = null; press('f8', false); if (st.shut) { cancelShut(); return; } if (!held.f8Fired) { if (st.on) f8Tap(); else powerOn(); } }
+function f8Down(){ if (held.f8) return; held.f8Fired = false; press('f8', true); if (st.on && held.play) { held.f8 = 'shut'; startShut(); return; } if (st.on && st.screen === 'design') st.modHold = { used:false, m:null, no:null }; held.f8 = setTimeout(() => { held.f8Fired = true; if (!st.on) powerOn(); }, 800); }
+function f8Up(){ if (!held.f8) return; if (held.f8 !== 'shut') clearTimeout(held.f8); held.f8 = null; press('f8', false); const mh = st.modHold; st.modHold = null; if (st.shut) { cancelShut(); return; } if (mh && mh.used) { if (mh.m) flash(mh.m.amt ? 'CONNECTED' : 'REMOVED'); return; } if (!held.f8Fired) { if (st.on) f8Tap(); else powerOn(); } }
 function bDown(){ if (held.b) return; held.bFired = false; held.b = setTimeout(() => { held.bFired = true; bHold(); }, 600); press('bbtn', true); }
 function bUp(){ if (!held.b) return; clearTimeout(held.b); held.b = null; press('bbtn', false); if (!held.bFired) bTap(); }
 function playDown(){ if (held.play) return; held.play = true; held.playUsed = false; press('play', true); if (st.on && held.f8) { startShut(); return; } clearTimeout(held.fanT); held.fanT = setTimeout(() => { if (held.play && !held.f8 && !st.shut) openFan(); }, FAN_HOLD); }
@@ -1601,6 +1676,8 @@ function drawMelody(now){
     st.vPs += (tPs - st.vPs) * 0.2; st.vTop += (tTop - st.vTop) * 0.2;
   } else if (!st.vPs) { st.vPs = 2; st.vTop = 84; }
   const yOf = m => Math.round(10 + (st.vTop - m) * st.vPs), nh = clamp(Math.round(st.vPs) - 1, 2, 4);
+  // the selected bar glows faintly behind its notes (both halves)
+  if (st.mode === 'notes' || !st.mode) { const cx = s => 1 + Math.floor(s * 110 / LOOP); patternEvents(); for (const sg of evCache.segs) if (sg.slot === st.sel) { const a = cx(sg.start), b = cx(sg.start + sg.len); g.fillStyle = 'rgba(255,210,63,0.09)'; g.fillRect(a, 7, Math.max(1, b - a), 104); } }
   for (let m = Math.floor(st.vTop - 100 / st.vPs); m <= st.vTop; m++) if (m % 12 === 0) { const y = yOf(m) + 1; if (y > 9 && y < 110) px(1, y, 110, 1, C.grid); }
   const blink = Math.floor(now / 350) % 2 === 0, sugg = st.phase === 'suggest' || st.phase === 'adapt';
   const colX = s => 1 + Math.floor(s * 110 / LOOP);
@@ -1611,7 +1688,7 @@ function drawMelody(now){
   for (let y = 10; y < 110; y += 3) px(colX(64), y, 1, 1, C.grid);
   if (curStep >= 0) px(colX(curStep), 7, 1, 2, C.play);
   // selection lines over the selected bar's chord, in both halves
-  for (const sg of segs) if (allSel || sg.slot % 4 === st.sel) { const c = allSel ? C.sel : C.acc; px(colX(sg.start), 6, Math.max(1, colX(sg.start + sg.len) - colX(sg.start)), 1, c); px(colX(sg.start), 111, Math.max(1, colX(sg.start + sg.len) - colX(sg.start)), 1, c); }
+  for (const sg of segs) if (allSel || sg.slot === st.sel) { const c = allSel ? C.sel : C.acc; px(colX(sg.start), 6, Math.max(1, colX(sg.start + sg.len) - colX(sg.start)), 1, c); px(colX(sg.start), 111, Math.max(1, colX(sg.start + sg.len) - colX(sg.start)), 1, c); }
   // chord names at the first time each of the 8 chords appears; second-half chords that differ are yellow
   let lastName = -99; const seen = new Set();
   if (pr) for (const sg of segs.slice().sort((x, y) => x.start - y.start)) {
@@ -1619,7 +1696,7 @@ function drawMelody(now){
     const ch = pr[sg.slot]; if (!ch) continue;
     const cname = chordName(ch), x = colX(sg.start);
     const differs = sg.slot >= 4 && !sameChord(ch, pr[sg.slot - 4]);
-    if (x >= lastName && !(sugg && !blink)) { txt(cname, x, 0, sugg || differs ? C.sug : C.auto); lastName = x + cname.length * 4 + 1; }
+    if (x >= lastName && !(sugg && !blink)) { txt(cname, x, 0, sugg || sg.slot >= 4 ? C.sug : C.auto); lastName = x + cname.length * 4 + 1; }
   }
   // brackets around the selected bar's main note (first half) when you can move it
   if ((st.phase === 'edit' || st.phase === 'adapt') && st.mode === 'notes' && !st.menu && st.bars[st.sel].mel) {
@@ -1636,7 +1713,8 @@ function drawMelody(now){
     for (const n of list) {
       const y = yOf(n.midi); if (y <= 9 || y >= 110) continue;
       let c = n.mel ? (n.alt ? C.sug : C.acc) : sugg ? (blink ? C.sug : null) : C.auto;
-      if (st.phase === 'adapt' && n.mel && e.bar % 4 === st.pending.bar) c = blink ? C.sel : C.acc;
+      if (e.bar >= 4 && c) c = C.sug;   // the generated second half is all pink, chord notes included
+      if (st.phase === 'adapt' && n.mel && e.bar === st.pending.bar) c = blink ? C.sel : C.acc;
       if (allSel && c) c = blink ? C.sel : c;
       if (c) px(x0, y, w, nh, c);
     }
@@ -1935,7 +2013,7 @@ let hintTxt = null;
 function setHint(t){
   if (!st.on) t = '';
   else if (st.screen === 'melody' && st.mode === 'notes' && !st.menu && st.phase === 'edit' && st.grab) t += '   |   buttons: OCT+  OCT-  ACC  DEL';
-  else if (st.screen === 'design') t = 'buttons: 1 source  2 envelope  3 filter + drive  4 motion + FX  (press again for page 2)';
+  else if (st.screen === 'design') t = 'buttons: 1 source  2 envelope  3 filter + drive  4 motion + FX  (press again for page 2)   hold F8 + turn a knob: add motion (main knob picks LFO 1, LFO 2, ENV 2, SEQ 1, SEQ 2)';
   else if (st.screen !== 'melody') t = '';
   if (t === hintTxt) return; hintTxt = t; document.getElementById('hint').textContent = t;
 }
@@ -1944,7 +2022,6 @@ const BOOT_LOGO = 1150, BOOT_CLOSE = 380, BOOT_OPEN = 480, BOOT_MS = BOOT_LOGO +
 const SPARKS = [[20,38,180],[92,36,260],[30,74,340],[84,72,420],[56,30,500],[14,58,570],[100,56,640],[44,80,710],[70,84,780],[56,22,850],[24,30,910],[90,82,970]];
 function drawLogo(t){
   px(0, 0, 112, 112, C.bg); txt('ALTF8', 26, 46, C.acc, 3);
-  if (t > 450) txt('READY', 46, 66, C.mut);
   for (const [x, y, t0] of SPARKS) {
     const u = (t - t0) / 360; if (u < 0 || u > 1) continue;
     const r = Math.round(Math.sin(u * Math.PI) * 3), c = u < 0.5 ? SEG.a : C.txt;
@@ -1973,7 +2050,7 @@ function draw(){
       px(0, 0, 112, 112, C.bg);
       const prompt = st.screen === 'melody' ? drawMelody(now) : st.screen === 'design' ? drawDesign(now) : st.screen === 'settings' ? drawSettings(now) : drawSynth(now);
       const full = st.screen === 'design';
-      if (full) { px(0, 0, 112, 112, C.bg); if (st.screen === 'design') drawSound(now); else drawShape(now, 2, 2, 108, 108); }
+      if (full) { px(0, 0, 112, 112, C.bg); if (st.screen === 'design') { drawSound(now); drawModOverlay(now); } else drawShape(now, 2, 2, 108, 108); }
       else if (st.screen !== 'melody') drawButtonBar();
       if (st.shut) {
         const f = Math.min(1, (now - st.shut.t0) / SHUT_MS);
@@ -1998,11 +2075,19 @@ function draw(){
       { const t = now - st.boot - BOOT_LOGO - BOOT_CLOSE; if (t >= 0 && t < BOOT_OPEN) { const o = easeIO(t / BOOT_OPEN); irisMask(92 * o, 0.9 + o * 0.9); } }
     }
   }
-  for (let i = 0; i < 4; i++) { const r = document.getElementById('r' + i); r.classList.toggle('off', !st.on); r.style.setProperty('--p', st.on ? knobFrac(i).toFixed(3) : 0); r.style.setProperty('--c', st.on && st.screen === 'design' ? shColor(i) : RING_DEF[i]); }
+  for (let i = 0; i < 4; i++) { const r = document.getElementById('r' + i); r.classList.toggle('off', !st.on); r.style.setProperty('--p', st.on ? knobFrac(i).toFixed(3) : 0); r.style.setProperty('--c', st.on && st.screen === 'design' ? shColor(i) : RING_DEF[i]);
+    let a = r.querySelector('.modarc'); if (!a) { a = document.createElement('div'); a.className = 'modarc'; r.appendChild(a); }
+    const key = st.on && st.screen === 'design' ? (shapeDefs()[i] || {}).key : null, ms = key ? (st.patch.mods || []).filter(m => m.key === key && m.amt) : [];
+    if (!ms.length) { a.style.display = 'none'; continue; }
+    const now2 = performance.now(), p0 = knobFrac(i); let off = 0; ms.forEach(m => off += m.amt / 100 * modValue(m.src, now2) * 0.35);
+    const lo = clamp(Math.min(p0, p0 + off), 0, 1), hi = clamp(Math.max(p0, p0 + off), 0, 1), c = MOD_COL[ms[0].src];
+    a.style.display = 'block'; a.style.background = 'conic-gradient(transparent ' + lo + 'turn, ' + c + ' ' + lo + 'turn ' + Math.max(hi, lo + 0.012) + 'turn, transparent 0), conic-gradient(' + c + '59 0 1turn)'; }
   const hiBar = st.screen === 'melody' ? (st.grab && st.phase === 'edit' ? -1 : st.sel) : st.screen === 'filter' ? st.fSel : st.screen === 'mod' ? MODTABS.indexOf(st.modTab) : st.screen === 'design' ? st.shTab : -1;
   for (let i = 0; i < 4; i++) document.getElementById('b' + i).classList.toggle('sel', st.on && hiBar === i);
-  const f8Ready = st.on && st.screen === 'melody' && ((st.phase === 'entry' && allSet()) || st.phase === 'suggest' || st.phase === 'adapt');
+  const f8Ready = st.on && ((st.screen === 'melody' && ((st.phase === 'entry' && allSet()) || st.phase === 'suggest' || st.phase === 'adapt')) || (st.screen === 'design' && !st.modHold));
   document.getElementById('f8').classList.toggle('ready', f8Ready);
+  // a small F8 badge blinks in the screen's top-right corner while F8 has something to do
+  if (f8Ready && !st.shut && !st.pop && performance.now() - st.lastEdit > 1500 && performance.now() - st.boot > BOOT_MS && Math.floor(performance.now() / 450) % 2 === 0) { px(100, 0, 12, 7, C.bg); txt('F8', 103, 1, '#7cc4ff'); }
   requestAnimationFrame(draw);
 }
 requestAnimationFrame(draw);
