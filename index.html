@@ -46,6 +46,8 @@
   #slider { position:absolute; top:10px; width:22px; height:24px; margin-left:-11px; border-radius:5px; background:linear-gradient(#5a5f6a,#2d3139); box-shadow:0 2px 3px rgba(0,0,0,.5); transition:left .08s; pointer-events:none; }
   .btn { position:absolute; top:342px; width:50px; height:50px; border-radius:50%; font-weight:800; font-size:15px; display:flex; align-items:center; justify-content:center; cursor:pointer; box-shadow:0 4px 0 #16181c; }
   #f8 { left:40px; background:radial-gradient(circle at 40% 35%,#ff7a6b,#c73a2c); color:#fff; }
+  #f8.ready { animation:f8blink 0.9s ease-in-out infinite; }
+  @keyframes f8blink { 0%, 100% { box-shadow:0 0 0 0 rgba(255,122,107,0); filter:brightness(1); } 50% { box-shadow:0 0 0 4px rgba(255,122,107,.55), 0 0 14px 4px rgba(255,90,70,.45); filter:brightness(1.18); } }
   #bbtn { left:110px; background:radial-gradient(circle at 40% 35%,#6f7682,#3a3f49); color:#fff; }
   #jack { position:absolute; left:34px; bottom:-5px; width:16px; height:10px; border-radius:0 0 8px 8px; background:#111; }
   #brand { position:absolute; right:18px; bottom:14px; font:700 13px/1 ui-monospace,Menlo,monospace; color:#9b9483; letter-spacing:.08em; }
@@ -155,7 +157,7 @@
       <h2>Keyboard map</h2>
       <table>
         <tr><td>Main knob: pitch, options, note cursor</td><td><kbd>&larr;</kbd><kbd>&rarr;</kbd> or scroll / drag the knob</td></tr>
-        <tr><td>Knobs on the melody screen: 1 chord lengths + feel (swing, note length, humanize), 2 rhythm + accents, 3 arpeggio + voicing, 4 tempo. On the Sound screen they follow the page (buttons 1-4); on MOD they do what the 4 rows on screen say</td><td><kbd>Q</kbd>/<kbd>A</kbd> <kbd>W</kbd>/<kbd>S</kbd> <kbd>E</kbd>/<kbd>D</kbd> <kbd>R</kbd>/<kbd>F</kbd> (up / down)</td></tr>
+        <tr><td>Knobs on the melody screen: 1 chord lengths (how the bars are shared), 2 rhythm + accents, 3 voicing spread, 4 tempo. On the Sound screen they follow the page (buttons 1-4); on MOD they do what the 4 rows on screen say</td><td><kbd>Q</kbd>/<kbd>A</kbd> <kbd>W</kbd>/<kbd>S</kbd> <kbd>E</kbd>/<kbd>D</kbd> <kbd>R</kbd>/<kbd>F</kbd> (up / down)</td></tr>
         <tr><td>Bar buttons 1-4</td><td><kbd>1</kbd><kbd>2</kbd><kbd>3</kbd><kbd>4</kbd></td></tr>
         <tr><td>F8: confirm / find chords. Hold: power on</td><td><kbd>Enter</kbd></td></tr>
         <tr><td>Power off: hold Play + F8 together until the bar fills</td><td>hold <kbd>Space</kbd> + <kbd>Enter</kbd></td></tr>
@@ -181,7 +183,7 @@
         <li>The loop is 8 bars: your 4 chords, then the 4 again (the suggestions may change chord 8, or 7 and 8). After you keep chords, the knob moves only the main note of the selected bar; the chords re-adapt, F8 keeps the change, B undoes it.</li>
         <li>On the note design screen, Play plays the note once; press Play again within 2 seconds to loop it, and once more to stop.</li>
         <li>The metronome is on the Settings screen.</li>
-        <li>Knob 1 shares the bars between the chords (beats per chord), knob 2 picks the rhythm (each one has its own ending in bar 8), knob 3 the arpeggio.</li>
+        <li>Knob 1 shares the bars between the chords (beats per chord), knob 2 picks the rhythm (each one has its own ending in bar 8), knob 3 the voicing spread.</li>
 
         <li>Tempo, key, cutoff and resonance are on the settings screen: knob to pick, F8 to edit, knob to change, F8 when done.</li>
       </ul>
@@ -216,27 +218,22 @@ const MAJ = [0,2,4,5,7,9,11], MIN = [0,2,3,5,7,8,10];
 const KEYS = ['CHROM'].concat(NN.map(n => n + ' MAJ'), NN.map(n => n + ' MIN'));
 // PATTERN = how long each of the 4 chords lasts across the 4-bar loop (harmonic rhythm), on a 16th grid.
 // Each entry is [chord slot, length in 16ths]; off < 0 starts every change early (anticipation).
-// CHORD LENGTHS (knob 1 on the melody screen): how the 16 beats of each 4-bar half are shared between the 4 chords,
-// always starting on the downbeat and in order (no shifting, no doubling). Names give the beats per chord.
-// A few presets also carry a feel: swing/shuffle (late offbeats), note length (gate) and humanize.
-const B4 = beats => beats.map((b, i) => [i, b * 4]);
+// CHORD LENGTHS (knob 1 on the melody screen): how the 16 beats of each 4-bar half are shared between the 4 chords.
+// Always from the downbeat and in order, and only a little away from even. gate < 1 leaves a small gap before the next chord.
+const B4 = beats => beats.map((b, i) => [i, Math.round(b * 4)]);
 const PATTERNS = [
-  { name:'EVEN 4-4-4-4', off:0, seq:B4([4, 4, 4, 4]) },
-  { name:'DOTTED WHOLE + HALF 6-2-6-2', off:0, seq:B4([6, 2, 6, 2]) },
-  { name:'HALF + DOTTED WHOLE 2-6-2-6', off:0, seq:B4([2, 6, 2, 6]) },
-  { name:'SYNCOPATED 5-3-5-3', off:0, seq:B4([5, 3, 5, 3]) },
-  { name:'SYNCOPATED 3-5-3-5', off:0, seq:B4([3, 5, 3, 5]) },
-  { name:'LONG FIRST 8-4-2-2', off:0, seq:B4([8, 4, 2, 2]) },
-  { name:'LONG LAST 2-2-4-8', off:0, seq:B4([2, 2, 4, 8]) },
-  { name:'DOTTED LEAD 6-4-4-2', off:0, seq:B4([6, 4, 4, 2]) },
-  { name:'TWO LONG TWO SHORT 6-6-2-2', off:0, seq:B4([6, 6, 2, 2]) },
-  { name:'3-3-2 THEN HOLD 3-3-2-8', off:0, seq:B4([3, 3, 2, 8]) },
-  { name:'PASSING CHORDS 7-1-7-1', off:0, seq:B4([7, 1, 7, 1]) },
-  { name:'EVEN SWING', off:0, seq:B4([4, 4, 4, 4]), swing:0.6 },
-  { name:'EVEN SHUFFLE', off:0, seq:B4([4, 4, 4, 4]), swing:1 },
-  { name:'EVEN STACCATO', off:0, seq:B4([4, 4, 4, 4]), gate:0.4 },
-  { name:'6-2-6-2 LEGATO', off:0, seq:B4([6, 2, 6, 2]), gate:1.08 },
-  { name:'EVEN LOOSE AND HUMAN', off:0, seq:B4([4, 4, 4, 4]), swing:0.3, human:1 }
+  { name:'EVEN 4-4-4-4', off:0, seq:B4([4, 4, 4, 4]), gate:0.97 },
+  { name:'EVEN WITH SPACE', off:0, seq:B4([4, 4, 4, 4]), gate:0.82 },
+  { name:'LEAN FORWARD 4.5-3.5', off:0, seq:B4([4.5, 3.5, 4.5, 3.5]), gate:0.92 },
+  { name:'LEAN BACK 3.5-4.5', off:0, seq:B4([3.5, 4.5, 3.5, 4.5]), gate:0.92 },
+  { name:'FIRST LONGER 5-4-4-3', off:0, seq:B4([5, 4, 4, 3]), gate:0.92 },
+  { name:'LAST LONGER 3-4-4-5', off:0, seq:B4([3, 4, 4, 5]), gate:0.92 },
+  { name:'DOTTED FEEL 4.5-4-4-3.5', off:0, seq:B4([4.5, 4, 4, 3.5]), gate:0.88 },
+  { name:'MIDDLE BREATH 4-3.5-4.5-4', off:0, seq:B4([4, 3.5, 4.5, 4]), gate:0.88 },
+  { name:'GENTLE SWING EVEN', off:0, seq:B4([4, 4, 4, 4]), gate:0.92, swing:0.3 },
+  { name:'GENTLE SWING 4.5-3.5', off:0, seq:B4([4.5, 3.5, 4.5, 3.5]), gate:0.9, swing:0.3 },
+  { name:'SOFT STACCATO EVEN', off:0, seq:B4([4, 4, 4, 4]), gate:0.65 },
+  { name:'LOOSE EVEN', off:0, seq:B4([4, 4, 4, 4]), gate:0.9, human:0.5 }
 ];
 // RHYTHM + ACCENTS (knob 2): when each chord is hit (16th positions in a bar; a chord change is always a hit),
 // how long a hit may ring (cap, 16ths) and how hard each position is played (acc, missing = dflt).
@@ -258,7 +255,32 @@ const RHY = [
   { name:'REGGAE SKANK', hits:[4,12], cap:1, end:{ hits:[4,8], cap:1, acc:{8:1} } },
   { name:'GALLOP', hits:[0,2,3,4,6,7,8,10,11,12,14,15], cap:1, acc:{0:1,4:0.85,8:0.95,12:0.85}, dflt:0.6, end:{ hits:[0,2,3,4,6,7,8], cap:1, acc:{0:1,8:1}, dflt:0.7 } }
 ];
-// ARPEGGIO + VOICING (knob 3): play one chord note per hit instead of the whole chord.
+// VOICING (knob 3): same chord, different layout under the melody note.
+// close = packed under the melody; drop 2/3 = one note moved down an octave; wide = every other note down an octave;
+// inversions = which chord note is at the bottom; bass = root added an octave below.
+const VOICINGS = [
+  { name:'CLOSE', v:'close' }, { name:'THIN (2 NOTES)', v:'thin' }, { name:'OPEN DROP 2', v:'drop2' }, { name:'OPEN DROP 3', v:'drop3' },
+  { name:'LOW AND WIDE', v:'low' }, { name:'ROOT AT THE BOTTOM', v:'inv0' }, { name:'THIRD AT THE BOTTOM', v:'inv1' }, { name:'FIFTH AT THE BOTTOM', v:'inv2' },
+  { name:'CLOSE + BASS NOTE', v:'bass' }, { name:'OPEN + BASS NOTE', v:'widebass' }
+];
+function spreadVoicing(notes, ch, mode){
+  let n = notes.slice().sort((a, b) => b - a); if (!n.length || mode === 'close') return n;
+  const down = i => { if (n[i] !== undefined) n[i] -= 12; };
+  const below = (pc, lim) => { let m = lim - 1; while (((m % 12) + 12) % 12 !== pc) m--; return m; };
+  if (mode === 'drop2') down(0);
+  else if (mode === 'drop3') down(1);
+  else if (mode === 'low') n = n.map(m => m - 12);
+  else if (mode === 'thin') n = [Math.min(...n)];
+  else if (mode === 'widebass') down(0);
+  else if (mode.startsWith('inv')) {
+    const pcs = chordPcs(ch), pc = pcs[+mode[3]] !== undefined ? pcs[+mode[3]] : pcs[0];
+    const others = n.filter(m => ((m % 12) + 12) % 12 !== pc), lo = others.length ? Math.min(...others) : Math.min(...n);
+    n = others.concat([below(pc, lo)]);
+  }
+  if (mode === 'bass' || mode === 'widebass') n.push(below(ch.root, Math.min(...n)) - (mode === 'bass' ? 12 : 0));
+  return n.map(m => Math.max(36, m)).sort((a, b) => b - a);
+}
+// ARPEGGIO + VOICING (knob 3, not used for now): play one chord note per hit instead of the whole chord.
 // mode = note order, rate = 16ths per note, spread = voicing (close, open drop-2, wide, bass note added), oct = octaves.
 const ARPS = [
   { name:'NO ARPEGGIO' },
@@ -364,9 +386,10 @@ const VERSIONS = [
   { id:'v17', file:'versions/v17.html', label:'v17 - Note shaping: 4 buttons x 2 pages (2026-11-18)', note:'NOTE SHAPE screen: buttons 1-4 pick Source, Envelope, Filter + Drive, Motion + FX; press again for page 2. Each knob shows a close-up, the whole note or the harmonics, in its own color.' },
   { id:'v18', file:'versions/v18.html', label:'v18 - 8-bar loops, adaptive chords, feel/rhythm/arp knobs (2026-11-18)', note:'Chord finder suggests 8-chord loops (chord 8 can resolve, or 7 and 8 change) in plain, 7th, sus and add9 colors. After keeping chords, the knob moves only the main note; chords re-adapt, F8 keeps, B undoes. Melody knobs: 1 chord lengths + swing/note length/humanize, 2 rhythm + accents, 3 arpeggio + voicing, 4 tempo.' },
   { id:'v19', file:'versions/v19.html', label:'v19 - iPhone sound, play/pause badge, free resolving endings (2026-11-18)', note:'Sound starts on any tap or knob release on iPhone. Play/pause badge comes out of the corner and dissolves. Changed endings (chord 8, or 7 and 8) pick the best resolution back to chord 1, even if it needs a different top note; those show in pink.' },
-  { id:'v20', file:'index.html', label:'v20 - Full-height notes, no B menu, conclusive bar 8 (2026-11-18)', note:'Chord names at the very top, notes fill the screen. No selector menu: B rejects/undoes, F8 reopens chord suggestions, metronome is in Settings. Knob 1 now only shares the bars between chords (beats per chord). Every rhythm has its own ending in bar 8; arpeggios end on a held chord.' }
+  { id:'v20', file:'versions/v20.html', label:'v20 - Full-height notes, no B menu, conclusive bar 8 (2026-11-18)', note:'Chord names at the very top, notes fill the screen. No selector menu: B rejects/undoes, F8 reopens chord suggestions, metronome is in Settings. Knob 1 now only shares the bars between chords (beats per chord). Every rhythm has its own ending in bar 8; arpeggios end on a held chord.' },
+  { id:'v21', file:'index.html', label:'v21 - Voicing knob, gentler chord lengths, F8 blink (2026-11-18)', note:'Knob 3 is voicing spread (close, drop 2/3, wide, inversions, bass note). Knob 1 presets stay close to even, some with small gaps. F8 blinks when it has something to do; suggestion counter in the bottom-left.' }
 ];
-const CURRENT = 'v20';
+const CURRENT = 'v21';
 /* ---- synth engine constants (v12) ---- */
 const UNI_MAX = 7;
 const FTYPES = ['lowpass','highpass','bandpass','notch'], FNAME = ['LP','HP','BP','NOTCH'];
@@ -777,7 +800,7 @@ const st = {
   patch:defaultPatch(),
   msg:'', msgT:0, lastEdit:0, mainAngle:0, kAngles:[0,0,0,0],
   viewTop:76, ov:null, pat:0, mode:'notes', menu:false, menuIdx:0, loopNote:false, pop:null, shut:null, setCur:0, setEdit:false, prevStart:0, prevDur:0, metro:false,
-  fan:null, pp:null, prog:null, pending:null, arp:0, shTab:0, shPage:0, zoom:0, viewKey:'', viewKind:'time', viewT:0, fSel:0, modTab:'lfo', lfoSel:0, seqSel:0, seqCur:0, mtxRow:0, lastKnob:-1
+  fan:null, pp:null, prog:null, pending:null, arp:0, voi:0, shTab:0, shPage:0, zoom:0, viewKey:'', viewKind:'time', viewT:0, fSel:0, modTab:'lfo', lfoSel:0, seqSel:0, seqCur:0, mtxRow:0, lastKnob:-1
 };
 
 /* ================= music helpers ================= */
@@ -1163,7 +1186,7 @@ function barNotes(slot){
   let top = B.mel.midi, alt = false;
   if (slot >= 4 && !chordPcs(pr[slot]).includes(top % 12)) { alt = true;
     for (const d of [1, -1, 2, -2, 3, -3, 4, -4, 5, -5, 6]) if (chordPcs(pr[slot]).includes((top + d + 120) % 12)) { top += d; break; } }
-  return [{ midi:top, mel:true, alt }].concat(voicing(top, pr[slot]).map(m => ({ midi:m })));
+  return [{ midi:top, mel:true, alt }].concat(spreadVoicing(voicing(top, pr[slot]), pr[slot], (VOICINGS[st.voi] || VOICINGS[0]).v).map(m => ({ midi:m })));
 }
 function schedule(s, t){
   const P = PATTERNS[st.pat], R = RHY[st.rhy], A = ARPS[st.arp] || ARPS[0], hu = P.human || 0;
@@ -1298,7 +1321,7 @@ function knobDefs(){
   if (sc === 'melody') return [
     kList('CHORD LENGTHS', () => st.pat, v => st.pat = v, PATTERNS.length, i => PATTERNS[i].name),
     kList('PLAY PATTERN', () => st.rhy, v => st.rhy = v, RHY.length, i => RHY[i].name),
-    kList('ARPEGGIO', () => st.arp, v => st.arp = v, ARPS.length, i => ARPS[i].name),
+    kList('VOICING', () => st.voi, v => st.voi = v, VOICINGS.length, i => VOICINGS[i].name),
     kNum('TEMPO', () => st.tempo, v => st.tempo = v, 60, 200, 2, v => v + ' BPM') ];
   return adsrDefs(P);
 }
@@ -1612,6 +1635,7 @@ function drawMelody(now){
       if (c) px(x0, y, w, nh, c);
     }
   }
+  if (st.phase === 'suggest' && st.options.length) { const t2 = (st.optIdx + 1) + '/' + st.options.length; px(0, 106, t2.length * 4 + 1, 6, C.bg); txt(t2, 1, 107, C.mut); }
   // while a knob turns, its value covers the chord names for a moment
   if (knobLabel) { px(0, 0, 112, 6, C.bg); stxt('hd', (st.lastKnob === 3 ? 'TEMPO ' : '') + knobLabel.val(), 27, 1, 0, C.acc); }
   const n = st.bars.filter(b => b.mel).length;
@@ -1946,6 +1970,8 @@ function draw(){
   for (let i = 0; i < 4; i++) { const r = document.getElementById('r' + i); r.classList.toggle('off', !st.on); r.style.setProperty('--p', st.on ? knobFrac(i).toFixed(3) : 0); r.style.setProperty('--c', st.on && st.screen === 'design' ? shColor(i) : RING_DEF[i]); }
   const hiBar = st.screen === 'melody' ? (st.grab && st.phase === 'edit' ? -1 : st.sel) : st.screen === 'filter' ? st.fSel : st.screen === 'mod' ? MODTABS.indexOf(st.modTab) : st.screen === 'design' ? st.shTab : -1;
   for (let i = 0; i < 4; i++) document.getElementById('b' + i).classList.toggle('sel', st.on && hiBar === i);
+  const f8Ready = st.on && st.screen === 'melody' && ((st.phase === 'entry' && allSet()) || st.phase === 'suggest' || st.phase === 'adapt');
+  document.getElementById('f8').classList.toggle('ready', f8Ready);
   requestAnimationFrame(draw);
 }
 requestAnimationFrame(draw);
@@ -1986,7 +2012,7 @@ verSel.addEventListener('change', () => { const v = VERSIONS.find(x => x.id === 
 const SKEY = 'altf8.saves.v1';
 function loadSaves(){ try { return JSON.parse(localStorage.getItem(SKEY) || '[]'); } catch (e) { return null; } }
 function storeSaves(a){ try { localStorage.setItem(SKEY, JSON.stringify(a)); return true; } catch (e) { return false; } }
-function snapshot(){ return JSON.parse(JSON.stringify({ bars:st.bars, prog:st.prog, arp:st.arp, phase:st.phase === 'suggest' ? 'entry' : st.phase === 'adapt' ? 'edit' : st.phase, rhy:st.rhy, pat:st.pat, tempo:st.tempo, key:st.key, patch:st.patch })); }
+function snapshot(){ return JSON.parse(JSON.stringify({ bars:st.bars, prog:st.prog, voi:st.voi, phase:st.phase === 'suggest' ? 'entry' : st.phase === 'adapt' ? 'edit' : st.phase, rhy:st.rhy, pat:st.pat, tempo:st.tempo, key:st.key, patch:st.patch })); }
 function renderSaves(){
   const list = document.getElementById('snaplist'); list.innerHTML = '';
   const a = loadSaves();
@@ -1995,7 +2021,7 @@ function renderSaves(){
   a.forEach((s, i) => {
     const r = document.createElement('div'); r.className = 'row';
     const sp = document.createElement('span'); sp.textContent = s.name + '  (' + s.date + ')';
-    const lb = document.createElement('button'); lb.textContent = 'Load'; lb.onclick = () => { Object.assign(st, JSON.parse(JSON.stringify(s.data))); st.patch = normPatch(st.patch); st.options = []; st.pending = null; if (st.phase === 'adapt') st.phase = 'edit'; if (st.arp === undefined || !ARPS[st.arp]) st.arp = 0; if (!PATTERNS[st.pat]) st.pat = 0; if (!RHY[st.rhy]) st.rhy = 0; if (!s.data.prog) st.prog = st.bars.every(b => b.chord) ? st.bars.map(b => b.chord).concat(st.bars.map(b => b.chord)) : null; st.grab = null; st.cursor = 0; applyFilter(); evCache.key = ''; setStatus('Loaded "' + s.name + '".'); };
+    const lb = document.createElement('button'); lb.textContent = 'Load'; lb.onclick = () => { Object.assign(st, JSON.parse(JSON.stringify(s.data))); st.patch = normPatch(st.patch); st.options = []; st.pending = null; if (st.phase === 'adapt') st.phase = 'edit'; st.arp = 0; if (!VOICINGS[st.voi]) st.voi = 0; if (!PATTERNS[st.pat]) st.pat = 0; if (!RHY[st.rhy]) st.rhy = 0; if (!s.data.prog) st.prog = st.bars.every(b => b.chord) ? st.bars.map(b => b.chord).concat(st.bars.map(b => b.chord)) : null; st.grab = null; st.cursor = 0; applyFilter(); evCache.key = ''; setStatus('Loaded "' + s.name + '".'); };
     const db = document.createElement('button'); db.textContent = 'Delete'; db.onclick = () => { const b = loadSaves() || []; b.splice(i, 1); storeSaves(b); renderSaves(); };
     r.append(sp, lb, db); list.appendChild(r);
   });
