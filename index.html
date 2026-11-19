@@ -480,9 +480,10 @@ const VERSIONS = [
   { id:'v36', file:'versions/v36.html', label:'v36 - Zoom while editing patterns, sound edits play your pattern (2026-11-18)', note:'Turning knobs 1-3 on the melody screen zooms into 4 bars for a moment so short hits and rests are readable; separate hits always keep a 1-pixel gap. Knobs only blink if this song has not used them yet (remembered with the song). On the Sound screen, once you have a chord pattern, edits play your pattern (stops 4 s after you stop editing) instead of a single note; Play plays the pattern.' },
   { id:'v37', file:'versions/v37.html', label:'v37 - One notch per setting (2026-11-18)', note:'Knobs with a list of settings now move one setting per notch (a tap or the same amount of turning every time); the ring fills one notch per setting and short lists wrap back to the first setting before a full turn. In full screen the circuit board fades smoothly into solid purple at the edges.' },
   { id:'v38', file:'versions/v38.html', label:'v38 - Fewer clicks, smooth zoom (2026-11-18)', note:'Notes that get cut short now fade from their current level instead of jumping to silence, and every note rings out fully before it stops, which removes the clicks when turning knobs fast. The 4-bar zoom eases in and out.' },
-  { id:'v39', file:'index.html', label:'v39 - Endings only in ending presets, darker chord options, staggered list (2026-11-18)', note:'Rhythms no longer change on the last bar unless you pick a preset with an ending (there are 5 such presets, next to their plain versions). New darker chord endings: minor iv, deceptive vi, a sad falling second half, bVI-bVII, and the andalusian walk-down in minor keys. The option list now alternates kinds: plain, dark, colored, turnaround, then again.' }
+  { id:'v39', file:'versions/v39.html', label:'v39 - Endings only in ending presets, darker chord options, staggered list (2026-11-18)', note:'Rhythms no longer change on the last bar unless you pick a preset with an ending (there are 5 such presets, next to their plain versions). New darker chord endings: minor iv, deceptive vi, a sad falling second half, bVI-bVII, and the andalusian walk-down in minor keys. The option list now alternates kinds: plain, dark, colored, turnaround, then again.' },
+  { id:'v40', file:'index.html', label:'v40 - Mod slots on button 2, new Sound layout (2026-11-18)', note:'Button 1 now has 3 pages: source, source 2, and feel (hold, velocity, tremolo, key track). Button 2: press again to go through MOD 1-4 after the note envelope. MOD 1 (pluck) and MOD 2 (swell) are envelopes with attack/decay/sustain/release; MOD 3 (wobble) and MOD 4 (slow sweep) repeat, with shape, speed, depth and fade-in. Each page draws its shape. Hold F8, nudge the knob you want to move, then turn the main knob to pick what moves it: the note envelope or MOD 1-4.' }
 ];
-const CURRENT = 'v39';
+const CURRENT = 'v40';
 /* ---- synth engine constants (v12) ---- */
 const UNI_MAX = 7;
 const FTYPES = ['lowpass','highpass','bandpass','notch'], FNAME = ['LP','HP','BP','NOTCH'];
@@ -491,8 +492,8 @@ const LSHAPES = ['SINE','TRI','SAW','SQUARE','S+H'];
 const LSYNC = [['FREE',0],['4/1',16],['2/1',8],['1/1',4],['1/2',2],['1/4',1],['1/8',0.5],['1/8T',1/3],['1/16',0.25]];
 const SRATES = [['1/4',1],['1/8',0.5],['1/8T',1/3],['1/16',0.25],['1/16T',1/6],['1/32',0.125]];
 // hold-F8 mod connections on the Sound screen: what can move a knob, and how far 100% moves it
-const MOD_SRCS = ['LFO1', 'LFO2', 'ENV2', 'SEQ1', 'SEQ2'], MOD_NAME = { LFO1:'LFO 1', LFO2:'LFO 2', ENV2:'ENV 2', SEQ1:'SEQ 1', SEQ2:'SEQ 2' };
-const MOD_COL = { LFO1:'#7af0ff', LFO2:'#ff9ef0', ENV2:'#b4ff8a', SEQ1:'#ffb347', SEQ2:'#c9a7ff' };
+const MOD_SRCS = ['ENV1', 'M1', 'M2', 'M3', 'M4'], MOD_NAME = { ENV1:'NOTE ENV', M1:'MOD 1', M2:'MOD 2', M3:'MOD 3', M4:'MOD 4', LFO1:'LFO 1', LFO2:'LFO 2', ENV2:'ENV 2', SEQ1:'SEQ 1', SEQ2:'SEQ 2' };
+const MOD_COL = { ENV1:'#ffffff', M1:'#a6f4ff', M2:'#34d6e8', M3:'#ff9ef0', M4:'#ffb347', LFO1:'#7af0ff', LFO2:'#ff9ef0', ENV2:'#b4ff8a', SEQ1:'#ffb347', SEQ2:'#c9a7ff' };
 const MOD_SCALE = { cutoff:4800, reso:10, pan:1, spread:60, sub:0.8, noise:0.5, ring:1, fm:4, trem:0.5, vib:60 };
 const SRCS = ['NONE','LFO1','LFO2','ENV1','ENV2','SEQ1','SEQ2','VELO','KEY'];
 // destination name, size of a 100% amount (cents for pitch/cutoff, dB/Q for reso, gain, pan, Hz)
@@ -513,7 +514,7 @@ function defaultPatch(){
     env2:{ a:1, d:5, s:0.2, r:4 },
     seq:[{ steps:[100,0,60,0,100,20,60,-40,100,0,60,0,80,40,-20,-60], len:16, rate:1, glide:0 },
          { steps:Array.from({ length:16 }, (_, i) => Math.round(-100 + i * 200 / 15)), len:16, rate:3, glide:40 }],
-    mtx, sh:shDefaults(), mods:[]
+    mtx, sh:shDefaults(), mods:[], msl:mslDefaults()
   };
 }
 function normPatch(p){
@@ -527,18 +528,27 @@ function normPatch(p){
   if (!p.mtx) o.mtx[0] = { src:0, dst:0, amt:0, via:0 }; // songs saved before v12 keep their old sound
   o.sh = Object.assign(shDefaults(), p.sh || {});
   o.mods = (p.mods || []).map(m => Object.assign({}, m));
+  o.msl = mslDefaults().map((d, i) => Object.assign(d, (p.msl || [])[i] || {}));
   return o;
 }
 /* ================= v17 note shaping: 4 buttons x 2 pages x 4 knobs on the NOTE SHAPE screen ================= */
 // each button is a color family; each knob gets its own shade (button 1 runs yellow to red)
 const SH_FAM = [['#ffd23f','#ffab2e','#ff7a2e','#ff4a3d'], ['#a6f4ff','#34d6e8','#22a6dc','#2f7ff0'],
                 ['#c8ff7a','#7dff6a','#38e08c','#19c2a2'], ['#ffb3ef','#ff4fd8','#d940e3','#a64df7']];
-const SH_TABS = [['SOURCE', 'SOURCE 2'], ['ENVELOPE', 'ENVELOPE 2'], ['FILTER', 'DRIVE'], ['MOTION', 'FX']];
+const SH_TABS = [['SOURCE', 'SOURCE 2', 'FEEL'], ['ENVELOPE', 'MOD 1', 'MOD 2', 'MOD 3', 'MOD 4'], ['FILTER', 'DRIVE'], ['MOTION', 'FX']];
 const RING_DEF = ['#ffd23f', '#34d6e8', '#7dff6a', '#ff4fd8'];
 const SH_WAVES = [0, 2, 3], SH_WNAME = ['SINE', 'SAW', 'SQUARE'];
 // LFO rate: free rates first, then tempo-locked note values (beats per cycle)
 const LRATES = [['0.5 HZ',0.5,0],['1 HZ',1,0],['2 HZ',2,0],['3 HZ',3,0],['4 HZ',4,0],['5 HZ',5,0],['6 HZ',6,0],['8 HZ',8,0],['10 HZ',10,0],
                 ['1/1',4,1],['1/2',2,1],['1/4',1,1],['1/8',0.5,1],['1/16',0.25,1]];
+// the 4 mod slots (button 2, pages 2-5): two envelopes and two repeating wobbles, each starting from a preset
+const MSL_SHAPES = ['SINE', 'TRIANGLE', 'SAW', 'SQUARE', 'RANDOM'];
+function mslDefaults(){ return [
+  { type:'env', a:0, d:4, s:0, r:3 },              // MOD 1: pluck (fast rise, quick fall)
+  { type:'env', a:8, d:6, s:1, r:5 },              // MOD 2: swell (slow rise, holds)
+  { type:'lfo', shape:0, rate:5, depth:100, fade:0 },   // MOD 3: wobble (5 Hz sine)
+  { type:'lfo', shape:1, rate:11, depth:100, fade:40 }  // MOD 4: slow sweep (1/4 notes, fades in)
+]; }
 function shDefaults(){ return { spread:0, sub:0, noise:0, sync:0, ring:0, fm:0, add:0, hold:0, vsens:100, trem:0, ktrack:0, fenv:0,
   drive:0, fold:0, crush:0, srr:0, vib:0, lrate:6, penv:0, glide:0, chorus:0, flanger:0, phaser:0, pan:0 }; }
 function lrateHz(i){ const r = LRATES[i] || LRATES[6]; return r[2] ? (st.tempo / 60) / r[1] : r[1]; }
@@ -554,9 +564,15 @@ function shapeDefs(){
     K('spread', 'time', kNum('UNISON', () => S.spread, v => { S.spread = v; P.uni = 1 + Math.round(v / 100 * (UNI_MAX - 1)); P.det = Math.round(v * 0.4); }, 0, 100, 4,
       () => P.uni + 'V ' + P.det + 'C')),
     amt('SUB', 'sub', 'close'), amt('NOISE', 'noise', 'close') ];
-  if (tab === 0) return [amt('SYNC', 'sync', 'close'), amt('RING MOD', 'ring', 'close'), amt('FM', 'fm', 'time'), amt('ADDITIVE', 'add', 'close')];
+  if (tab === 0 && pg === 1) return [amt('SYNC', 'sync', 'close'), amt('RING MOD', 'ring', 'close'), amt('FM', 'fm', 'time'), amt('ADDITIVE', 'add', 'close')];
+  if (tab === 0) return [amt('HOLD', 'hold', 'time'), amt('VELOCITY', 'vsens', 'time'), amt('TREMOLO', 'trem', 'time'), amt('KEY TRACK', 'ktrack', 'harm')];
   if (tab === 1 && pg === 0) return adsrDefs(P).map((d, i) => K(['a', 'd', 's', 'r'][i], 'time', d));
-  if (tab === 1) return [amt('HOLD', 'hold', 'time'), amt('VELOCITY', 'vsens', 'time'), amt('TREMOLO', 'trem', 'time'), amt('KEY TRACK', 'ktrack', 'harm')];
+  if (tab === 1) { const k = pg - 1, M = P.msl[k], pre = 'm' + k;
+    if (M.type === 'env') return adsrDefs(M).map((d, i) => K(pre + ['a', 'd', 's', 'r'][i], 'mod', d));
+    return [K(pre + 'sh', 'mod', kList('SHAPE', () => M.shape, v => M.shape = v, MSL_SHAPES.length, i => MSL_SHAPES[i])),
+      K(pre + 'rt', 'mod', kList('SPEED', () => M.rate, v => M.rate = v, LRATES.length, i => LRATES[i][0])),
+      K(pre + 'dp', 'mod', kNum('DEPTH', () => M.depth, v => M.depth = v, 0, 100, 5, pct)),
+      K(pre + 'fd', 'mod', kNum('FADE IN', () => M.fade, v => M.fade = v, 0, 100, 5, v => (v / 50).toFixed(1) + 'S'))]; }
   if (tab === 2 && pg === 0) return [
     K('cutoff', 'harm', kLog('CUTOFF', () => P.cutoff, v => P.cutoff = v, 40, 16000, 1.1, fmtHz)),
     K('reso', 'harm', kNum('RESO', () => P.reso, v => P.reso = v, 0.5, 18, 0.5, v => v.toFixed(1))),
@@ -795,7 +811,7 @@ function effectAmounts(P){
 }
 function waveColor(P){
   if (!keyColors) { keyColors = {}; const sv = [st.shTab, st.shPage];
-    for (let tb = 0; tb < 4; tb++) for (let pg = 0; pg < 2; pg++) { st.shTab = tb; st.shPage = pg; shapeDefs().forEach((d, i) => { if (!keyColors[d.key]) keyColors[d.key] = hexRgb(SH_FAM[tb][i]); }); }
+    for (let tb = 0; tb < 4; tb++) for (let pg = 0; pg < SH_TABS[tb].length; pg++) { st.shTab = tb; st.shPage = pg; shapeDefs().forEach((d, i) => { if (!keyColors[d.key]) keyColors[d.key] = hexRgb(SH_FAM[tb][i]); }); }
     st.shTab = sv[0]; st.shPage = sv[1]; }
   const base = [226, 230, 238]; let r = base[0], g = base[1], b = base[2], wsum = 1;
   for (const [k, a] of effectAmounts(P)) { const c = keyColors[k]; if (!c) continue; const w = Math.pow(a, 0.8) * 0.9; r += c[0] * w; g += c[1] * w; b += c[2] * w; wsum += w; }
@@ -808,7 +824,7 @@ const REF_COL = '#8fd8ff', REF_DIM = '#1d3a52';
 
 // hold-F8 mod: the header says what's happening and the bottom-left says what to do next
 function drawModOverlay(now){
-  const H = st.modHold, src = MOD_SRCS[st.modSrc] || 'LFO1', col = MOD_COL[src];
+  const H = st.modHold, src = MOD_SRCS[st.modSrc] || 'ENV1', col = MOD_COL[src];
   if (H) {
     px(0, 0, 112, 7, C.bg);
     if (H.no) txt(H.no + ' CANT MOVE', 1, 1, C.mut);
@@ -816,19 +832,42 @@ function drawModOverlay(now){
     else txt('MOD FROM ' + MOD_NAME[src], 1, 1, col);
   }
   if (!H && !pageCanMod()) return;
-  const tip = !H ? 'HOLD F8 + KNOB: ADD MOTION' : H.m ? (H.m.amt ? 'LET GO TO KEEP' : 'LET GO TO REMOVE') : H.no ? 'TRY ANOTHER KNOB' : 'TURN A KNOB  DIAL:SOURCE';
+  const tip = !H ? 'HOLD F8 + KNOB: ADD MOTION' : H.m ? (H.m.amt ? 'DIAL:SOURCE  LET GO:KEEP' : 'LET GO TO REMOVE') : H.no ? 'TRY ANOTHER KNOB' : 'TURN THE KNOB TO MOVE';
   px(0, 105, tip.length * 4 + 1, 7, C.bg); txt(tip, 1, 106, H ? col : C.mut);
+}
+// value of a mod slot (or the note's own envelope) t seconds into a note held for 'hold' seconds
+function slotEnvAt(E, t, hold){
+  const a = Math.max(ATK[E.a], 0.003), d = Math.max(DEC[E.d], 0.003), r = Math.max(REL[E.r], 0.01);
+  const lvl = u => u < a ? u / a : u < a + d ? 1 + (E.s - 1) * (u - a) / d : E.s;
+  return t <= hold ? lvl(t) : lvl(hold) * Math.exp(-(t - hold) / (r / 4));
+}
+function lfoWave(shape, ph){ const f = ph - Math.floor(ph);
+  if (shape === 0) return Math.sin(2 * Math.PI * f); if (shape === 1) return 1 - 4 * Math.abs(f - 0.5); if (shape === 2) return 2 * f - 1;
+  if (shape === 3) return f < 0.5 ? 1 : -1; const k = Math.floor(ph), r = Math.sin(k * 12.9898) * 43758.5453; return (r - Math.floor(r)) * 2 - 1; }
+function slotLfoAt(M, t){ const fd = M.fade / 50, g = fd > 0 ? Math.min(1, t / fd) : 1; return lfoWave(M.shape, t * lrateHz(M.rate)) * M.depth / 100 * g; }
+// a mod slot page: its shape over one note (2 s, held for 1.2 s), drawn as a line in the slot's color
+function drawModSlot(k, now){
+  const M = st.patch.msl[k], col = SH_FAM[1][(k + 1) % 4], T = 2, hold = 1.2, top = 14, h = 86, x0 = 2, w = 108;
+  const lfo = M.type === 'lfo', mid = lfo ? top + h / 2 : top + h;
+  px(x0, mid, w, 1, C.grid); if (!lfo) px(x0 + Math.round(hold / T * w), top, 1, h, C.dim);
+  let prev = null;
+  for (let x = 0; x < w; x++) {
+    const t = x / w * T, v = lfo ? slotLfoAt(M, t) : slotEnvAt(M, t, hold), y = Math.round(lfo ? mid - v * (h / 2 - 2) : mid - v * (h - 2));
+    if (prev !== null) { const a = Math.min(prev, y), b = Math.max(prev, y); px(x0 + x, a, 1, b - a + 1, col); } else px(x0 + x, y, 1, 1, col);
+    prev = y;
+  }
 }
 function drawSound(now){
   const defs = shapeDefs(), hot = st.lastKnob >= 0 && now - st.lastEdit < 1500 && defs[st.lastKnob];
   if (hot) { const d = defs[st.lastKnob], v = String(d.val()); txt(d.name, 1, 1, shColor(st.lastKnob)); txt(v, 111 - v.length * 4, 1, C.txt); }
-  else { txt(SH_TABS[st.shTab][st.shPage], 1, 1, SH_FAM[st.shTab][0]); for (let i = 0; i < 4; i++) px(79 + i * 5, 2, 3, 3, shColor(i)); px(72, 2, 2, 3, st.shPage ? C.mut : C.txt); px(75, 2, 2, 3, st.shPage ? C.txt : C.mut); }
+  else { txt(SH_TABS[st.shTab][st.shPage], 1, 1, SH_FAM[st.shTab][0]); for (let i = 0; i < 4; i++) px(79 + i * 5, 2, 3, 3, shColor(i)); const np = SH_TABS[st.shTab].length; for (let q = 0; q < np; q++) px(77 - (np - q) * 3, 2, 2, 3, q === st.shPage ? C.txt : C.mut); }
   px(0, 7, 112, 1, C.dim);
   // Source (button 1) is always shown zoomed in; elsewhere close-up knobs zoom in while turning
-  const zoomIn = st.shTab === 0 || (st.viewKind === 'close' && now - st.viewT < 1000);
+  if (st.shTab === 1 && st.shPage > 0) { drawModSlot(st.shPage - 1, now); return; }
+  const zoomIn = (st.shTab === 0 && st.shPage < 2) || (st.viewKind === 'close' && now - st.viewT < 1000);
   st.zoom += ((zoomIn ? 1 : 0) - st.zoom) * 0.1; if (Math.abs(st.zoom) < 0.002) st.zoom = 0;
   const pd = previewData(), rd = refData(pd.T), col = waveColor(st.patch);
-  if (st.viewKind === 'harm' && st.shTab !== 0) { drawHarm(pd, rd, col); return; }
+  if (st.viewKind === 'harm' && !(st.shTab === 0 && st.shPage < 2)) { drawHarm(pd, rd, col); return; }
   drawWaveView(pd, rd, col, st.zoom);
 }
 // one waveform band: min/max per pixel column, continuous between columns
@@ -1268,6 +1307,15 @@ function voice(midi, t, dur, vel, lane){
   tgt.cutoff = f1.detune; tgt.reso = f1.Q; tgt.spread = spreadBus; tgt.pan = pan ? pan.pan : null;
   const modNode = {};
   const makeModSrc = name => {
+    if (name === 'ENV1') { const c = src(ac.createConstantSource()); c.offset.value = 0; schedEnv(c.offset, t, dur, ATK[P.a], DEC[P.d], P.s, REL[P.r], 1); return c; }
+    if (/^M[1-4]$/.test(name)) { const M = P.msl[+name[1] - 1];
+      if (M.type === 'env') { const c = src(ac.createConstantSource()); c.offset.value = 0; schedEnv(c.offset, t, dur, ATK[M.a], DEC[M.d], M.s, REL[M.r], 1); return c; }
+      const dg = mk(ac.createGain()), dep = M.depth / 100, fd = M.fade / 50;
+      if (fd > 0) { dg.gain.setValueAtTime(0, t); dg.gain.linearRampToValueAtTime(dep, t + fd); } else dg.gain.value = dep;
+      if (M.shape === 4) { const c = src(ac.createConstantSource()), stp = 1 / Math.max(lrateHz(M.rate), 0.05);
+        for (let tt = t, i = 0; tt < end && i < 400; tt += stp, i++) c.offset.setValueAtTime(Math.random() * 2 - 1, tt); c.connect(dg); }
+      else { const o = src(ac.createOscillator()); o.type = WAVES[M.shape]; o.frequency.value = lrateHz(M.rate); o.connect(dg); }
+      return dg; }
     if (name === 'LFO1' || name === 'LFO2') { const k = name === 'LFO1' ? 0 : 1, o = src(ac.createOscillator()); o.type = WAVES[P.lfo[k].shape] || 'sine'; o.frequency.value = lfoHz(k); return o; }
     if (name === 'ENV2') { const c = src(ac.createConstantSource()), E = P.env2; c.offset.value = 0; schedEnv(c.offset, t, dur, ATK[E.a], DEC[E.d], E.s, REL[E.r], 1); return c; }
     return seqSrc[name === 'SEQ1' ? 0 : 1] || null;
@@ -1436,7 +1484,13 @@ function mainTurn(dir){
   if (!st.on) return;
   st.mainAngle += dir * 15; document.getElementById('mainknob').style.setProperty('--rot', st.mainAngle + 'deg');
   if (held.play) { held.playUsed = true; if (!st.fan || st.fan.closing) openFan(); st.fan.sel = (st.fan.sel + dir + FAN.length) % FAN.length; return; }
-  if (st.screen === 'design' && st.modHold) { st.modSrc = (st.modSrc + dir + MOD_SRCS.length) % MOD_SRCS.length; st.modHold.used = true; st.modHold.m = null; st.modHold.no = null; return; }
+  if (st.screen === 'design' && st.modHold) {
+    const H = st.modHold, old = MOD_SRCS[st.modSrc]; st.modSrc = (st.modSrc + dir + MOD_SRCS.length) % MOD_SRCS.length; H.used = true;
+    // a knob you already moved keeps its amount and switches to the new source
+    if (H.m && H.m.key) { const P = st.patch, nw = MOD_SRCS[st.modSrc], m = P.mods.find(x => x.key === H.m.key && x.src === old);
+      if (m) { const dup = P.mods.find(x => x.key === H.m.key && x.src === nw); if (dup) { dup.amt = clamp(dup.amt + m.amt, -100, 100); P.mods.splice(P.mods.indexOf(m), 1); H.m.amt = dup.amt; } else m.src = nw; H.m.src = nw; } }
+    else { H.m = null; H.no = null; }
+    return; }
   if (st.screen === 'settings') { if (st.setEdit) changeSetting(dir); else st.setCur = (st.setCur + dir + SETTINGS.length) % SETTINGS.length; return; }
   if (st.screen === 'filter') { st.fSel = 1 - st.fSel; return; }
   if (st.screen === 'mod') { modTurn(dir); return; }
@@ -1556,13 +1610,15 @@ function modKnob(i, dir){
   if (!m) { m = { src, key:d.key, amt:0 }; P.mods.push(m); }
   m.amt = clamp(m.amt + dir * 5, -100, 100);
   if (!m.amt) P.mods.splice(P.mods.indexOf(m), 1);
-  H.m = { name:d.name, src, amt:m.amt };
+  H.m = { name:d.name, key:d.key, src, amt:m.amt };
   if (now - st.lastEdit > 2000 || !st.prevStart) previewDesign();
   st.lastEdit = now; st.lastKnob = -1;
 }
 // where a source is right now (-1..1), for the moving arc on the knob ring
 function modValue(src, now){
-  const sec = now / 1000;
+  const sec = now / 1000, beat = 60 / st.tempo, nt = sec % (beat * 2);
+  if (src === 'ENV1') return slotEnvAt(st.patch, nt, beat);
+  if (/^M[1-4]$/.test(src)) { const M = st.patch.msl[+src[1] - 1]; return M.type === 'env' ? slotEnvAt(M, nt, beat) : slotLfoAt(M, sec % 8); }
   if (src === 'LFO1' || src === 'LFO2') return Math.sin(2 * Math.PI * lfoHz(src === 'LFO1' ? 0 : 1) * sec);
   if (src === 'ENV2') { const b = 60 / st.tempo, f = (sec % b) / b; return Math.exp(-f * 4); }
   const k = src === 'SEQ1' ? 0 : 1, S = st.patch.seq[k], i = Math.floor(sec / seqStepDur(k)) % S.len; return (S.steps[i] || 0) / 100;
@@ -1616,7 +1672,7 @@ function noteAction(i){
 function selBar(i){
   if (!st.on) return;
   if (st.screen === 'filter') { if (i < 2) st.fSel = i; return; }
-  if (st.screen === 'design') { if (st.shTab === i) st.shPage = 1 - st.shPage; else { st.shTab = i; st.shPage = 0; } st.lastKnob = -1; st.viewKind = 'time'; st.viewKey = ''; return; }
+  if (st.screen === 'design') { if (st.shTab === i) st.shPage = (st.shPage + 1) % SH_TABS[i].length; else { st.shTab = i; st.shPage = 0; } st.lastKnob = -1; st.viewKind = 'time'; st.viewKey = ''; return; }
   if (st.screen === 'mod') {
     if (i === 0 && st.modTab === 'lfo') st.lfoSel = 1 - st.lfoSel;
     else if (i === 2 && st.modTab === 'seq') { st.seqSel = 1 - st.seqSel; st.seqCur = Math.min(st.seqCur, st.patch.seq[st.seqSel].len - 1); }
@@ -2213,7 +2269,7 @@ let hintTxt = null;
 function setHint(t){
   if (!st.on) t = '';
   else if (st.screen === 'melody' && st.mode === 'notes' && !st.menu && st.phase === 'edit' && st.grab) t += '   |   buttons: OCT+  OCT-  ACC  DEL';
-  else if (st.screen === 'design') t = 'buttons: 1 source  2 envelope  3 filter + drive  4 motion + FX  (press again for page 2)   hold F8 + turn a knob: add motion (main knob picks LFO 1, LFO 2, ENV 2, SEQ 1, SEQ 2)';
+  else if (st.screen === 'design') t = 'buttons: 1 source (press again: source 2, feel)  2 envelope (press again: mod 1-4)  3 filter + drive  4 motion + FX.   Hold F8, nudge a knob, then the main knob picks what moves it: note envelope or mod 1-4';
   else if (st.screen !== 'melody') t = '';
   if (t === hintTxt) return; hintTxt = t; document.getElementById('hint').textContent = t;
 }
