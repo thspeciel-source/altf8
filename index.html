@@ -58,6 +58,10 @@
   /* engraved lettering on the metal shell: dark cut with a light lower edge */
   #brand, #maker { position:absolute; bottom:14px; font:700 13px/1 ui-monospace,Menlo,monospace; color:#8a8f97; letter-spacing:.08em; text-shadow:0 1px 0 rgba(255,255,255,.75), 0 -1px 0 rgba(0,0,0,.28); }
   #brand { right:18px; }
+  /* engraved control names: K1-K4 under the small knobs, DIAL over the big knob */
+  .eng { position:absolute; width:40px; text-align:center; font:700 8px/1 ui-monospace,Menlo,monospace; letter-spacing:.1em; color:rgba(235,225,255,.62); text-shadow:0 -1px 0 rgba(40,15,80,.55), 0 1px 0 rgba(255,255,255,.18); pointer-events:none; }
+  body.fs .eng { translate:0 var(--fst,0px); }
+  body.fs .eng.low { translate:0 var(--fsl,0px); }
   #maker { left:18px; font-size:9px; letter-spacing:.12em; }
   .kbd { position:absolute; font:700 9px/1 ui-monospace,Menlo,monospace; color:#5d5748; background:rgba(255,255,255,.55); border-radius:3px; padding:2px 3px; pointer-events:none; }
   #pwrled { position:absolute; left:18px; top:12px; width:7px; height:7px; border-radius:50%; background:#5b4f45; }
@@ -177,6 +181,11 @@
       <div class="btn" id="f8">F8</div>
       <div class="btn" id="bbtn">B</div>
       <div id="jack"></div>
+      <div class="eng" style="left:258px;top:86px">K1</div>
+      <div class="eng" style="left:258px;top:142px">K2</div>
+      <div class="eng" style="left:258px;top:198px">K3</div>
+      <div class="eng" style="left:258px;top:254px">K4</div>
+      <div class="eng low" style="left:196px;top:306px;width:88px">DIAL</div>
       <div id="brand">AltF8</div>
       <div id="maker">RTP INC. - <span id="makerver"></span></div>
       <span class="kbd" style="left:236px;top:-30px">Space</span>
@@ -194,7 +203,7 @@
     <div class="card">
       <h2>Keyboard map</h2>
       <table>
-        <tr><td>Main knob: pitch, options, note cursor</td><td><kbd>&larr;</kbd><kbd>&rarr;</kbd> or scroll / drag the knob</td></tr>
+        <tr><td>DIAL (big knob): pitch, options, note cursor</td><td><kbd>&larr;</kbd><kbd>&rarr;</kbd> or scroll / drag the knob</td></tr>
         <tr><td>Knobs on the melody screen: 1 chord lengths (how the bars are shared), 2 rhythm + accents, 3 voicing spread, 4 tempo. On the Sound screen they follow the page (buttons 1-4); on MOD they do what the 4 rows on screen say</td><td><kbd>Q</kbd>/<kbd>A</kbd> <kbd>W</kbd>/<kbd>S</kbd> <kbd>E</kbd>/<kbd>D</kbd> <kbd>R</kbd>/<kbd>F</kbd> (up / down)</td></tr>
         <tr><td>Bar buttons 1-4</td><td><kbd>1</kbd><kbd>2</kbd><kbd>3</kbd><kbd>4</kbd></td></tr>
         <tr><td>F8: confirm / find chords. Hold: power on</td><td><kbd>Enter</kbd></td></tr>
@@ -214,7 +223,7 @@
         <li>On OSC, FILTER and MOD, Play plays a longer test note so you can hear the modulation; press twice to loop it.</li>
       </ul>
       <ul class="help">
-        <li>Melody screen: pick a bar (1-4), turn the main knob to set its pitch, go to the next bar. With 4 pitches set, press F8 to find chords.</li>
+        <li>Melody screen: pick a bar (1-4), turn DIAL to set its pitch, go to the next bar. With 4 pitches set, press F8 to find chords.</li>
         <li>Suggestions blink. F8 keeps one, B rejects it, the knob scrolls through the others. Press Play to hear them.</li>
         <li>After keeping chords: pick a bar (1-4) and turn the knob to move its main note; the chords re-adapt, F8 keeps the change, B undoes it. F8 with nothing pending reopens the chord suggestions.</li>
         <li>Yellow = notes you placed. Cyan = notes placed by the chord finder.</li>
@@ -482,9 +491,10 @@ const VERSIONS = [
   { id:'v38', file:'versions/v38.html', label:'v38 - Fewer clicks, smooth zoom (2026-11-18)', note:'Notes that get cut short now fade from their current level instead of jumping to silence, and every note rings out fully before it stops, which removes the clicks when turning knobs fast. The 4-bar zoom eases in and out.' },
   { id:'v39', file:'versions/v39.html', label:'v39 - Endings only in ending presets, darker chord options, staggered list (2026-11-18)', note:'Rhythms no longer change on the last bar unless you pick a preset with an ending (there are 5 such presets, next to their plain versions). New darker chord endings: minor iv, deceptive vi, a sad falling second half, bVI-bVII, and the andalusian walk-down in minor keys. The option list now alternates kinds: plain, dark, colored, turnaround, then again.' },
   { id:'v40', file:'versions/v40.html', label:'v40 - Mod slots on button 2, new Sound layout (2026-11-18)', note:'Button 1 now has 3 pages: source, source 2, and feel (hold, velocity, tremolo, key track). Button 2: press again to go through MOD 1-4 after the note envelope. MOD 1 (pluck) and MOD 2 (swell) are envelopes with attack/decay/sustain/release; MOD 3 (wobble) and MOD 4 (slow sweep) repeat, with shape, speed, depth and fade-in. Each page draws its shape. Hold F8, nudge the knob you want to move, then turn the main knob to pick what moves it: the note envelope or MOD 1-4.' },
-  { id:'v41', file:'index.html', label:'v41 - SHAPE screen, page counters, F8 badge bottom-right (2026-11-18)', note:'The sound screen is now called SHAPE. Each page title shows its place, like SOURCE (1/3) or MOD 2 (3/5). The blinking F8 badge moved to the bottom-right so it no longer covers chord names, and pink chord names stay on screen while you browse options (only the notes blink).' }
+  { id:'v41', file:'versions/v41.html', label:'v41 - SHAPE screen, page counters, F8 badge bottom-right (2026-11-18)', note:'The sound screen is now called SHAPE. Each page title shows its place, like SOURCE (1/3) or MOD 2 (3/5). The blinking F8 badge moved to the bottom-right so it no longer covers chord names, and pink chord names stay on screen while you browse options (only the notes blink).' },
+  { id:'v42', file:'index.html', label:'v42 - Named controls: DIAL and K1-K4 (2026-11-18)', note:'The case is engraved with control names: K1-K4 under the small knobs and DIAL over the big knob (bar buttons 1-4, F8, B and PLAY keep their labels). On-screen tips use those names, e.g. HOLD F8 + K1-4: MOTION and DIAL:MORE.' }
 ];
-const CURRENT = 'v41';
+const CURRENT = 'v42';
 /* ---- synth engine constants (v12) ---- */
 const UNI_MAX = 7;
 const FTYPES = ['lowpass','highpass','bandpass','notch'], FNAME = ['LP','HP','BP','NOTCH'];
@@ -833,7 +843,7 @@ function drawModOverlay(now){
     else txt('MOD FROM ' + MOD_NAME[src], 1, 1, col);
   }
   if (!H && !pageCanMod()) return;
-  const tip = !H ? 'HOLD F8 + KNOB: MOTION' : H.m ? (H.m.amt ? 'DIAL:SOURCE LET GO:KEEP' : 'LET GO TO REMOVE') : H.no ? 'TRY ANOTHER KNOB' : 'TURN THE KNOB TO MOVE';
+  const tip = !H ? 'HOLD F8 + K1-4: MOTION' : H.m ? (H.m.amt ? 'DIAL:SOURCE LET GO:KEEP' : 'LET GO TO REMOVE') : H.no ? 'TRY ANOTHER K' : 'TURN K1-4 TO MOVE';
   px(0, 105, tip.length * 4 + 1, 7, C.bg); txt(tip, 1, 106, H ? col : C.mut);
 }
 // value of a mod slot (or the note's own envelope) t seconds into a note held for 'hold' seconds
@@ -1978,10 +1988,10 @@ function drawMelody(now){
   // while a knob turns, its value covers the chord names for a moment
   if (knobLabel) { px(0, 0, 112, 6, C.bg); stxt('hd', (st.lastKnob === 3 ? 'TEMPO ' : '') + knobLabel.val(), 27, 1, 0, C.acc); }
   const n = st.bars.filter(b => b.mel).length;
-  if (st.phase === 'entry') return n < 4 ? 'KNOB:PITCH ' + n + '/4' : 'F8:FIND CHORDS';
-  if (st.phase === 'suggest') return 'KNOB:MORE F8:OK B:NO ' + (st.optIdx + 1) + '/' + st.options.length + ' ' + (st.options[st.optIdx].tag || '');
+  if (st.phase === 'entry') return n < 4 ? 'DIAL:PITCH ' + n + '/4' : 'F8:FIND CHORDS';
+  if (st.phase === 'suggest') return 'DIAL:MORE F8:OK B:NO ' + (st.optIdx + 1) + '/' + st.options.length + ' ' + (st.options[st.optIdx].tag || '');
   if (st.phase === 'adapt') return 'NEXT BAR KEEPS IT  B:UNDO';
-  return 'KNOB:MOVE NOTE  1-4:BAR  F8:NEW CHORDS';
+  return 'DIAL:MOVE NOTE  1-4:BAR  F8:NEW CHORDS';
 }
 function menuRegion(m){
   if (m === 'METRONOME') return [0, 0, 112, 8];
@@ -2220,7 +2230,7 @@ function drawSettings(now){
     txt(settingValue(i), 50, y, cur && st.setEdit && Math.floor(now / 300) % 2 ? C.sel : C.acc);
   });
   drawOverlay(now, [0, 3, 1, 2, 0, 0][st.setCur], 4, 47, 104, 48);
-  return st.setCur === 5 ? 'F8: RELOAD THE NEWEST CODE, KEEP THIS SONG' : st.setEdit ? 'KNOB:CHANGE F8:DONE' : 'KNOB:PICK F8:EDIT';
+  return st.setCur === 5 ? 'F8: RELOAD THE NEWEST CODE, KEEP THIS SONG' : st.setEdit ? 'DIAL:CHANGE F8:DONE' : 'DIAL:PICK F8:EDIT';
 }
 // slide-in amount for corner overlays: 0 -> 1 -> 0
 const ease = x => 1 - Math.pow(1 - clamp(x, 0, 1), 3);
@@ -2270,7 +2280,7 @@ let hintTxt = null;
 function setHint(t){
   if (!st.on) t = '';
   else if (st.screen === 'melody' && st.mode === 'notes' && !st.menu && st.phase === 'edit' && st.grab) t += '   |   buttons: OCT+  OCT-  ACC  DEL';
-  else if (st.screen === 'design') t = 'buttons: 1 source (press again: source 2, feel)  2 envelope (press again: mod 1-4)  3 filter + drive  4 motion + FX.   Hold F8, nudge a knob, then the main knob picks what moves it: note envelope or mod 1-4';
+  else if (st.screen === 'design') t = 'buttons: 1 source (press again: source 2, feel)  2 envelope (press again: mod 1-4)  3 filter + drive  4 motion + FX.   Hold F8, nudge K1-K4, then DIAL picks what moves it: note envelope or mod 1-4';
   else if (st.screen !== 'melody') t = '';
   if (t === hintTxt) return; hintTxt = t; document.getElementById('hint').textContent = t;
 }
