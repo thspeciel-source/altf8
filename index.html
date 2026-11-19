@@ -296,24 +296,30 @@ const PATTERNS = [
 ];
 // RHYTHM + ACCENTS (knob 2): when each chord is hit (16th positions in a bar; a chord change is always a hit),
 // how long a hit may ring (cap, 16ths) and how hard each position is played (acc, missing = dflt).
-// end = the last bar of the 8-bar loop: a more conclusive figure (stop = rest after the last hit, otherwise it rings out).
+// end (only on the presets named "... ENDING") = the last bar of the 8-bar loop plays a different, more conclusive figure (stop = rest after the last hit).
 const RHY = [
-  { name:'SUSTAIN', hits:[], cap:64, end:{ hits:[0,12], acc:{12:0.75} } },
-  { name:'HALF NOTES', hits:[0,8], cap:64, acc:{0:1,8:0.8}, end:{ hits:[0,4,8], acc:{0:1,4:0.7,8:1} } },
-  { name:'QUARTERS, STRONG 1 + 3', hits:[0,4,8,12], cap:64, acc:{0:1,4:0.62,8:0.9,12:0.62}, end:{ hits:[0,4,8], cap:4, stop:true, acc:{0:1,4:0.7,8:1} } },
-  { name:'BACKBEAT QUARTERS', hits:[0,4,8,12], cap:64, acc:{0:0.65,4:1,8:0.65,12:1}, end:{ hits:[0,4,8,10,12,14], cap:2, acc:{0:1,4:1,8:0.75,10:0.8,12:0.9}, dflt:1 } },
-  { name:'DRIVING EIGHTHS', hits:[0,2,4,6,8,10,12,14], cap:64, acc:{0:1,4:0.85,8:0.95,12:0.85}, dflt:0.62, end:{ hits:[0,2,4,6,8], cap:2, stop:true, acc:{0:1,8:1}, dflt:0.7 } },
-  { name:'PUMPING OFFBEAT 8THS', hits:[0,2,4,6,8,10,12,14], cap:64, acc:{2:1,6:1,10:1,14:1}, dflt:0.55, end:{ hits:[2,6,10,12], cap:2, acc:{12:1}, dflt:0.8 } },
-  { name:'EIGHTHS 3-3-2 ACCENT', hits:[0,2,4,6,8,10,12,14], cap:64, acc:{0:1,6:1,12:1}, dflt:0.58, end:{ hits:[0,6,12], acc:{0:1,6:1,12:1} } },
-  { name:'CHARLESTON', hits:[0,6], cap:64, acc:{0:1,6:0.85}, end:{ hits:[0,6,12], acc:{0:1,6:0.85,12:1} } },
-  { name:'TRESILLO 3+3+2', hits:[0,6,12], cap:64, acc:{0:1,6:0.85,12:0.9}, end:{ hits:[0,3,6,12], acc:{0:1,3:0.7,6:0.85,12:1} } },
-  { name:'BOSSA', hits:[0,3,6,10,13], cap:3, acc:{0:1,6:0.9}, dflt:0.72, end:{ hits:[0,3,6,8], cap:3, acc:{0:1,8:1}, dflt:0.75 } },
-  { name:'POP SYNCOPATION', hits:[0,3,6,10,12], cap:64, acc:{0:1,6:1}, dflt:0.75, end:{ hits:[0,3,6,8], acc:{0:1,8:1}, dflt:0.8 } },
-  { name:'SIXTEENTH GROOVE', hits:[0,3,6,8,11,14], cap:2, acc:{0:1,8:0.9}, dflt:0.68, end:{ hits:[0,3,6,8,11,12,13,14], cap:1, acc:{0:1,8:1,14:1}, dflt:0.7 } },
-  { name:'OFFBEAT STABS', hits:[2,6,10,14], cap:1, end:{ hits:[2,6,8], cap:1, acc:{8:1}, dflt:0.85 } },
-  { name:'REGGAE SKANK', hits:[4,12], cap:1, end:{ hits:[4,8], cap:1, acc:{8:1} } },
-  { name:'GALLOP', hits:[0,2,3,4,6,7,8,10,11,12,14,15], cap:1, acc:{0:1,4:0.85,8:0.95,12:0.85}, dflt:0.6, end:{ hits:[0,2,3,4,6,7,8], cap:1, acc:{0:1,8:1}, dflt:0.7 } }
+  { name:'SUSTAIN', hits:[], cap:64 },
+  { name:'HALF NOTES', hits:[0,8], cap:64, acc:{0:1,8:0.8} },
+  { name:'QUARTERS, STRONG 1 + 3', hits:[0,4,8,12], cap:64, acc:{0:1,4:0.62,8:0.9,12:0.62} },
+  { name:'QUARTERS + STOP ENDING', hits:[0,4,8,12], cap:64, acc:{0:1,4:0.62,8:0.9,12:0.62}, end:{ hits:[0,4,8], cap:4, stop:true, acc:{0:1,4:0.7,8:1} } },
+  { name:'BACKBEAT QUARTERS', hits:[0,4,8,12], cap:64, acc:{0:0.65,4:1,8:0.65,12:1} },
+  { name:'BACKBEAT + FILL ENDING', hits:[0,4,8,12], cap:64, acc:{0:0.65,4:1,8:0.65,12:1}, end:{ hits:[0,4,8,10,12,14], cap:2, acc:{0:1,4:1,8:0.75,10:0.8,12:0.9}, dflt:1 } },
+  { name:'DRIVING EIGHTHS', hits:[0,2,4,6,8,10,12,14], cap:64, acc:{0:1,4:0.85,8:0.95,12:0.85}, dflt:0.62 },
+  { name:'EIGHTHS + STOP ENDING', hits:[0,2,4,6,8,10,12,14], cap:64, acc:{0:1,4:0.85,8:0.95,12:0.85}, dflt:0.62, end:{ hits:[0,2,4,6,8], cap:2, stop:true, acc:{0:1,8:1}, dflt:0.7 } },
+  { name:'PUMPING OFFBEAT 8THS', hits:[0,2,4,6,8,10,12,14], cap:64, acc:{2:1,6:1,10:1,14:1}, dflt:0.55 },
+  { name:'EIGHTHS 3-3-2 ACCENT', hits:[0,2,4,6,8,10,12,14], cap:64, acc:{0:1,6:1,12:1}, dflt:0.58 },
+  { name:'CHARLESTON', hits:[0,6], cap:64, acc:{0:1,6:0.85} },
+  { name:'TRESILLO 3+3+2', hits:[0,6,12], cap:64, acc:{0:1,6:0.85,12:0.9} },
+  { name:'TRESILLO + PICKUP ENDING', hits:[0,6,12], cap:64, acc:{0:1,6:0.85,12:0.9}, end:{ hits:[0,3,6,12], acc:{0:1,3:0.7,6:0.85,12:1} } },
+  { name:'BOSSA', hits:[0,3,6,10,13], cap:3, acc:{0:1,6:0.9}, dflt:0.72 },
+  { name:'POP SYNCOPATION', hits:[0,3,6,10,12], cap:64, acc:{0:1,6:1}, dflt:0.75 },
+  { name:'POP SYNC + HOLD ENDING', hits:[0,3,6,10,12], cap:64, acc:{0:1,6:1}, dflt:0.75, end:{ hits:[0,3,6,8], acc:{0:1,8:1}, dflt:0.8 } },
+  { name:'SIXTEENTH GROOVE', hits:[0,3,6,8,11,14], cap:2, acc:{0:1,8:0.9}, dflt:0.68 },
+  { name:'OFFBEAT STABS', hits:[2,6,10,14], cap:1 },
+  { name:'REGGAE SKANK', hits:[4,12], cap:1 },
+  { name:'GALLOP', hits:[0,2,3,4,6,7,8,10,11,12,14,15], cap:1, acc:{0:1,4:0.85,8:0.95,12:0.85}, dflt:0.6 }
 ];
+
 // VOICING (knob 3): same chord, different layout under the melody note.
 // close = packed under the melody; drop 2/3 = one note moved down an octave; wide = every other note down an octave;
 // inversions = which chord note is at the bottom; bass = root added an octave below.
@@ -473,9 +479,10 @@ const VERSIONS = [
   { id:'v35', file:'versions/v35.html', label:'v35 - Turnaround on the last chord (2026-11-18)', note:'Chord options now include turnaround versions (tagged + TURN): chord 8 splits in two and its second half is the V of chord 1, leading back to the top of the loop. The split works with every chord-length preset, and rests are shared between the two halves.' },
   { id:'v36', file:'versions/v36.html', label:'v36 - Zoom while editing patterns, sound edits play your pattern (2026-11-18)', note:'Turning knobs 1-3 on the melody screen zooms into 4 bars for a moment so short hits and rests are readable; separate hits always keep a 1-pixel gap. Knobs only blink if this song has not used them yet (remembered with the song). On the Sound screen, once you have a chord pattern, edits play your pattern (stops 4 s after you stop editing) instead of a single note; Play plays the pattern.' },
   { id:'v37', file:'versions/v37.html', label:'v37 - One notch per setting (2026-11-18)', note:'Knobs with a list of settings now move one setting per notch (a tap or the same amount of turning every time); the ring fills one notch per setting and short lists wrap back to the first setting before a full turn. In full screen the circuit board fades smoothly into solid purple at the edges.' },
-  { id:'v38', file:'index.html', label:'v38 - Fewer clicks, smooth zoom (2026-11-18)', note:'Notes that get cut short now fade from their current level instead of jumping to silence, and every note rings out fully before it stops, which removes the clicks when turning knobs fast. The 4-bar zoom eases in and out.' }
+  { id:'v38', file:'versions/v38.html', label:'v38 - Fewer clicks, smooth zoom (2026-11-18)', note:'Notes that get cut short now fade from their current level instead of jumping to silence, and every note rings out fully before it stops, which removes the clicks when turning knobs fast. The 4-bar zoom eases in and out.' },
+  { id:'v39', file:'index.html', label:'v39 - Endings only in ending presets, darker chord options, staggered list (2026-11-18)', note:'Rhythms no longer change on the last bar unless you pick a preset with an ending (there are 5 such presets, next to their plain versions). New darker chord endings: minor iv, deceptive vi, a sad falling second half, bVI-bVII, and the andalusian walk-down in minor keys. The option list now alternates kinds: plain, dark, colored, turnaround, then again.' }
 ];
-const CURRENT = 'v38';
+const CURRENT = 'v39';
 /* ---- synth engine constants (v12) ---- */
 const UNI_MAX = 7;
 const FTYPES = ['lowpass','highpass','bandpass','notch'], FNAME = ['LP','HP','BP','NOTCH'];
@@ -1050,6 +1057,21 @@ function findChords(mels){
     }
     halves.sort((u, v) => v.sc2 - u.sc2);
     halves.slice(0, 3).forEach((x, i) => endings.push(['NEW HALF', p.concat(x.h), -0.1 - i * 0.35]));
+    // darker endings, built from the key's tonic: a minor iv (borrowed), a deceptive vi, a falling minor second half,
+    // the aeolian bVI-bVII, and in minor the andalusian walk down
+    const T = ki.root, mn = ki.mode === 'min', C3 = (r, q, deg) => ({ root:((T + r) % 12 + 12) % 12, q, deg });
+    const darks = mn ? [
+      ['MINOR iv', p.concat([p[0], p[1], p[2], C3(5, 'min', -3)]), -0.2],
+      ['ANDALUSIAN', p.concat([C3(0, 'min', 0), C3(10, 'maj', -3), C3(8, 'maj', -3), C3(7, 'maj', -2)]), -0.25],
+      ['DARK bVI bVII', p.concat([p[0], p[1], C3(8, 'maj', -3), C3(10, 'maj', -3)]), -0.3],
+      ['SAD HALF', p.concat([C3(8, 'maj', -3), C3(3, 'maj', -3), C3(5, 'min', -3), C3(0, 'min', 0)]), -0.35]
+    ] : [
+      ['MINOR iv', p.concat([p[0], p[1], p[2], C3(5, 'min', -3)]), -0.2],
+      ['DECEPTIVE vi', p.concat([p[0], p[1], p[2], C3(9, 'min', 5)]), -0.25],
+      ['SAD HALF', p.concat([C3(9, 'min', 5), C3(4, 'min', 2), C3(5, 'maj', 3), C3(5, 'min', -3)]), -0.3],
+      ['DARK bVI bVII', p.concat([p[0], p[1], C3(8, 'maj', -3), C3(10, 'maj', -3)]), -0.35]
+    ];
+    darks.forEach(d => { const h = d[1].slice(3); if (!d[1].slice(4).every((c, i) => sameChord(c, p[i])) && !h.some((c, i) => i && sameChord(c, h[i - 1]))) endings.push(d); });
     // turnaround versions: the last chord splits, its second half is the V of chord 1 leading back to the top
     const V1 = { root:(p[0].root + 7) % 12, q:'maj', deg:-2 };
     endings.slice().forEach(([tag, pr, eb]) => { if (!sameChord(pr[7], V1) && !(pr[7].root === V1.root)) endings.push([(tag || 'REPEAT') + ' + TURN', pr.concat([V1]), eb - 0.25]); });
@@ -1059,8 +1081,12 @@ function findChords(mels){
     }
   }
   opts.sort((u, v) => v.score - u.score);
-  const seen = new Set(), out = [];
-  for (const o of opts) { const k = o.chords.map(chordName).join(' '); if (!seen.has(k)) { seen.add(k); out.push(o); } if (out.length >= 60) break; }
+  // stagger the kinds so browsing alternates: plain, dark, colored (7ths/sus/add9), turnaround, plain, dark...
+  const kind = o => /7THS|SUS|ADD9/.test(o.tag) ? 2 : /TURN/.test(o.tag) ? 3 : /MINOR|DECEPTIVE|SAD|DARK|ANDALUSIAN/.test(o.tag) ? 1 : 0;
+  const seen = new Set(), pools = [[], [], [], []];
+  for (const o of opts) { const k = o.chords.map(chordName).join(' '); if (!seen.has(k)) { seen.add(k); pools[kind(o)].push(o); } }
+  const out = [];
+  for (let r = 0; out.length < 60 && pools.some(q => q.length); r++) for (const q of pools) if (q.length && out.length < 60) out.push(q.shift());
   return { options:out, key:ki };
 }
 function voicing(melMidi, ch){
@@ -1612,8 +1638,8 @@ function openMenu(){ st.menu = true; st.menuIdx = Math.max(0, MODES.indexOf(st.m
 const OPT_START = 4;
 function arrangeOptions(list){
   if (list.length <= OPT_START + 1) return { list, idx:0 };
-  const back = [], fwd = [];
-  for (let i = 1; i < list.length; i++) (back.length < OPT_START && i % 2 === 0 ? back : fwd).push(list[i]);
+  // turning back from the start walks the same staggered order (2nd, 3rd...), forward continues after those
+  const back = list.slice(1, OPT_START + 1), fwd = list.slice(OPT_START + 1);
   return { list:back.reverse().concat([list[0]], fwd), idx:back.length };
 }
 function runChordFinder(){
