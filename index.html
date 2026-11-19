@@ -127,16 +127,19 @@
   /* ---------- v30: translucent purple shell over a visible circuit board ---------- */
   #device { background:#0f2a1d; }
   #pcb { position:absolute; inset:0; width:100%; height:100%; z-index:0; pointer-events:none; filter:blur(3.5px) saturate(.85); clip-path:inset(0 round 22px); }
-  body.fs #pcb { clip-path:none; }
+  /* full screen: the board fades into solid purple at every edge, so there is no hard cut-off */
+  body.fs #pcb { clip-path:none; opacity:.42;
+    -webkit-mask-image:linear-gradient(to bottom, transparent 0, #000 16%, #000 84%, transparent 100%), linear-gradient(to right, transparent 0, #000 10%, #000 90%, transparent 100%);
+    -webkit-mask-composite:source-in; mask-image:linear-gradient(to bottom, transparent 0, #000 16%, #000 84%, transparent 100%), linear-gradient(to right, transparent 0, #000 10%, #000 90%, transparent 100%); mask-composite:intersect; }
   #shell { position:absolute; inset:0; z-index:1; pointer-events:none; border-radius:inherit;
     background:radial-gradient(120% 60% at 20% 0%, rgba(255,255,255,.28), rgba(255,255,255,0) 55%), linear-gradient(160deg, rgba(150,110,225,.55), rgba(95,60,175,.62) 60%, rgba(70,40,140,.7));
     box-shadow:inset 0 0 0 2px rgba(220,200,255,.35), inset 0 2px 0 rgba(255,255,255,.35), inset 0 -3px 0 rgba(30,10,60,.35); }
   #device > :not(#pcb):not(#shell) { z-index:2; }
   #brand, #maker { color:rgba(235,225,255,.62) !important; text-shadow:0 -1px 0 rgba(40,15,80,.55), 0 1px 0 rgba(255,255,255,.18) !important; }
-  html:has(body.fs) { background:#4b3383; }
-  body.fs { background:linear-gradient(160deg, rgba(150,110,225,.75), rgba(70,40,140,.9)), #0f2a1d !important; }
+  html:has(body.fs) { background:#5a4296; }
+  body.fs { background:#5a4296 !important; }
   body.fs #device { background:transparent; overflow:visible; }
-  body.fs #shell { background:radial-gradient(120% 60% at 20% 0%, rgba(255,255,255,.18), rgba(255,255,255,0) 55%), rgba(110,75,190,.5); box-shadow:none; border-radius:0; }
+  body.fs #shell { display:none; }
   /* metallic rims so the controls and screen pop off the clear shell */
   #scrwrap, #play, .bar, .btn:not(.ready), .bar:active, .btn:not(.ready):active, .bar.down, .btn.down:not(.ready) { box-shadow:0 0 0 1px #f2f4f7, 0 0 0 2.5px #9097a1, 0 0 0 3.5px #dde1e6, 0 0 0 4px rgba(40,20,70,.45) !important; }
   #scrwrap { box-shadow:0 0 0 1px #f2f4f7, 0 0 0 2.5px #9097a1, 0 0 0 3.5px #dde1e6, 0 0 0 4px rgba(40,20,70,.45), inset 0 2px 6px rgba(0,0,0,.8) !important; }
@@ -469,7 +472,7 @@ const VERSIONS = [
   { id:'v34', file:'versions/v34.html', label:'v34 - Chord lengths with rests, numbers instead of names, metronome on (2026-11-18)', note:'Knob 1 has 26 chord-length presets: connected ones, breaths before changes, clear rests (3 beats + rest, half bar + rest, long-short pairs) and detached ones (tenuto, portato, staccato). The screen shows the gaps. Knobs 1-3 show only a number out of the total. The metronome is on by default.' },
   { id:'v35', file:'versions/v35.html', label:'v35 - Turnaround on the last chord (2026-11-18)', note:'Chord options now include turnaround versions (tagged + TURN): chord 8 splits in two and its second half is the V of chord 1, leading back to the top of the loop. The split works with every chord-length preset, and rests are shared between the two halves.' },
   { id:'v36', file:'versions/v36.html', label:'v36 - Zoom while editing patterns, sound edits play your pattern (2026-11-18)', note:'Turning knobs 1-3 on the melody screen zooms into 4 bars for a moment so short hits and rests are readable; separate hits always keep a 1-pixel gap. Knobs only blink if this song has not used them yet (remembered with the song). On the Sound screen, once you have a chord pattern, edits play your pattern (stops 4 s after you stop editing) instead of a single note; Play plays the pattern.' },
-  { id:'v37', file:'index.html', label:'v37 - One notch per setting (2026-11-18)', note:'Knobs with a list of settings now move one setting per notch (a tap or the same amount of turning every time); the ring fills one notch per setting and short lists wrap back to the first setting before a full turn.' }
+  { id:'v37', file:'index.html', label:'v37 - One notch per setting (2026-11-18)', note:'Knobs with a list of settings now move one setting per notch (a tap or the same amount of turning every time); the ring fills one notch per setting and short lists wrap back to the first setting before a full turn. In full screen the circuit board fades smoothly into solid purple at the edges.' }
 ];
 const CURRENT = 'v37';
 /* ---- synth engine constants (v12) ---- */
