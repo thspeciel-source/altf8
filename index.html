@@ -1293,6 +1293,23 @@ function flashHint(){ setStatus('The AltF8 is off: hold F8 (Enter) for about a s
 function setStatus(t){ const s = document.getElementById('status'); s.textContent = t; clearTimeout(setStatus.t); setStatus.t = setTimeout(() => { s.textContent = ''; }, 3500); }
 
 document.addEventListener('pointerdown', () => wakeAudio(), true);
+// iPhone: sound can only start at the END of a tap (touchend / click), and the ringer switch mutes web audio
+// unless the page is playing as media. A silent looping <audio> plus audioSession 'playback' lets it play on silent.
+let iosUnlocked = false;
+function silentWavUrl(){
+  const n = 4410, b = new ArrayBuffer(44 + n * 2), v = new DataView(b), w = (o, s) => { for (let i = 0; i < s.length; i++) v.setUint8(o + i, s.charCodeAt(i)); };
+  w(0, 'RIFF'); v.setUint32(4, 36 + n * 2, true); w(8, 'WAVEfmt '); v.setUint32(16, 16, true); v.setUint16(20, 1, true); v.setUint16(22, 1, true);
+  v.setUint32(24, 44100, true); v.setUint32(28, 88200, true); v.setUint16(32, 2, true); v.setUint16(34, 16, true); w(36, 'data'); v.setUint32(40, n * 2, true);
+  return URL.createObjectURL(new Blob([b], { type:'audio/wav' }));
+}
+function unlockAudio(){
+  wakeAudio();
+  if (iosUnlocked) return; iosUnlocked = true;
+  try { if (navigator.audioSession) navigator.audioSession.type = 'playback'; } catch (e) {}
+  try { const el = new Audio(silentWavUrl()); el.loop = true; el.setAttribute('playsinline', ''); el.play().catch(() => { iosUnlocked = false; }); } catch (e) {}
+}
+['touchend', 'click', 'keydown'].forEach(ev => document.addEventListener(ev, unlockAudio, true));
+document.addEventListener('visibilitychange', () => { if (!document.hidden && ac && ac.state !== 'running') ac.resume(); });
 window.addEventListener('blur', () => { held.play = false; clearTimeout(held.fanT); if (st.fan) closeFan(false); if (held.f8) { clearTimeout(held.f8); held.f8 = null; } if (held.b) { clearTimeout(held.b); held.b = null; } ['play','f8','bbtn'].forEach(id => press(id, false)); });
 document.addEventListener('keydown', e => {
   wakeAudio();
