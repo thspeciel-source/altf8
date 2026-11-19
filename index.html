@@ -472,9 +472,10 @@ const VERSIONS = [
   { id:'v34', file:'versions/v34.html', label:'v34 - Chord lengths with rests, numbers instead of names, metronome on (2026-11-18)', note:'Knob 1 has 26 chord-length presets: connected ones, breaths before changes, clear rests (3 beats + rest, half bar + rest, long-short pairs) and detached ones (tenuto, portato, staccato). The screen shows the gaps. Knobs 1-3 show only a number out of the total. The metronome is on by default.' },
   { id:'v35', file:'versions/v35.html', label:'v35 - Turnaround on the last chord (2026-11-18)', note:'Chord options now include turnaround versions (tagged + TURN): chord 8 splits in two and its second half is the V of chord 1, leading back to the top of the loop. The split works with every chord-length preset, and rests are shared between the two halves.' },
   { id:'v36', file:'versions/v36.html', label:'v36 - Zoom while editing patterns, sound edits play your pattern (2026-11-18)', note:'Turning knobs 1-3 on the melody screen zooms into 4 bars for a moment so short hits and rests are readable; separate hits always keep a 1-pixel gap. Knobs only blink if this song has not used them yet (remembered with the song). On the Sound screen, once you have a chord pattern, edits play your pattern (stops 4 s after you stop editing) instead of a single note; Play plays the pattern.' },
-  { id:'v37', file:'index.html', label:'v37 - One notch per setting (2026-11-18)', note:'Knobs with a list of settings now move one setting per notch (a tap or the same amount of turning every time); the ring fills one notch per setting and short lists wrap back to the first setting before a full turn. In full screen the circuit board fades smoothly into solid purple at the edges.' }
+  { id:'v37', file:'versions/v37.html', label:'v37 - One notch per setting (2026-11-18)', note:'Knobs with a list of settings now move one setting per notch (a tap or the same amount of turning every time); the ring fills one notch per setting and short lists wrap back to the first setting before a full turn. In full screen the circuit board fades smoothly into solid purple at the edges.' },
+  { id:'v38', file:'index.html', label:'v38 - Fewer clicks, smooth zoom (2026-11-18)', note:'Notes that get cut short now fade from their current level instead of jumping to silence, and every note rings out fully before it stops, which removes the clicks when turning knobs fast. The 4-bar zoom eases in and out.' }
 ];
-const CURRENT = 'v37';
+const CURRENT = 'v38';
 /* ---- synth engine constants (v12) ---- */
 const UNI_MAX = 7;
 const FTYPES = ['lowpass','highpass','bandpass','notch'], FNAME = ['LP','HP','BP','NOTCH'];
@@ -1129,8 +1130,9 @@ function schedEnv(prm, t, dur, a, d, s, r, peak){
 function steal(){
   const v = voices.shift(); if (!v) return;
   const now = ac.currentTime;
-  try { v.g.gain.cancelScheduledValues(now); v.g.gain.setTargetAtTime(0, now, 0.005); } catch (e) {}
-  v.stops.forEach(s => { try { s.stop(now + 0.03); } catch (e) {} });
+  // fade from wherever the envelope is right now (a plain cancel makes the level jump, which clicks)
+  try { const gg = v.g.gain; if (gg.cancelAndHoldAtTime) gg.cancelAndHoldAtTime(now); else { const cur = gg.value; gg.cancelScheduledValues(now); gg.setValueAtTime(cur, now); } gg.setTargetAtTime(0, now, 0.012); } catch (e) {}
+  v.stops.forEach(s => { try { s.stop(now + 0.09); } catch (e) {} });
 }
 function cleanup(rec){
   const i = voices.indexOf(rec); if (i >= 0) voices.splice(i, 1); activeV = voices.length;
@@ -1188,7 +1190,7 @@ function voice(midi, t, dur, vel, lane){
   if (ac.createStereoPanner) { pan = mk(ac.createStereoPanner()); pan.pan.value = S.pan / 100; vca.connect(pan); pan.connect(bus); } else vca.connect(bus);
   const tm = shTimes(P), velF = 1 - S.vsens / 100 * (1 - vel);
   g.gain.setValueAtTime(0, t);
-  const off = schedEnvH(g.gain, t + tm.dly, Math.max(0.02, dur - tm.dly), ATK[P.a], tm.hold, DEC[P.d], P.s, REL[P.r], velF * 0.45), end = off + r + 0.05;
+  const off = schedEnvH(g.gain, t + tm.dly, Math.max(0.02, dur - tm.dly), ATK[P.a], tm.hold, DEC[P.d], P.s, REL[P.r], velF * 0.45), end = off + r * 1.75 + 0.05;   // let the release tail die out fully before stopping (stopping at ~2% clicks)
   // modulation sources, built only when a matrix slot uses them
   const srcNode = {};
   const makeSrc = s => {
@@ -1825,9 +1827,12 @@ function env(t, P){ const a = ATK[P.a], d = DEC[P.d], s = P.s, r = REL[P.r], hol
 // menu: every item sits on the part of the screen it controls; current one outlined, next one dotted
 function drawMelody(now){
   // while knobs 1-3 are being turned, zoom into one half (4 bars) so short hits and gaps are readable
-  const zp = st.lastKnob >= 0 && st.lastKnob < 3 && now - st.lastEdit < 2500;
-  const half = st.playing && curStep >= 0 ? (curStep >= 64 ? 1 : 0) : st.sel >= 4 ? 1 : 0;
-  const vOff = zp ? half * 64 : 0, vSpan = zp ? 64 : LOOP;
+  // the zoom eases in and out instead of jumping
+  const zWant = st.lastKnob >= 0 && st.lastKnob < 3 && now - st.lastEdit < 2500 ? 1 : 0;
+  st.zm = (st.zm || 0) + (zWant - (st.zm || 0)) * 0.05; if (Math.abs(st.zm - zWant) < 0.004) st.zm = zWant;
+  if (zWant) st.zHalf = st.playing && curStep >= 0 ? (curStep >= 64 ? 1 : 0) : st.sel >= 4 ? 1 : 0;
+  const z = st.zm * st.zm * (3 - 2 * st.zm), zp = z > 0.5;
+  const vOff = (st.zHalf || 0) * 64 * z, vSpan = LOOP - (LOOP - 64) * z;
   // no permanent header: a label shows only while a knob turns or a rhythm/pattern list is open
   const knobLabel = st.lastKnob >= 0 && now - st.lastEdit < 1500 ? knobDefs()[st.lastKnob] : null;
   if (st.playing && ac) { while (uiQ.length && uiQ[0].t <= ac.currentTime) curStep = uiQ.shift().s; }
@@ -1851,7 +1856,7 @@ function drawMelody(now){
   patternEvents(); const segs = evCache.segs, pr = curProg();
   // 8 bars across the screen: beat ticks, a faint line between the two halves, playhead
   for (let b = 0; b < 8; b++) for (let k = 0; k < 16; k += 4) px(colX(b * 16 + k), 8, 1, 1, k ? C.grid : C.dim);
-  if (!zp) for (let y = 10; y < 110; y += 3) px(colX(64), y, 1, 1, C.grid);
+  if (z < 0.98) for (let y = 10; y < 110; y += 3) px(colX(64), y, 1, 1, C.grid);
   if (curStep >= 0) px(colX(curStep), 7, 1, 2, C.play);
   // selection lines over the selected bar's chord, in both halves
   for (const sg of segs) if (allSel || sg.slot === st.sel) { const c = allSel ? C.sel : C.acc; px(colX(sg.start), 6, Math.max(1, colX(sg.start + sg.len) - colX(sg.start)), 1, c); px(colX(sg.start), 111, Math.max(1, colX(sg.start + sg.len) - colX(sg.start)), 1, c); }
