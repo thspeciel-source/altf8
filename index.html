@@ -43,6 +43,7 @@
   #mainknob::after { content:''; position:absolute; left:50%; top:6px; width:3px; height:18px; margin-left:-1.5px; border-radius:1.5px; background:#1c1e22; transform-origin:50% 38px; transform:rotate(var(--rot,0deg)); }
   .bar { position:absolute; top:274px; width:52px; height:28px; border-radius:6px; background:linear-gradient(#4a4f5a,#2b2f37); color:#cfd6e6; font-size:11px; font-weight:700; display:flex; align-items:center; justify-content:center; cursor:pointer; box-shadow:0 3px 0 #16181c; }
   .bar.sel { background:linear-gradient(#ffe27a,#e8b820); color:#2a2100; }
+  .bar.sel.two { background:linear-gradient(#ff8fe6,#e23fc0); color:#3a0030; }
   .bar:active,.btn:active,.bar.down,.btn.down { transform:translateY(2px); box-shadow:0 1px 0 #16181c; }
   #track { position:absolute; left:6px; right:6px; top:17px; height:10px; border-radius:5px; background:#2b2f37; box-shadow:inset 0 1px 3px rgba(0,0,0,.7); }
   .det { position:absolute; top:8px; width:6px; height:6px; margin-left:-3px; border-radius:50%; background:#8d93a0; cursor:pointer; }
@@ -110,6 +111,7 @@
   #mainknob { box-shadow:0 0 0 1.5px #8a8e95, inset 0 0 0 3px rgba(255,255,255,.6), inset 0 0 0 4px rgba(120,124,132,.35); }
   .bar { background:#353a44; box-shadow:none; }
   .bar.sel { background:#ffd23f; }
+  .bar.sel.two { background:#ff4fd8; }
   .btn { box-shadow:none; }
   .bar:active,.btn:active,.bar.down,.btn.down { transform:none; box-shadow:none; filter:brightness(.8); }
   .knob::after, #mainknob::after { left:0; top:0; width:100%; height:100%; margin:0; border-radius:50%; transform-origin:50% 50%; transform:rotate(var(--rot,0deg));
@@ -402,9 +404,10 @@ const VERSIONS = [
   { id:'v25', file:'versions/v25.html', label:'v25 - Moved notes keep without F8 (2026-11-18)', note:'After moving a bar\'s main note, pressing another bar keeps the change and its adapted chords; F8 no longer needs to confirm it. B still undoes it until you move on.' },
   { id:'v26', file:'versions/v26.html', label:'v26 - B reopens chord suggestions (2026-11-18)', note:'With chords set, B goes back to the pink suggestions: your current progression is option 1 and the main knob browses new ones.' },
   { id:'v27', file:'versions/v27.html', label:'v27 - Metal shell, knob hints, tap knobs (2026-11-18)', note:'Brushed-metal shell with engraved AltF8 and RTP INC. + version lettering. Knobs blink until you first turn them on each page; tap a knob to move one step (top half up, bottom half down; left/right half on the main knob). The F8 badge says what F8 will do. Bars 5-8 turn blue once the chords are kept.' },
-  { id:'v28', file:'index.html', label:'v28 - F8 blinks only where motion fits (2026-11-18)', note:'On Sound pages where no knob can take motion (the envelope times, drive/fold/crush/downsample), F8 stops blinking and the hold-F8 tip is hidden.' }
+  { id:'v28', file:'versions/v28.html', label:'v28 - F8 blinks only where motion fits (2026-11-18)', note:'On Sound pages where no knob can take motion (the envelope times, drive/fold/crush/downsample), F8 stops blinking and the hold-F8 tip is hidden.' },
+  { id:'v29', file:'index.html', label:'v29 - Edit bars 5-8, moving second-half melody (2026-11-18)', note:'The generated top notes of bars 5-8 now move as an arch (up through 5-6, settling on chord 8). Once chords are kept, press a bar button again to jump to its twin in bars 5-8 (the button turns pink) and turn the main knob to set that top note; press again to go back. Hold B there to return the note to auto.' }
 ];
-const CURRENT = 'v28';
+const CURRENT = 'v29';
 /* ---- synth engine constants (v12) ---- */
 const UNI_MAX = 7;
 const FTYPES = ['lowpass','highpass','bandpass','notch'], FNAME = ['LP','HP','BP','NOTCH'];
@@ -833,7 +836,7 @@ const st = {
   bars:[0,1,2,3].map(() => ({ mel:null, chord:null, notes:[] })),
   patch:defaultPatch(),
   msg:'', msgT:0, lastEdit:0, mainAngle:0, kAngles:[0,0,0,0],
-  viewTop:76, touched:{}, modSrc:0, modHold:null, ov:null, pat:0, mode:'notes', menu:false, menuIdx:0, loopNote:false, pop:null, shut:null, setCur:0, setEdit:false, prevStart:0, prevDur:0, metro:false,
+  viewTop:76, touched:{}, top2:[null, null, null, null], modSrc:0, modHold:null, ov:null, pat:0, mode:'notes', menu:false, menuIdx:0, loopNote:false, pop:null, shut:null, setCur:0, setEdit:false, prevStart:0, prevDur:0, metro:false,
   fan:null, pp:null, prog:null, pending:null, arp:0, voi:0, shTab:0, shPage:0, zoom:0, viewKey:'', viewKind:'time', viewT:0, fSel:0, modTab:'lfo', lfoSel:0, seqSel:0, seqCur:0, mtxRow:0, lastKnob:-1
 };
 
@@ -1240,18 +1243,32 @@ function preview(midi){ if (st.on && ac) voice(midi, ac.currentTime + 0.005, 0.2
 /* ================= sequencer ================= */
 let step = 0, nextT = 0, uiQ = [], curStep = -1;
 const stepDur = () => 60 / st.tempo / 4;
+// the second half's top notes: an arch that rises through bars 5-6 and settles onto chord 8's root,
+// staying near the matching first-half note; a note you set by hand (bars 5-8) replaces the generated one
+function genTops(pr){
+  const out = []; let prev = st.bars[3].mel ? st.bars[3].mel.midi : 60;
+  for (let k = 0; k < 4; k++) {
+    const ch = pr[4 + k], base = st.bars[k].mel ? st.bars[k].mel.midi : prev, own = (st.top2 || [])[k];
+    if (own != null) { out.push(own); prev = own; continue; }
+    if (!ch) { out.push(base); prev = base; continue; }
+    const pcs = chordPcs(ch), up = k < 2 ? 1 : -1; let best = base, bs = -1e9;
+    for (let m = base - 7; m <= base + 7; m++) {
+      if (!pcs.includes(((m % 12) + 12) % 12)) continue;
+      const iv = m - prev; let sc = -Math.abs(Math.abs(iv) - 3) * 0.5 - Math.abs(m - base) * 0.15;
+      if (iv === 0) sc -= 3; if (Math.sign(iv) === up) sc += 1.5; if (k === 3 && m % 12 === ch.root % 12) sc += 3;
+      if (sc > bs) { bs = sc; best = m; }
+    }
+    out.push(best); prev = best;
+  }
+  return out;
+}
 function barNotes(slot){
   const B = st.bars[slot % 4]; if (!B.mel) return [];
   const pr = curProg();
   if (!pr || !pr[slot]) return [{ midi:B.mel.midi, mel:true }];
   let top = B.mel.midi, alt = false;
   // the second half is never designed by hand: its top notes are generated from the chords (always pink)
-  if (slot >= 4) { alt = true; const pcs = chordPcs(pr[slot]);
-    const order = slot === 7 ? [0, -1, 1, -2, 2, -3, 3, -4, 4, -5, 5, 6] : slot % 2 ? [-2, 2, -1, 1, -3, 3, -4, 4, -5, 5, 0] : [2, -2, 1, -1, 3, -3, 4, -4, 5, -5, 0];
-    const want = slot === 7 ? [pr[slot].root % 12] : pcs;
-    let d0 = order.find(d => want.includes((top + d + 120) % 12));
-    if (d0 === undefined) d0 = order.find(d => pcs.includes((top + d + 120) % 12)) || 0;
-    top += d0; }
+  if (slot >= 4) { alt = true; top = genTops(pr)[slot - 4]; }
   return [{ midi:top, mel:true, alt }].concat(spreadVoicing(voicing(top, pr[slot]), pr[slot], (VOICINGS[st.voi] || VOICINGS[0]).v).map(m => ({ midi:m })));
 }
 function schedule(s, t){
@@ -1296,7 +1313,7 @@ setInterval(() => {
 /* ================= controls logic ================= */
 function flash(m){ st.msg = m; st.msgT = performance.now(); }
 function allSet(){ return st.bars.every(b => b.mel); }
-function lastPitch(){ for (let i = st.sel; i >= 0; i--) if (st.bars[i].mel) return st.bars[i].mel.midi; for (const b of st.bars) if (b.mel) return b.mel.midi; const ki = keyInfo(st.key); return 60 + (ki.mode === 'chrom' ? 0 : ki.root); }
+function lastPitch(){ for (let i = st.sel % 4; i >= 0; i--) if (st.bars[i].mel) return st.bars[i].mel.midi; for (const b of st.bars) if (b.mel) return b.mel.midi; const ki = keyInfo(st.key); return 60 + (ki.mode === 'chrom' ? 0 : ki.root); }
 function barList(b){ const B = st.bars[b], l = B.notes.map((n, i) => ({ midi:n.midi, ref:i })); if (B.mel) l.push({ midi:B.mel.midi, ref:'mel' }); return l.sort((x, y) => y.midi - x.midi); }
 
 function mainTurn(dir){
@@ -1312,8 +1329,11 @@ function mainTurn(dir){
   if (st.menu) { st.menuIdx = (st.menuIdx + dir + MODES.length) % MODES.length; return; }
   if (st.mode === 'rhythm') { st.rhy = (st.rhy + dir + RHY.length) % RHY.length; return; }
   if (st.mode === 'pattern') { st.pat = (st.pat + dir + PATTERNS.length) % PATTERNS.length; return; }
-  const B = st.bars[st.sel];
+  const B = st.bars[st.sel % 4];
   if (st.phase === 'suggest') { const n = st.options.length; st.optIdx = (st.optIdx + dir + n) % n; return; }
+  // bars 5-8: the knob moves that bar's top note straight away (no adapting, nothing to confirm)
+  if (st.sel >= 4) { if (!st.prog) return; const k = st.sel - 4, cur = barNotes(st.sel)[0].midi, m = stepPitch(cur, dir);
+    if (m === cur) { flash(dir > 0 ? 'HIGHEST NOTE' : 'LOWEST NOTE'); return; } st.top2[k] = m; preview(m); return; }
   if (st.phase === 'entry' || (st.phase === 'edit' && !B.mel)) {
     if (!B.mel) { let m = lastPitch(); if (!inKey(m, keyInfo(st.key))) m = stepPitch(m, 1); B.mel = { midi:m, auto:false }; }
     else { const m = stepPitch(B.mel.midi, dir); if (m === B.mel.midi) flash(dir > 0 ? 'HIGHEST NOTE' : 'LOWEST NOTE'); B.mel.midi = m; }
@@ -1450,7 +1470,7 @@ function settingValue(c){
   if (c === 4) return st.metro ? 'ON' : 'OFF';
   return P.reso.toFixed(1);
 }
-function grabbedNote(){ const B = st.bars[st.sel]; return st.grab.ref === 'mel' ? B.mel : B.notes[st.grab.ref]; }
+function grabbedNote(){ const B = st.bars[st.sel % 4]; return st.grab.ref === 'mel' ? B.mel : B.notes[st.grab.ref]; }
 function delNote(B, ref){
   if (ref === 'mel') B.mel = null; else B.notes.splice(ref, 1);
   const em = B.emph === undefined ? 'mel' : B.emph;
@@ -1458,7 +1478,7 @@ function delNote(B, ref){
 }
 const NOTE_ACTS = ['OCT+', 'OCT-', 'ACC', 'DEL'];
 function noteAction(i){
-  const B = st.bars[st.sel], n = grabbedNote();
+  const B = st.bars[st.sel % 4], n = grabbedNote();
   if (i === 0 || i === 1) {
     const m = n.midi + (i === 0 ? 12 : -12);
     if (m < LO || m > HI) { flash(i === 0 ? 'TOO HIGH' : 'TOO LOW'); return; }
@@ -1479,8 +1499,11 @@ function selBar(i){
   if (st.screen !== 'melody') return;
   if (st.menu || st.mode !== 'notes') return;
   keepPending();
-  st.sel = i; st.cursor = 0; st.grab = null;
-  if (st.phase !== 'suggest' && st.bars[i].mel) preview(st.bars[i].mel.midi);
+  // pressing the same bar again (once chords are set) hops to its twin in bars 5-8, and back
+  const twin = st.prog && st.phase === 'edit' && st.sel % 4 === i;
+  st.sel = twin ? (st.sel < 4 ? i + 4 : i) : i; st.cursor = 0; st.grab = null;
+  if (st.sel >= 4) { const t = barNotes(st.sel)[0]; if (t) preview(t.midi); }
+  else if (st.phase !== 'suggest' && st.bars[i].mel) preview(st.bars[i].mel.midi);
 }
 const MODES = ['METRONOME', 'CHORDS', 'RHYTHM', 'NOTES', 'PATTERN'];
 function openMenu(){ st.menu = true; st.menuIdx = Math.max(0, MODES.indexOf(st.mode.toUpperCase())); st.grab = null; }
@@ -1511,6 +1534,7 @@ function f8Tap(){
   if (st.phase === 'entry') { runChordFinder(); return; }
   if (st.phase === 'suggest') {
     const o = st.options[st.optIdx];
+    if (o.tag !== 'CURRENT') st.top2 = [null, null, null, null];
     st.prog = o.chords.slice();
     st.bars.forEach((B, i) => { B.chord = st.prog[i]; B.notes = voicing(B.mel.midi, st.prog[i]).map(m => ({ midi:m, auto:true })); B.emph = 'mel'; });
     st.phase = 'edit'; flash('CHORDS SET'); return;
@@ -1525,7 +1549,7 @@ function bTap(){
   st.menu = false; st.mode = 'notes';
   if (st.phase === 'suggest') {
     st.options.splice(st.optIdx, 1);
-    if (!st.options.length) { st.phase = 'entry'; flash('NO MORE OPTIONS'); return; }
+    if (!st.options.length) { st.phase = 'entry'; st.sel %= 4; flash('NO MORE OPTIONS'); return; }
     st.optIdx = st.optIdx % st.options.length; flash('REJECTED'); return;
   }
   if (st.phase === 'adapt') { const pd = st.pending; st.bars[pd.bar].mel.midi = pd.oldMidi; st.pending = null; st.phase = 'edit'; flash('UNDONE'); preview(pd.oldMidi); return; }
@@ -1541,6 +1565,7 @@ function bHold(){
   if (st.on && st.screen === 'mod' && st.modTab === 'mtx') { Object.assign(st.patch.mtx[st.mtxRow], { src:0, dst:0, amt:0, via:0 }); flash('SLOT ' + (st.mtxRow + 1) + ' CLEARED'); return; }
   if (st.on && st.screen === 'mod' && st.modTab === 'seq') { st.patch.seq[st.seqSel].steps.fill(0); flash('SEQ ' + (st.seqSel + 1) + ' CLEARED'); return; }
   if (!st.on || st.screen !== 'melody' || st.menu || st.mode !== 'notes') return;
+  if (st.sel >= 4) { if (st.top2[st.sel - 4] != null) { st.top2[st.sel - 4] = null; flash('BACK TO AUTO'); } return; }
   const B = st.bars[st.sel];
   if (st.phase === 'entry') { if (B.mel) { B.mel = null; flash('NOTE DELETED'); } return; }
 }
@@ -1728,9 +1753,9 @@ function drawMelody(now){
     if (x >= lastName && !(sugg && !blink)) { txt(cname, x, 0, sugg ? C.sug : C.auto); lastName = x + cname.length * 4 + 1; }
   }
   // brackets around the selected bar's main note (first half) when you can move it
-  if ((st.phase === 'edit' || st.phase === 'adapt') && st.mode === 'notes' && !st.menu && st.bars[st.sel].mel) {
-    const sg = segs.find(z => z.slot === st.sel);
-    if (sg) { const y = yOf(st.bars[st.sel].mel.midi); px(colX(sg.start) - 1, y - 1, 1, nh + 2, C.sel); px(colX(sg.start + sg.len), y - 1, 1, nh + 2, C.sel); }
+  if ((st.phase === 'edit' || st.phase === 'adapt') && st.mode === 'notes' && !st.menu && st.bars[st.sel % 4].mel) {
+    const sg = segs.find(z => z.slot === st.sel), top = barNotes(st.sel)[0];
+    if (sg && top) { const y = yOf(top.midi); px(colX(sg.start) - 1, y - 1, 1, nh + 2, C.sel); px(colX(sg.start + sg.len), y - 1, 1, nh + 2, C.sel); }
   }
   // notes, drawn where they play; arpeggios show only the note each hit plays
   for (const e of patternEvents()) {
@@ -1762,7 +1787,7 @@ function menuRegion(m){
   if (m === 'METRONOME') return [0, 0, 112, 8];
   if (m === 'CHORDS') return [0, 8, 112, 9];
   if (m === 'RHYTHM') return [0, 17, 112, 82];
-  if (m === 'NOTES') return [1 + Math.floor(st.sel * 16 * 110 / LOOP), 19, 14, 78];
+  if (m === 'NOTES') return [1 + Math.floor((st.sel % 4) * 16 * 110 / LOOP), 19, 14, 78];
   return [0, 100, 112, 12];
 }
 function outline(x, y, w, h, c, dotted){
@@ -1783,7 +1808,7 @@ function drawButtonBar(){
   let labs = ['', '', '', ''], hi = -1;
   if (st.screen === 'melody' && !st.menu && st.mode === 'notes') {
     if (st.phase === 'edit' && st.grab) labs = NOTE_ACTS;
-    else { labs = ['1', '2', '3', '4']; hi = st.sel; }
+    else { labs = ['1', '2', '3', '4']; hi = st.sel % 4; }
   } else if (st.screen === 'filter') { labs = ['F1', 'F2', '', '']; hi = st.fSel; }
   else if (st.screen === 'mod') { labs = ['LFO' + (st.lfoSel + 1), 'ENV2', 'SEQ' + (st.seqSel + 1), 'MTRX']; hi = MODTABS.indexOf(st.modTab); }
   for (let b = 0; b < 4; b++) {
@@ -2112,8 +2137,8 @@ function draw(){
     const now2 = performance.now(), p0 = knobFrac(i); let off = 0; ms.forEach(m => off += m.amt / 100 * modValue(m.src, now2) * 0.35);
     const lo = clamp(Math.min(p0, p0 + off), 0, 1), hi = clamp(Math.max(p0, p0 + off), 0, 1), c = MOD_COL[ms[0].src];
     a.style.display = 'block'; a.style.background = 'conic-gradient(transparent ' + lo + 'turn, ' + c + ' ' + lo + 'turn ' + Math.max(hi, lo + 0.012) + 'turn, transparent 0), conic-gradient(' + c + '59 0 1turn)'; }
-  const hiBar = st.screen === 'melody' ? (st.grab && st.phase === 'edit' ? -1 : st.sel) : st.screen === 'filter' ? st.fSel : st.screen === 'mod' ? MODTABS.indexOf(st.modTab) : st.screen === 'design' ? st.shTab : -1;
-  for (let i = 0; i < 4; i++) document.getElementById('b' + i).classList.toggle('sel', st.on && hiBar === i);
+  const hiBar = st.screen === 'melody' ? (st.grab && st.phase === 'edit' ? -1 : st.sel % 4) : st.screen === 'filter' ? st.fSel : st.screen === 'mod' ? MODTABS.indexOf(st.modTab) : st.screen === 'design' ? st.shTab : -1;
+  for (let i = 0; i < 4; i++) { const b = document.getElementById('b' + i); b.classList.toggle('sel', st.on && hiBar === i); b.classList.toggle('two', st.on && hiBar === i && st.screen === 'melody' && st.sel >= 4); }
   const f8Ready = st.on && ((st.screen === 'melody' && ((st.phase === 'entry' && allSet()) || st.phase === 'suggest')) || (st.screen === 'design' && !st.modHold && pageCanMod()));
   document.getElementById('f8').classList.toggle('ready', f8Ready);
   // a small F8 badge blinks in the screen's top-right corner while F8 has something to do
@@ -2161,7 +2186,7 @@ document.getElementById('makerver').textContent = CURRENT.toUpperCase();
 const SKEY = 'altf8.saves.v1';
 function loadSaves(){ try { return JSON.parse(localStorage.getItem(SKEY) || '[]'); } catch (e) { return null; } }
 function storeSaves(a){ try { localStorage.setItem(SKEY, JSON.stringify(a)); return true; } catch (e) { return false; } }
-function snapshot(){ return JSON.parse(JSON.stringify({ bars:st.bars, prog:st.prog, voi:st.voi, phase:st.phase === 'suggest' ? 'entry' : st.phase === 'adapt' ? 'edit' : st.phase, rhy:st.rhy, pat:st.pat, tempo:st.tempo, key:st.key, patch:st.patch })); }
+function snapshot(){ return JSON.parse(JSON.stringify({ bars:st.bars, top2:st.top2, prog:st.prog, voi:st.voi, phase:st.phase === 'suggest' ? 'entry' : st.phase === 'adapt' ? 'edit' : st.phase, rhy:st.rhy, pat:st.pat, tempo:st.tempo, key:st.key, patch:st.patch })); }
 function renderSaves(){
   const list = document.getElementById('snaplist'); list.innerHTML = '';
   const a = loadSaves();
