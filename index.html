@@ -494,9 +494,10 @@ const VERSIONS = [
   { id:'v41', file:'versions/v41.html', label:'v41 - SHAPE screen, page counters, F8 badge bottom-right (2026-11-18)', note:'The sound screen is now called SHAPE. Each page title shows its place, like SOURCE (1/3) or MOD 2 (3/5). The blinking F8 badge moved to the bottom-right so it no longer covers chord names, and pink chord names stay on screen while you browse options (only the notes blink).' },
   { id:'v42', file:'versions/v42.html', label:'v42 - Named controls: DIAL and K1-K4 (2026-11-18)', note:'The case is engraved with control names: K1-K4 under the small knobs and DIAL under the big knob (bar buttons 1-4, F8, B and PLAY keep their labels). On-screen tips use those names, e.g. HOLD F8 + K1-4: MOTION and DIAL:MORE.' },
   { id:'v43', file:'versions/v43.html', label:'v43 - B undoes a new connection (2026-11-18)', note:'After you let go of F8 on the Shape screen, the tip says B: UNDO for 4 seconds; pressing B puts the connections back as they were. The LET GO:KEEP hint is gone. Tidier layout: bar buttons span the screen width with even gaps, F8 and B sit under bars 1-2 on the dial\'s center line, and the dial lines up with the knob column.' },
-  { id:'v44', file:'index.html', label:'v44 - Stronger motion nudges (2026-11-18)', note:'Hold F8 + K1-4: the first nudge on a new connection jumps straight to 50% (or -50% turning left); each further notch moves it 10%.' }
+  { id:'v44', file:'versions/v44.html', label:'v44 - Stronger motion nudges (2026-11-18)', note:'Hold F8 + K1-4: the first nudge on a new connection jumps straight to 50% (or -50% turning left); each further notch moves it 10%.' },
+  { id:'v45', file:'index.html', label:'v45 - Tone and Space buttons, reverb + echo (2026-11-19)', note:'Button 3 is TONE: filter (type first, then cutoff, reso, key track) and grit (drive, fold, crush, downsample). Button 4 is SPACE: pan, chorus, flanger, phaser, then room (room type, echo time, reverb, echo). Feel is now velocity, glide, tune and level. Built-in vibrato, LFO rate, pitch env, filter env and tremolo are gone: move tune, level, pan or anything else with hold-F8 motion instead. Discrete choices sit on the first knob.' }
 ];
-const CURRENT = 'v44';
+const CURRENT = 'v45';
 /* ---- synth engine constants (v12) ---- */
 const UNI_MAX = 7;
 const FTYPES = ['lowpass','highpass','bandpass','notch'], FNAME = ['LP','HP','BP','NOTCH'];
@@ -507,7 +508,7 @@ const SRATES = [['1/4',1],['1/8',0.5],['1/8T',1/3],['1/16',0.25],['1/16T',1/6],[
 // hold-F8 mod connections on the Sound screen: what can move a knob, and how far 100% moves it
 const MOD_SRCS = ['ENV1', 'M1', 'M2', 'M3', 'M4'], MOD_NAME = { ENV1:'NOTE ENV', M1:'MOD 1', M2:'MOD 2', M3:'MOD 3', M4:'MOD 4', LFO1:'LFO 1', LFO2:'LFO 2', ENV2:'ENV 2', SEQ1:'SEQ 1', SEQ2:'SEQ 2' };
 const MOD_COL = { ENV1:'#ffffff', M1:'#a6f4ff', M2:'#34d6e8', M3:'#ff9ef0', M4:'#ffb347', LFO1:'#7af0ff', LFO2:'#ff9ef0', ENV2:'#b4ff8a', SEQ1:'#ffb347', SEQ2:'#c9a7ff' };
-const MOD_SCALE = { cutoff:4800, reso:10, pan:1, spread:60, sub:0.8, noise:0.5, ring:1, fm:4, trem:0.5, vib:60 };
+const MOD_SCALE = { cutoff:4800, reso:10, pan:1, spread:60, sub:0.8, noise:0.5, ring:1, fm:4, trem:0.5, vib:60, tune:100, level:1 };
 const SRCS = ['NONE','LFO1','LFO2','ENV1','ENV2','SEQ1','SEQ2','VELO','KEY'];
 // destination name, size of a 100% amount (cents for pitch/cutoff, dB/Q for reso, gain, pan, Hz)
 const DSTS = [['PITCH',1200],['FINE',100],['DETUNE',100],['CUT1',4800],['CUT2',4800],['RES1',15],['RES2',15],['AMP',1],['PAN',1],['LFO1 RT',10],['LFO2 RT',10]];
@@ -548,7 +549,7 @@ function normPatch(p){
 // each button is a color family; each knob gets its own shade (button 1 runs yellow to red)
 const SH_FAM = [['#ffd23f','#ffab2e','#ff7a2e','#ff4a3d'], ['#a6f4ff','#34d6e8','#22a6dc','#2f7ff0'],
                 ['#c8ff7a','#7dff6a','#38e08c','#19c2a2'], ['#ffb3ef','#ff4fd8','#d940e3','#a64df7']];
-const SH_TABS = [['SOURCE', 'SOURCE', 'FEEL'], ['ENVELOPE', 'MOD 1', 'MOD 2', 'MOD 3', 'MOD 4'], ['FILTER', 'DRIVE'], ['MOTION', 'FX']];
+const SH_TABS = [['SOURCE', 'SOURCE', 'FEEL'], ['ENVELOPE', 'MOD 1', 'MOD 2', 'MOD 3', 'MOD 4'], ['FILTER', 'GRIT'], ['SPACE', 'ROOM']];
 const RING_DEF = ['#ffd23f', '#34d6e8', '#7dff6a', '#ff4fd8'];
 const SH_WAVES = [0, 2, 3], SH_WNAME = ['SINE', 'SAW', 'SQUARE'];
 // LFO rate: free rates first, then tempo-locked note values (beats per cycle)
@@ -563,7 +564,10 @@ function mslDefaults(){ return [
   { type:'lfo', shape:1, rate:11, depth:100, fade:40 }  // MOD 4: slow sweep (1/4 notes, fades in)
 ]; }
 function shDefaults(){ return { spread:0, sub:0, noise:0, sync:0, ring:0, fm:0, add:0, hold:0, vsens:100, trem:0, ktrack:0, fenv:0,
-  drive:0, fold:0, crush:0, srr:0, vib:0, lrate:6, penv:0, glide:0, chorus:0, flanger:0, phaser:0, pan:0 }; }
+  drive:0, fold:0, crush:0, srr:0, vib:0, lrate:6, penv:0, glide:0, chorus:0, flanger:0, phaser:0, pan:0,
+  tune:0, level:100, room:0, verb:0, etime:2, echo:0 }; }
+const ROOMS = [['ROOM', 0.7, 0.5], ['PLATE', 1.3, 0.2], ['HALL', 2.4, 0.35], ['CAVE', 4, 0.55]];   // name, seconds, darkness
+const ETIMES = [['1/16', 0.25], ['1/8', 0.5], ['DOTTED 1/8', 0.75], ['1/4', 1], ['1/2', 2]];
 function lrateHz(i){ const r = LRATES[i] || LRATES[6]; return r[2] ? (st.tempo / 60) / r[1] : r[1]; }
 const pct = v => Math.round(v) + '%';
 
@@ -578,7 +582,8 @@ function shapeDefs(){
       () => P.uni + 'V ' + P.det + 'C')),
     amt('SUB', 'sub', 'close'), amt('NOISE', 'noise', 'close') ];
   if (tab === 0 && pg === 1) return [amt('SYNC', 'sync', 'close'), amt('RING MOD', 'ring', 'close'), amt('FM', 'fm', 'time'), amt('ADDITIVE', 'add', 'close')];
-  if (tab === 0) return [amt('HOLD', 'hold', 'time'), amt('VELOCITY', 'vsens', 'time'), amt('TREMOLO', 'trem', 'time'), amt('KEY TRACK', 'ktrack', 'harm')];
+  if (tab === 0) return [amt('VELOCITY', 'vsens', 'time'), amt('GLIDE', 'glide', 'time'),
+    K('tune', 'time', kNum('TUNE', () => S.tune, v => S.tune = v, -100, 100, 5, v => (v > 0 ? '+' : '') + v + 'C')), amt('LEVEL', 'level', 'time')];
   if (tab === 1 && pg === 0) return adsrDefs(P).map((d, i) => K(['a', 'd', 's', 'r'][i], 'time', d));
   if (tab === 1) { const k = pg - 1, M = P.msl[k], pre = 'm' + k;
     if (M.type === 'env') return adsrDefs(M).map((d, i) => K(pre + ['a', 'd', 's', 'r'][i], 'mod', d));
@@ -587,16 +592,17 @@ function shapeDefs(){
       K(pre + 'dp', 'mod', kNum('DEPTH', () => M.depth, v => M.depth = v, 0, 100, 5, pct)),
       K(pre + 'fd', 'mod', kNum('FADE IN', () => M.fade, v => M.fade = v, 0, 100, 5, v => (v / 50).toFixed(1) + 'S'))]; }
   if (tab === 2 && pg === 0) return [
+    K('ftype', 'harm', kList('TYPE', () => P.ftype, v => P.ftype = v, FTYPES.length, i => FNAME[i])),
     K('cutoff', 'harm', kLog('CUTOFF', () => P.cutoff, v => P.cutoff = v, 40, 16000, 1.1, fmtHz)),
     K('reso', 'harm', kNum('RESO', () => P.reso, v => P.reso = v, 0.5, 18, 0.5, v => v.toFixed(1))),
-    K('ftype', 'harm', kList('TYPE', () => P.ftype, v => P.ftype = v, FTYPES.length, i => FNAME[i])),
-    amt('FILTER ENV', 'fenv', 'time') ];
+    amt('KEY TRACK', 'ktrack', 'harm') ];
   if (tab === 2) return [amt('DRIVE', 'drive', 'close'), amt('FOLD', 'fold', 'close'), amt('CRUSH', 'crush', 'close'), amt('DOWNSAMPLE', 'srr', 'close')];
-  if (pg === 0) return [amt('VIBRATO', 'vib', 'time'),
-    K('lrate', 'time', kList('LFO RATE', () => S.lrate, v => S.lrate = v, LRATES.length, i => LRATES[i][0])),
-    amt('PITCH ENV', 'penv', 'time'), amt('GLIDE', 'glide', 'time')];
-  return [amt('CHORUS', 'chorus', 'time'), amt('FLANGER', 'flanger', 'time'), amt('PHASER', 'phaser', 'time'),
-    K('pan', 'close', kNum('PAN', () => S.pan, v => S.pan = v, -100, 100, 5, v => v === 0 ? 'CENTER' : (v < 0 ? 'L' : 'R') + Math.abs(v)))];
+  // SPACE (button 4): pan stays where you put it unless hold-F8 motion moves it
+  if (pg === 0) return [K('pan', 'close', kNum('PAN', () => S.pan, v => S.pan = v, -100, 100, 5, v => v === 0 ? 'CENTER' : (v < 0 ? 'L' : 'R') + Math.abs(v))),
+    amt('CHORUS', 'chorus', 'time'), amt('FLANGER', 'flanger', 'time'), amt('PHASER', 'phaser', 'time')];
+  return [K('room', 'time', kList('ROOM', () => S.room, v => S.room = v, ROOMS.length, i => ROOMS[i][0])),
+    K('etime', 'time', kList('ECHO TIME', () => S.etime, v => S.etime = v, ETIMES.length, i => ETIMES[i][0])),
+    amt('REVERB', 'verb', 'time'), amt('ECHO', 'echo', 'time')];
 }
 function shColor(i){ return SH_FAM[st.shTab][i]; }
 
@@ -665,7 +671,11 @@ function initFx(){
     prev.connect(phWet);
     // shared noise for the NOISE knob
     noiseBuf = ac.createBuffer(1, ac.sampleRate, ac.sampleRate); const nd = noiseBuf.getChannelData(0); for (let i = 0; i < nd.length; i++) nd[i] = Math.random() * 2 - 1;
-    fx = { shaper, srr, dry, chWet, flWet, phWet, srrOn:false };
+    // reverb: a convolver with a generated decaying-noise room; echo: tempo-locked delay with feedback
+    const verb = ac.createConvolver(), vbWet = ac.createGain(); vbWet.gain.value = 0; dry.connect(verb); verb.connect(vbWet); vbWet.connect(out);
+    const ed = ac.createDelay(4), efb = ac.createGain(), ecWet = ac.createGain(), ehp = ac.createBiquadFilter(); efb.gain.value = 0.38; ecWet.gain.value = 0;
+    ehp.type = 'lowpass'; ehp.frequency.value = 4500; dry.connect(ed); ed.connect(ehp); ehp.connect(efb); efb.connect(ed); ehp.connect(ecWet); ecWet.connect(out);
+    fx = { shaper, srr, dry, chWet, flWet, phWet, srrOn:false, verb, vbWet, ed, ecWet, roomKey:-1 };
     applyFx();
   } catch (e) { fx = null; try { bus.connect(master); } catch (e2) {} }
 }
@@ -687,6 +697,13 @@ function applyFx(){
   fx.chWet.gain.setTargetAtTime(S.chorus / 100 * 0.8, t, 0.03);
   fx.flWet.gain.setTargetAtTime(S.flanger / 100 * 0.8, t, 0.03);
   fx.phWet.gain.setTargetAtTime(S.phaser / 100, t, 0.03);
+  const room = S.room || 0;
+  if (fx.roomKey !== room) { fx.roomKey = room; const [, sec, dark] = ROOMS[room], n = Math.round(ac.sampleRate * sec), b = ac.createBuffer(2, n, ac.sampleRate);
+    for (let c = 0; c < 2; c++) { const d = b.getChannelData(c); let lp = 0; for (let i = 0; i < n; i++) { lp += (Math.random() * 2 - 1 - lp) * (1 - dark); d[i] = lp * Math.pow(1 - i / n, 2.2); } }
+    fx.verb.buffer = b; }
+  fx.vbWet.gain.setTargetAtTime((S.verb || 0) / 100 * 0.9, t, 0.03);
+  fx.ed.delayTime.setTargetAtTime(Math.min(3.9, 60 / st.tempo * ETIMES[S.etime ?? 2][1]), t, 0.05);
+  fx.ecWet.gain.setTargetAtTime((S.echo || 0) / 100 * 0.7, t, 0.03);
 }
 
 /* ---- envelope with delay and hold, for the amp ---- */
@@ -726,7 +743,7 @@ function renderPrev(P, vk, forceT, slot){
   const ap = [0, 0, 0, 0];
   for (let i = 0; i < N; i++) {
     const t = i / sr;
-    let f = f0 * Math.pow(2, P.oct + P.fine / 1200 + (midi - 60) / 12);
+    let f = f0 * Math.pow(2, P.oct + (P.fine + (S.tune || 0)) / 1200 + (midi - 60) / 12);
     if (S.glide > 0) { const gt = S.glide / 100 * 0.5; if (t < gt) f *= 0.75 + 0.25 * t / gt; }
     if (S.penv > 0) f *= Math.pow(2, S.penv / 100 * 2 * Math.exp(-t / 0.05));
     if (S.vib > 0) f *= Math.pow(2, S.vib / 1200 * Math.sin(2 * Math.PI * lr * t));
@@ -744,7 +761,7 @@ function renderPrev(P, vk, forceT, slot){
     }
     if (P.route === 0) v = runBq(q2, runBq(q1, v)); else if (P.route === 1) v = 0.6 * (runBq(q1, v) + runBq(q2, v)); else v = runBq(q1, v);
     const ev = envAt(t); env[i] = ev[0]; stage[i] = ev[1];
-    v *= ev[0] * velF;
+    v *= ev[0] * velF * (S.level ?? 100) / 100;
     if (S.trem > 0) v *= 1 - S.trem / 200 + S.trem / 200 * Math.sin(2 * Math.PI * lr * t);
     v = shapeFn(S, v * 0.6) / 0.6;
     if (holdN > 1) { if (i % holdN === 0) holdV = v; v = holdV; }
@@ -1252,6 +1269,7 @@ function voice(midi, t, dur, vel, lane){
   if (S.fm > 0 || MK.has('fm')) { const mo = src(ac.createOscillator()); mo.frequency.value = f0 * 2; const mg = mk(ac.createGain()); mg.gain.value = 0;
     schedEnv(mg.gain, t, dur, 0.002, 0.25, 0.15, REL[P.r], S.fm / 100 * 4 * 2 * f0); mo.connect(mg); rec.oscs.forEach(o => mg.connect(o.frequency)); tgt.fm = mg.gain; }
   if (S.vib > 0 || MK.has('vib')) { const vo = src(ac.createOscillator()); vo.frequency.value = lr; const vg = mk(ac.createGain()); vg.gain.value = S.vib; vo.connect(vg); vg.connect(pitchBus); tgt.vib = vg.gain; }
+  if (S.tune) { const tc = src(ac.createConstantSource()); tc.offset.value = S.tune; tc.connect(pitchBus); }
   if (S.penv > 0) { const pc = src(ac.createConstantSource()); pc.offset.setValueAtTime(S.penv / 100 * 2400, t); pc.offset.setTargetAtTime(0, t, 0.05); pc.connect(pitchBus); }
   // filters
   const f1 = mk(ac.createBiquadFilter()), f2 = mk(ac.createBiquadFilter());
@@ -1264,6 +1282,7 @@ function voice(midi, t, dur, vel, lane){
   else { pre.connect(f1); f1.connect(g); }
   if (S.fenv > 0) { const fc = src(ac.createConstantSource()); fc.offset.value = 0; schedEnv(fc.offset, t, dur, 0.002, 0.3, 0.1, REL[P.r], S.fenv / 100 * 4800); fc.connect(f1.detune); }
   if (S.trem > 0 || MK.has('trem')) { vca.gain.value = 1 - S.trem / 200; const to = src(ac.createOscillator()); to.frequency.value = lr; const tg = mk(ac.createGain()); tg.gain.value = S.trem / 200; to.connect(tg); tg.connect(vca.gain); tgt.trem = tg.gain; }
+  if ((S.level ?? 100) !== 100) vca.gain.value *= (S.level ?? 100) / 100;
   g.connect(vca);
   let pan = null;
   if (ac.createStereoPanner) { pan = mk(ac.createStereoPanner()); pan.pan.value = S.pan / 100; vca.connect(pan); pan.connect(bus); } else vca.connect(bus);
@@ -1318,7 +1337,7 @@ function voice(midi, t, dur, vel, lane){
     rec.rows[i] = { src:m.src, dst:m.dst, via:m.via, amt:amtParam };
   });
   // hold-F8 connections: each one adds a source, scaled by its amount, onto the knob's sound parameter
-  tgt.cutoff = f1.detune; tgt.reso = f1.Q; tgt.spread = spreadBus; tgt.pan = pan ? pan.pan : null;
+  tgt.cutoff = f1.detune; tgt.reso = f1.Q; tgt.spread = spreadBus; tgt.pan = pan ? pan.pan : null; tgt.tune = pitchBus; tgt.level = vca.gain;
   const modNode = {};
   const makeModSrc = name => {
     if (name === 'ENV1') { const c = src(ac.createConstantSource()); c.offset.value = 0; schedEnv(c.offset, t, dur, ATK[P.a], DEC[P.d], P.s, REL[P.r], 1); return c; }
@@ -1610,7 +1629,7 @@ function setKnob(i, dir){
   if (st.screen === 'design') { const d = knobDefs()[i]; st.viewKind = d.view; st.viewKey = d.key; st.viewT = performance.now(); if (String(d.val()) === String(before)) st.zoom = Math.min(st.zoom, 0.7); applyFx(); }
   applyFilter(); applyLive();
   const now = performance.now();
-  if (st.screen === 'melody') { if (i < 3) previewBar(); st.lastEdit = now; return; }
+  if (st.screen === 'melody') { if (i < 3) previewBar(); else applyFx(); st.lastEdit = now; return; }
   if (now - st.lastEdit > 2000 || !st.prevStart) previewDesign();
   st.lastEdit = now;
 }
@@ -1651,7 +1670,7 @@ function knobFrac(i){ return clamp(knobDefs()[i].frac(), 0, 1); }
 const SETTINGS = ['TEMPO', 'KEY', 'CUTOFF 1', 'RESO 1', 'METRONOME', 'UPDATE'];
 function changeSetting(dir){
   const P = st.patch, c = st.setCur;
-  if (c === 0) st.tempo = Math.max(60, Math.min(200, st.tempo + dir * 2));
+  if (c === 0) { st.tempo = Math.max(60, Math.min(200, st.tempo + dir * 2)); applyFx(); }
   if (c === 1) st.key = (st.key + dir + KEYS.length) % KEYS.length;
   if (c === 2) { P.cutoff = Math.max(40, Math.min(16000, P.cutoff * Math.pow(1.1, dir))); applyFilter(); }
   if (c === 3) { P.reso = Math.max(0.5, Math.min(18, Math.round((P.reso + dir * 0.5) * 10) / 10)); applyFilter(); }
@@ -2286,7 +2305,7 @@ let hintTxt = null;
 function setHint(t){
   if (!st.on) t = '';
   else if (st.screen === 'melody' && st.mode === 'notes' && !st.menu && st.phase === 'edit' && st.grab) t += '   |   buttons: OCT+  OCT-  ACC  DEL';
-  else if (st.screen === 'design') t = 'buttons: 1 source (press again: source 2, feel)  2 envelope (press again: mod 1-4)  3 filter + drive  4 motion + FX.   Hold F8, nudge K1-K4, then DIAL picks what moves it: note envelope or mod 1-4';
+  else if (st.screen === 'design') t = 'buttons: 1 source (press again: source 2, feel)  2 envelope (press again: mod 1-4)  3 tone (filter, grit)  4 space (pan + FX, room: reverb and echo).   Hold F8, nudge K1-K4, then DIAL picks what moves it: note envelope or mod 1-4';
   else if (st.screen !== 'melody') t = '';
   if (t === hintTxt) return; hintTxt = t; document.getElementById('hint').textContent = t;
 }
