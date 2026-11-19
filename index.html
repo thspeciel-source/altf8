@@ -2,7 +2,12 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="AltF8">
+<meta name="theme-color" content="#16181d">
 <title>AltF8 Emulator</title>
 <style>
   :root { --bg:#16181d; --panel:#1f232b; --line:#2f3542; --txt:#e6e9ef; --muted:#97a0b3; --acc:#ffd23f; --cyan:#34d6e8; }
@@ -83,10 +88,24 @@
   body.fs #side, body.fs #devcol > div:first-child, body.fs .cap, body.fs .kbd { display:none; }
   body.fs #fsExit { display:block; }
   body.fs #app { padding:0; }
-  body.fs #device { position:fixed; left:50%; top:50%; margin:0; height:var(--devh,510px); transform:translate(-50%,-50%) scale(var(--fs,1)); }
+  body.fs #device { position:fixed; left:50%; top:calc(50% + var(--fsy,0px)); margin:0; height:var(--devh,510px); transform:translate(-50%,-50%) scale(var(--fs,1)); }
   body.fs #pwrled, body.fs #play, body.fs #scrwrap, body.fs .ring { translate:0 var(--fst,0px); }
   body.fs .bar, body.fs .btn, body.fs #mainknob { translate:0 var(--fsl,0px); }
   body.fs #brand { right:auto; left:50%; translate:-50% 0; }
+  /* ---------- v16: flat top-down look (no side edges, no drop shadows) ---------- */
+  :root { --sat:env(safe-area-inset-top,0px); --sab:env(safe-area-inset-bottom,0px); }
+  #device { box-shadow:inset 0 0 0 1px rgba(255,255,255,.35); }
+  #scrwrap { box-shadow:none; }
+  #play { background:#2c3038; box-shadow:none; }
+  .knob { box-shadow:0 0 0 1px #8f939a, inset 0 0 0 1.5px rgba(255,255,255,.55); }
+  #mainknob { box-shadow:0 0 0 1.5px #8a8e95, inset 0 0 0 3px rgba(255,255,255,.6), inset 0 0 0 4px rgba(120,124,132,.35); }
+  .bar { background:#353a44; box-shadow:none; }
+  .bar.sel { background:#ffd23f; }
+  .btn { box-shadow:none; }
+  .bar:active,.btn:active,.bar.down,.btn.down { transform:none; box-shadow:none; filter:brightness(.8); }
+  html:has(body.fs) { background:#ddd7c9; }
+  body.fs { background:#ddd7c9; }
+  body.fs #jack { display:none; }
 </style>
 </head>
 <body>
@@ -251,9 +270,10 @@ const VERSIONS = [
   { id:'v12', file:'versions/v12.html', label:'v12 - Synth engine + mod matrix (2026-11-18)', note:'Unison, detune and fine tune; a second filter; two LFOs, a second envelope and two step sequencers routed through an 8-slot mod matrix on a new MOD screen.' },
   { id:'v13', file:'versions/v13.html', label:'v13 - Screen fan + play/pause animation (2026-11-18)', note:'Hold Play to open a fan of the 6 screens from the top-right corner; the knob moves the yellow selection and letting go opens it. Play/pause slides an icon in from the same corner.' },
   { id:'v14', file:'versions/v14.html', label:'v14 - Phone full screen (2026-11-18)', note:'Full screen button: only the device is shown, scaled to fill the phone screen. Tap the x in the corner to leave.' },
-  { id:'v15', file:'index.html', label:'v15 - Clean melody screen + aluminum knobs (2026-11-18)', note:'Melody screen has no text or button strip at the bottom; prompts show under the device instead. Brushed aluminum knobs. Full screen stretches to the phone and spreads out the controls.' }
+  { id:'v15', file:'versions/v15.html', label:'v15 - Clean melody screen + aluminum knobs (2026-11-18)', note:'Melody screen has no text or button strip at the bottom; prompts show under the device instead. Brushed aluminum knobs. Full screen stretches to the phone and spreads out the controls.' },
+  { id:'v16', file:'index.html', label:'v16 - Flat top-down look, edge-to-edge phone (2026-11-18)', note:'No side edges or drop shadows on knobs and buttons. Full screen fills under the status bar and home bar; opening from a Home Screen icon goes straight to full screen.' }
 ];
-const CURRENT = 'v15';
+const CURRENT = 'v16';
 /* ---- synth engine constants (v12) ---- */
 const UNI_MAX = 7;
 const FTYPES = ['lowpass','highpass','bandpass','notch'], FNAME = ['LP','HP','BP','NOTCH'];
@@ -1415,13 +1435,16 @@ renderSaves();
 /* ================= v14 phone full screen ================= */
 function fitFs(){
   const vv = window.visualViewport, W = vv ? vv.width : innerWidth, H = vv ? vv.height : innerHeight;
-  const sc = Math.min(W / 310, H / 540), devH = Math.max(540, H / sc), extra = devH - 540, b = document.body.style;
+  const cs = getComputedStyle(document.documentElement), sat = parseFloat(cs.getPropertyValue('--sat')) || 0, sab = parseFloat(cs.getPropertyValue('--sab')) || 0;
+  const Hu = H - sat - sab, sc = Math.min(W / 310, Hu / 540), devH = Math.max(540, Hu / sc), extra = devH - 540, b = document.body.style;
+  b.setProperty('--fsy', ((sat - sab) / 2).toFixed(1) + 'px');
   b.setProperty('--fs', sc.toFixed(3)); b.setProperty('--devh', devH.toFixed(1) + 'px');
   // spread the spare height: some above the screen, more between the screen and the buttons
   b.setProperty('--fst', (16 + extra * 0.3).toFixed(1) + 'px'); b.setProperty('--fsl', (18 + extra * 0.55).toFixed(1) + 'px');
 }
+function setTheme(c){ const m = document.querySelector('meta[name=theme-color]'); if (m) m.setAttribute('content', c); }
 function enterFs(){
-  document.body.classList.add('fs'); fitFs(); wakeAudio();
+  document.body.classList.add('fs'); setTheme('#ddd7c9'); fitFs(); wakeAudio();
   const el = document.documentElement, rq = el.requestFullscreen || el.webkitRequestFullscreen;
   if (!rq) return; // iPhone Safari: page-only full screen
   try {
@@ -1430,19 +1453,21 @@ function enterFs(){
   } catch (e) {}
 }
 function exitFs(){
-  document.body.classList.remove('fs');
+  document.body.classList.remove('fs'); setTheme('#16181d');
   const fe = document.fullscreenElement || document.webkitFullscreenElement, ex = document.exitFullscreen || document.webkitExitFullscreen;
   if (fe && ex) try { ex.call(document); } catch (e) {}
 }
 document.getElementById('fsBtn').addEventListener('click', enterFs);
 document.getElementById('fsExit').addEventListener('click', exitFs);
 ['fullscreenchange', 'webkitfullscreenchange'].forEach(ev => document.addEventListener(ev, () => {
-  if (!(document.fullscreenElement || document.webkitFullscreenElement)) document.body.classList.remove('fs');
+  if (!(document.fullscreenElement || document.webkitFullscreenElement) && document.body.classList.contains('fs') && document.fullscreenEnabled) { document.body.classList.remove('fs'); setTheme('#16181d'); }
   setTimeout(fitFs, 60);
 }));
 addEventListener('resize', fitFs);
 if (window.visualViewport) visualViewport.addEventListener('resize', fitFs);
 document.getElementById('device').addEventListener('contextmenu', e => e.preventDefault());
+// opened from a Home Screen icon: go straight to full screen
+try { if (navigator.standalone || matchMedia('(display-mode: standalone)').matches || matchMedia('(display-mode: fullscreen)').matches) enterFs(); } catch (e) {}
 </script>
 </body>
 </html>
