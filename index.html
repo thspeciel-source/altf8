@@ -19,13 +19,15 @@
   /* ---------- device ---------- */
   #devcol { display:flex; flex-direction:column; align-items:center; max-width:340px; }
   #device { position:relative; width:310px; height:510px; border-radius:22px; margin-top:14px;
-    background:linear-gradient(160deg,#e9e4d8,#cfc8b8); box-shadow:0 18px 40px rgba(0,0,0,.55), inset 0 2px 0 rgba(255,255,255,.6), inset 0 -3px 0 rgba(0,0,0,.15); user-select:none; touch-action:none; }
+    background:repeating-linear-gradient(90deg,rgba(255,255,255,.07) 0 1px,rgba(0,0,0,.035) 1px 2px,rgba(255,255,255,0) 2px 3px),linear-gradient(160deg,#e3e6ea 0%,#bfc4cb 38%,#d6dade 62%,#a9aeb6 100%); box-shadow:0 18px 40px rgba(0,0,0,.55), inset 0 2px 0 rgba(255,255,255,.6), inset 0 -3px 0 rgba(0,0,0,.15); user-select:none; touch-action:none; }
   #scrwrap { position:absolute; left:14px; top:30px; width:236px; height:236px; background:#0a0c12; border-radius:9px; padding:6px; box-shadow:inset 0 2px 6px rgba(0,0,0,.8); }
   #scr { width:224px; height:224px; image-rendering:pixelated; image-rendering:crisp-edges; display:block; border-radius:3px; }
   #play { position:absolute; right:12px; top:-11px; width:74px; height:22px; border-radius:9px 9px 3px 3px; background:linear-gradient(#3b3f48,#24272e); color:#cfd6e6; font-size:10px; font-weight:700; letter-spacing:.06em; display:flex; align-items:center; justify-content:center; cursor:pointer; box-shadow:0 -2px 0 rgba(255,255,255,.08) inset; }
   .ring { position:absolute; width:40px; height:40px; border-radius:50%; display:flex; align-items:center; justify-content:center;
     background:conic-gradient(var(--c,var(--cyan)) calc(var(--p,0) * 1turn), #3a3f4a 0); cursor:ns-resize; box-shadow:0 0 6px -1px var(--c,var(--cyan)); }
   .ring.off { box-shadow:none; }
+  .ring.fresh { animation:ringfresh 1.1s ease-in-out infinite; }
+  @keyframes ringfresh { 0%, 100% { box-shadow:0 0 4px -1px var(--c,var(--cyan)); } 50% { box-shadow:0 0 14px 4px var(--c,var(--cyan)); } }
   .modarc { position:absolute; inset:-6px; border-radius:50%; pointer-events:none; display:none;
     -webkit-mask:radial-gradient(circle, transparent 22.5px, #000 23px); mask:radial-gradient(circle, transparent 22.5px, #000 23px); }
   .ring.off { background:conic-gradient(#3a3f4a 1turn,#3a3f4a 0); }
@@ -52,7 +54,10 @@
   @keyframes f8blink { 0%, 100% { box-shadow:0 0 0 0 rgba(124,196,255,0); filter:brightness(1); } 50% { box-shadow:0 0 0 4px rgba(124,196,255,.55), 0 0 14px 4px rgba(70,150,255,.45); filter:brightness(1.18); } }
   #bbtn { left:110px; background:radial-gradient(circle at 40% 35%,#6f7682,#3a3f49); color:#fff; }
   #jack { position:absolute; left:34px; bottom:-5px; width:16px; height:10px; border-radius:0 0 8px 8px; background:#111; }
-  #brand { position:absolute; right:18px; bottom:14px; font:700 13px/1 ui-monospace,Menlo,monospace; color:#9b9483; letter-spacing:.08em; }
+  /* engraved lettering on the metal shell: dark cut with a light lower edge */
+  #brand, #maker { position:absolute; bottom:14px; font:700 13px/1 ui-monospace,Menlo,monospace; color:#8a8f97; letter-spacing:.08em; text-shadow:0 1px 0 rgba(255,255,255,.75), 0 -1px 0 rgba(0,0,0,.28); }
+  #brand { right:18px; }
+  #maker { left:18px; font-size:9px; letter-spacing:.12em; }
   .kbd { position:absolute; font:700 9px/1 ui-monospace,Menlo,monospace; color:#5d5748; background:rgba(255,255,255,.55); border-radius:3px; padding:2px 3px; pointer-events:none; }
   #pwrled { position:absolute; left:18px; top:12px; width:7px; height:7px; border-radius:50%; background:#5b4f45; }
   #pwrled.on { background:#7dff6a; box-shadow:0 0 6px #7dff6a; }
@@ -86,7 +91,7 @@
   #device { -webkit-user-select:none; -webkit-touch-callout:none; }
   #fsBtn { margin-top:10px; background:var(--acc); color:#2a2100; border-color:var(--acc); font-weight:700; }
   #fsExit { display:none; position:fixed; z-index:10; bottom:max(12px, env(safe-area-inset-bottom)); right:max(12px, env(safe-area-inset-right)); width:36px; height:36px; padding:0; border-radius:50%; font-size:20px; line-height:1; background:rgba(38,43,53,.8); }
-  body.fs { overflow:hidden; overscroll-behavior:none; touch-action:none; min-height:100dvh; background:linear-gradient(160deg,#e9e4d8,#cfc8b8) fixed; }
+  body.fs { overflow:hidden; overscroll-behavior:none; touch-action:none; min-height:100dvh; background:repeating-linear-gradient(90deg,rgba(255,255,255,.07) 0 1px,rgba(0,0,0,.035) 1px 2px,rgba(255,255,255,0) 2px 3px) fixed,linear-gradient(160deg,#e3e6ea 0%,#bfc4cb 38%,#d6dade 62%,#a9aeb6 100%) fixed; }
   body.fs #device { border-radius:0; box-shadow:none; background:transparent; }
   body.fs #fsExit { background:rgba(38,43,53,.55); }
   body.fs #side, body.fs #devcol > div:first-child, body.fs .cap, body.fs .kbd { display:none; }
@@ -112,8 +117,8 @@
     -webkit-mask:radial-gradient(circle, transparent 52%, #000 54%, #000 90%, transparent 92%); mask:radial-gradient(circle, transparent 52%, #000 54%, #000 90%, transparent 92%); }
   #mainknob::after { background:repeating-conic-gradient(rgba(30,33,40,.6) 0deg 3deg, transparent 3deg 15deg);
     -webkit-mask:radial-gradient(circle, transparent 66%, #000 68%, #000 89%, transparent 91%); mask:radial-gradient(circle, transparent 66%, #000 68%, #000 89%, transparent 91%); }
-  html:has(body.fs) { background:#ddd7c9; }
-  body.fs { background:#ddd7c9; }
+  html:has(body.fs) { background:#c4c8ce; }
+  body.fs { background-color:#c4c8ce; }
   body.fs #jack { display:none; }
 </style>
 </head>
@@ -143,6 +148,7 @@
       <div class="btn" id="bbtn">B</div>
       <div id="jack"></div>
       <div id="brand">AltF8</div>
+      <div id="maker">RTP INC. - <span id="makerver"></span></div>
       <span class="kbd" style="left:236px;top:-30px">Space</span>
       <span class="kbd" style="left:286px;top:276px">Q/A..R/F</span>
       <span class="kbd" style="left:43px;top:306px">1</span><span class="kbd" style="left:99px;top:306px">2</span><span class="kbd" style="left:155px;top:306px">3</span><span class="kbd" style="left:211px;top:306px">4</span>
@@ -394,9 +400,10 @@ const VERSIONS = [
   { id:'v23', file:'versions/v23.html', label:'v23 - Sparkle intro with shutter transition, tap F8 to start (2026-11-18)', note:'Power-on shows the logo with sparkles, then a hexagon-shaped opening closes over it and reopens onto the screen. A quick tap on F8 now powers on too, which lets iPhone start sound right away; a blocked chime plays as soon as sound unlocks.' },
   { id:'v24', file:'versions/v24.html', label:'v24 - Hold F8 to add motion, generated second half, blue F8 (2026-11-18)', note:'On the Sound screen, hold F8 and turn a knob to connect a moving source to it (the main knob picks LFO 1, LFO 2, ENV 2, SEQ 1 or SEQ 2); a thin arc on the ring shows it moving and a tip in the bottom-left says what to do next. Chord bars 5-8 can be a whole new half and are always generated (all pink). The selected bar glows, an F8 badge blinks top-right when F8 is ready, and F8 is blue.' },
   { id:'v25', file:'versions/v25.html', label:'v25 - Moved notes keep without F8 (2026-11-18)', note:'After moving a bar\'s main note, pressing another bar keeps the change and its adapted chords; F8 no longer needs to confirm it. B still undoes it until you move on.' },
-  { id:'v26', file:'index.html', label:'v26 - B reopens chord suggestions (2026-11-18)', note:'With chords set, B goes back to the pink suggestions: your current progression is option 1 and the main knob browses new ones.' }
+  { id:'v26', file:'versions/v26.html', label:'v26 - B reopens chord suggestions (2026-11-18)', note:'With chords set, B goes back to the pink suggestions: your current progression is option 1 and the main knob browses new ones.' },
+  { id:'v27', file:'index.html', label:'v27 - Metal shell, knob hints, tap knobs (2026-11-18)', note:'Brushed-metal shell with engraved AltF8 and RTP INC. + version lettering. Knobs blink until you first turn them on each page; tap a knob to move one step (top half up, bottom half down; left/right half on the main knob). The F8 badge says what F8 will do. Bars 5-8 turn blue once the chords are kept.' }
 ];
-const CURRENT = 'v26';
+const CURRENT = 'v27';
 /* ---- synth engine constants (v12) ---- */
 const UNI_MAX = 7;
 const FTYPES = ['lowpass','highpass','bandpass','notch'], FNAME = ['LP','HP','BP','NOTCH'];
@@ -824,7 +831,7 @@ const st = {
   bars:[0,1,2,3].map(() => ({ mel:null, chord:null, notes:[] })),
   patch:defaultPatch(),
   msg:'', msgT:0, lastEdit:0, mainAngle:0, kAngles:[0,0,0,0],
-  viewTop:76, modSrc:0, modHold:null, ov:null, pat:0, mode:'notes', menu:false, menuIdx:0, loopNote:false, pop:null, shut:null, setCur:0, setEdit:false, prevStart:0, prevDur:0, metro:false,
+  viewTop:76, touched:{}, modSrc:0, modHold:null, ov:null, pat:0, mode:'notes', menu:false, menuIdx:0, loopNote:false, pop:null, shut:null, setCur:0, setEdit:false, prevStart:0, prevDur:0, metro:false,
   fan:null, pp:null, prog:null, pending:null, arp:0, voi:0, shTab:0, shPage:0, zoom:0, viewKey:'', viewKind:'time', viewT:0, fSel:0, modTab:'lfo', lfoSel:0, seqSel:0, seqCur:0, mtxRow:0, lastKnob:-1
 };
 
@@ -1385,6 +1392,7 @@ function knobDefs(){
 }
 function setKnob(i, dir){
   if (!st.on) return;
+  st.touched[knobPage() + i] = true;
   st.kAngles[i] += dir * 18; document.getElementById('k' + i).style.setProperty('--rot', st.kAngles[i] + 'deg');
   if (st.screen === 'design' && st.modHold) { modKnob(i, dir); return; }
   const before = knobDefs()[i].val();
@@ -1418,6 +1426,7 @@ function modValue(src, now){
   if (src === 'ENV2') { const b = 60 / st.tempo, f = (sec % b) / b; return Math.exp(-f * 4); }
   const k = src === 'SEQ1' ? 0 : 1, S = st.patch.seq[k], i = Math.floor(sec / seqStepDur(k)) % S.len; return (S.steps[i] || 0) / 100;
 }
+function knobPage(){ return st.screen === 'design' ? 'd' + st.shTab + st.shPage : st.screen; }
 function knobFrac(i){ return clamp(knobDefs()[i].frac(), 0, 1); }
 const SETTINGS = ['TEMPO', 'KEY', 'CUTOFF 1', 'RESO 1', 'METRONOME'];
 function changeSetting(dir){
@@ -1623,14 +1632,18 @@ function bindHold(id, down, up){
 }
 bindHold('f8', f8Down, f8Up); bindHold('bbtn', bDown, bUp); bindHold('play', playDown, playUp);
 [0,1,2,3].forEach(i => { const el = document.getElementById('b' + i); el.addEventListener('pointerdown', e => { e.preventDefault(); selBar(i); }); });
-function bindKnob(el, fn){
+function bindKnob(el, fn, horiz){
   let y0 = null, acc = 0;
   el.addEventListener('wheel', e => { e.preventDefault(); fn(e.deltaY < 0 ? 1 : -1); }, { passive:false });
-  el.addEventListener('pointerdown', e => { e.preventDefault(); el.setPointerCapture(e.pointerId); y0 = e.clientY; acc = 0; });
-  el.addEventListener('pointermove', e => { if (y0 === null) return; acc += y0 - e.clientY; y0 = e.clientY; while (acc >= 12) { fn(1); acc -= 12; } while (acc <= -12) { fn(-1); acc += 12; } });
-  el.addEventListener('pointerup', () => { y0 = null; });
+  let tap = null;
+  el.addEventListener('pointerdown', e => { e.preventDefault(); el.setPointerCapture(e.pointerId); y0 = e.clientY; acc = 0; tap = { x:e.clientX, y:e.clientY, t:performance.now(), moved:false }; });
+  el.addEventListener('pointermove', e => { if (y0 === null) return; if (tap && Math.hypot(e.clientX - tap.x, e.clientY - tap.y) > 6) tap.moved = true; acc += y0 - e.clientY; y0 = e.clientY; while (acc >= 12) { fn(1); acc -= 12; } while (acc <= -12) { fn(-1); acc += 12; } });
+  // a quick tap turns one step: top half (or right half of the main knob) up, the other half down
+  el.addEventListener('pointerup', e => { y0 = null;
+    if (tap && !tap.moved && performance.now() - tap.t < 450) { const r = el.getBoundingClientRect(); fn(horiz ? (e.clientX > r.left + r.width / 2 ? 1 : -1) : (e.clientY < r.top + r.height / 2 ? 1 : -1)); }
+    tap = null; });
 }
-bindKnob(document.getElementById('mainknob'), mainTurn);
+bindKnob(document.getElementById('mainknob'), mainTurn, true);
 [0,1,2,3].forEach(i => bindKnob(document.getElementById('r' + i), d => setKnob(i, d)));
 
 /* ================= pixel font + drawing ================= */
@@ -1708,7 +1721,7 @@ function drawMelody(now){
     const ch = pr[sg.slot]; if (!ch) continue;
     const cname = chordName(ch), x = colX(sg.start);
     const differs = sg.slot >= 4 && !sameChord(ch, pr[sg.slot - 4]);
-    if (x >= lastName && !(sugg && !blink)) { txt(cname, x, 0, sugg || sg.slot >= 4 ? C.sug : C.auto); lastName = x + cname.length * 4 + 1; }
+    if (x >= lastName && !(sugg && !blink)) { txt(cname, x, 0, sugg ? C.sug : C.auto); lastName = x + cname.length * 4 + 1; }
   }
   // brackets around the selected bar's main note (first half) when you can move it
   if ((st.phase === 'edit' || st.phase === 'adapt') && st.mode === 'notes' && !st.menu && st.bars[st.sel].mel) {
@@ -1725,7 +1738,8 @@ function drawMelody(now){
     for (const n of list) {
       const y = yOf(n.midi); if (y <= 9 || y >= 110) continue;
       let c = n.mel ? (n.alt ? C.sug : C.acc) : sugg ? (blink ? C.sug : null) : C.auto;
-      if (e.bar >= 4 && c) c = C.sug;   // the generated second half is all pink, chord notes included
+      // the generated second half: grey before chords exist, all pink while choosing, all blue once kept
+      if (e.bar >= 4 && c) c = st.phase === 'entry' ? C.dim : sugg ? C.sug : C.auto;
       if (st.phase === 'adapt' && n.mel && e.bar === st.pending.bar) c = blink ? C.sel : C.acc;
       if (allSel && c) c = blink ? C.sel : c;
       if (c) px(x0, y, w, nh, c);
@@ -2087,7 +2101,7 @@ function draw(){
       { const t = now - st.boot - BOOT_LOGO - BOOT_CLOSE; if (t >= 0 && t < BOOT_OPEN) { const o = easeIO(t / BOOT_OPEN); irisMask(92 * o, 0.9 + o * 0.9); } }
     }
   }
-  for (let i = 0; i < 4; i++) { const r = document.getElementById('r' + i); r.classList.toggle('off', !st.on); r.style.setProperty('--p', st.on ? knobFrac(i).toFixed(3) : 0); r.style.setProperty('--c', st.on && st.screen === 'design' ? shColor(i) : RING_DEF[i]);
+  for (let i = 0; i < 4; i++) { const r = document.getElementById('r' + i); r.classList.toggle('off', !st.on); r.classList.toggle('fresh', st.on && (st.screen === 'melody' || st.screen === 'design') && !st.touched[knobPage() + i] && performance.now() - st.boot > BOOT_MS); r.style.setProperty('--p', st.on ? knobFrac(i).toFixed(3) : 0); r.style.setProperty('--c', st.on && st.screen === 'design' ? shColor(i) : RING_DEF[i]);
     let a = r.querySelector('.modarc'); if (!a) { a = document.createElement('div'); a.className = 'modarc'; r.appendChild(a); }
     const key = st.on && st.screen === 'design' ? (shapeDefs()[i] || {}).key : null, ms = key ? (st.patch.mods || []).filter(m => m.key === key && m.amt) : [];
     if (!ms.length) { a.style.display = 'none'; continue; }
@@ -2099,7 +2113,9 @@ function draw(){
   const f8Ready = st.on && ((st.screen === 'melody' && ((st.phase === 'entry' && allSet()) || st.phase === 'suggest')) || (st.screen === 'design' && !st.modHold));
   document.getElementById('f8').classList.toggle('ready', f8Ready);
   // a small F8 badge blinks in the screen's top-right corner while F8 has something to do
-  if (f8Ready && !st.shut && !st.pop && performance.now() - st.lastEdit > 1500 && performance.now() - st.boot > BOOT_MS && Math.floor(performance.now() / 450) % 2 === 0) { px(100, 0, 12, 7, C.bg); txt('F8', 103, 1, '#7cc4ff'); }
+  if (f8Ready && !st.shut && !st.pop && performance.now() - st.lastEdit > 1500 && performance.now() - st.boot > BOOT_MS && Math.floor(performance.now() / 450) % 2 === 0) {
+    const word = st.screen === 'melody' ? (st.phase === 'suggest' ? 'KEEP ' : 'CHORDS ') : '', t = word + 'F8', x = 111 - t.length * 4;
+    px(x - 2, 0, 113 - x, 7, C.bg); txt(word, x, 1, C.txt); txt('F8', 103, 1, '#7cc4ff'); }
   requestAnimationFrame(draw);
 }
 requestAnimationFrame(draw);
@@ -2137,6 +2153,7 @@ VERSIONS.forEach(v => { const o = document.createElement('option'); o.value = v.
 verSel.value = CURRENT;
 function showVer(){ const v = VERSIONS.find(x => x.id === verSel.value); document.getElementById('verNote').textContent = v ? v.note : ''; }
 verSel.addEventListener('change', () => { const v = VERSIONS.find(x => x.id === verSel.value); if (v && v.id !== CURRENT) { location.href = (location.pathname.includes('/versions/') ? '../' : '') + v.file; } showVer(); }); showVer();
+document.getElementById('makerver').textContent = CURRENT.toUpperCase();
 const SKEY = 'altf8.saves.v1';
 function loadSaves(){ try { return JSON.parse(localStorage.getItem(SKEY) || '[]'); } catch (e) { return null; } }
 function storeSaves(a){ try { localStorage.setItem(SKEY, JSON.stringify(a)); return true; } catch (e) { return false; } }
