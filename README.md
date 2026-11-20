@@ -25,3 +25,5 @@ Pick whichever fits:
 When a change is a new build, copy the current `index.html` into `versions/vN.html` first and add it to the `VERSIONS` list in each file.
 
 Blueprint (decisions, ideas, open questions): see the AltF8 Blueprint doc.
+
+Read by me
