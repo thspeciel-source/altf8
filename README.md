@@ -13,6 +13,8 @@ The emulator is a single page with no build step.
 
 Older builds are in `versions/` and can be picked from the version selector on the page.
 
+Separate lines (a different direction branched from a build, not the next numbered build) also live in `versions/`, for example `versions/sound-first.html`. They keep their own `CURRENT` id and are added to the `VERSIONS` list in every file, just like a build; `index.html` stays the main line.
+
 ## Staying in sync (no GitHub Desktop needed)
 
 Pick whichever fits:
