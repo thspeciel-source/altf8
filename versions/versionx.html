@@ -4870,9 +4870,9 @@ document.addEventListener('keyup', e => { const id = TILT_KEYS[e.key.toLowerCase
 
 /* iPhone audio: MIX ON plays alongside other apps (a podcast keeps going) but the ring/silent switch mutes it;
    MIX OFF always plays, even on silent, and pauses other apps' audio */
-let mixOn = true; try { mixOn = localStorage.getItem('altf8.mix') !== '0'; } catch (e) {}
+let mixOn = false; try { mixOn = localStorage.getItem('altf8.mix2') === '1'; } catch (e) {}   // default: always plays; MIX ON is one tap away
 function mixLabel(){ document.getElementById('mixBtn').textContent = mixOn ? 'Mix with other apps: on (silent switch mutes)' : 'Mix with other apps: off (always plays)'; document.getElementById('fsMix').textContent = mixOn ? 'MIX ON' : 'MIX OFF'; }
-function setMix(on){ mixOn = on; try { localStorage.setItem('altf8.mix', on ? '1' : '0'); } catch (e) {}
+function setMix(on){ mixOn = on; try { localStorage.setItem('altf8.mix2', on ? '1' : '0'); } catch (e) {}
   try { if (navigator.audioSession) navigator.audioSession.type = on ? 'ambient' : 'playback'; } catch (e) {}
   mixLabel(); if (st.on) flash(on ? 'MIX WITH OTHER APPS' : 'ALWAYS PLAYS'); audioKeepAlive(); }
 if (!navigator.audioSession) document.body.classList.add('nomix');
