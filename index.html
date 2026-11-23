@@ -4370,8 +4370,8 @@ function drawViz(now){
   const light = !!viz.light;   // versionX: a glossy white-to-grey screen
   vizBg(u, light, W);
   // camera: DIAL turns it
-  const ph = viz.hi ? (now || performance.now()) / 1000 * 2 * Math.PI / 16 : 0;   // versionX: slow, chill oval sway
-  const yaw = viz.yaw + Math.sin(ph) * 0.32, el = 0.52 + Math.cos(ph) * 0.06, ce = Math.cos(el), se = Math.sin(el), cy0 = Math.cos(yaw), sy0 = Math.sin(yaw);
+  const ph = viz.hi ? (now || performance.now()) / 1000 * 2 * Math.PI / 16 : 0;   // versionX: slow, chill figure-8 sway
+  const yaw = viz.yaw + Math.sin(ph) * 0.17, el = 0.52 + Math.sin(2 * ph) * 0.035, ce = Math.cos(el), se = Math.sin(el), cy0 = Math.cos(yaw), sy0 = Math.sin(yaw);
   const SC = 32 * KS, HS = 1.0;
   const P3 = (x, y, z) => { const X = x * cy0 - z * sy0, Z = x * sy0 + z * cy0, Y = y * HS; return [W / 2 + X * SC, W * 0.518 - (Y - 0.5) * SC * ce + Z * SC * se, Z * ce + Y * se]; };
   { const a0 = P3(0, 0.5, 1), a1 = P3(0, 0.5, -1), dx = a1[0] - a0[0], dy = a1[1] - a0[1], l = Math.hypot(dx, dy) || 1; viz.tdir = [dx / l, dy / l]; }   // which way 'later' points on screen   // the object's middle (y 0.5) sits at the screen centre from every angle
