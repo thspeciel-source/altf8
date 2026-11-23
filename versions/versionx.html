@@ -265,6 +265,8 @@
   #f8.down, #bbtn.down, #f8:active, #bbtn:active { box-shadow:0 0 0 3px rgba(30,15,60,.35), 0 1px 0 rgba(0,0,0,.4), 0 3px 5px rgba(0,0,0,.4), inset 0 -3px 6px rgba(0,0,0,.3), inset 0 2px 3px rgba(255,255,255,.35) !important; }
   /* ---------- versionX: a second, all-white console face on the same device; one button swaps consoles ---------- */
   #vxSwitch { margin-top:10px; margin-left:6px; }
+  #scrhi { display:none; position:absolute; left:6px; top:6px; width:224px; height:224px; border-radius:3px; }
+  body.vxc #scrhi { display:block; }
   #fsSwitch { display:none; position:fixed; z-index:10; bottom:max(12px, env(safe-area-inset-bottom)); left:max(12px, env(safe-area-inset-left)); height:36px; padding:0 14px; border-radius:18px;
     font:600 13px/1 system-ui,sans-serif; background:rgba(38,43,53,.55); color:#fff; border:1px solid rgba(255,255,255,.25); }
   body.fs #fsSwitch { display:block; }
@@ -347,7 +349,7 @@
       <div id="limled" title="Limiter: amber = working lightly, red = squashing hard"></div><div id="limlab">LIMIT</div>
       <div id="play" data-k="play">PLAY</div>
       <div id="viz" data-k="viz" title="Visualizer: hold to peek, tap twice to stay, press again to leave">VIEW</div>
-      <div id="scrwrap"><canvas id="scr" width="112" height="112"></canvas></div>
+      <div id="scrwrap"><canvas id="scr" width="112" height="112"></canvas><canvas id="scrhi" width="240" height="240"></canvas></div>
       <div class="ring" id="r0" style="--c:#ffd23f;left:258px;top:44px"><div class="knob" id="k0"></div></div>
       <div class="ring" id="r1" style="--c:#34d6e8;left:258px;top:100px"><div class="knob" id="k1"></div></div>
       <div class="ring" id="r2" style="--c:#7dff6a;left:258px;top:156px"><div class="knob" id="k2"></div></div>
@@ -688,8 +690,9 @@ const VERSIONS = [
   { id:'v48', file:'versions/v48.html', label:'v48 - Drum presets, rolls and step editing; better bass and melody presets (2026-11-19)', note:'Drums: buttons 1-4 load presets (grooves, hats, fills and rolls, percussion; press again for the next). K1 moves a step cursor and K2 sets that step: hit, accent, ghost or a x2/x3/x4 roll. Hold B on an empty drum, then again, to clear everything. On SHAPE, DIAL picks the drum and only that drum plays while you edit it; button 1 = drum (tune, decay, tone, level), button 2 = kit (kit, swing, humanize). Bass: 16 patterns ordered calm to busy (anticipated root, step into next, Motown, one drop, synco funk, pedal...). Melody arp: 15 patterns (steps, converge, double, scale run...), natural accents on the beat, and each preset sound starts with a pattern that suits it.' },
   { id:'sf1', file:'versions/sound-first-1.html', label:'Sound-first draft 1: a separate line from v48 (2026-11-20)', note:'Separate line from v48: power-on picks SYNTH or DRUMS and lands on SOUND; hold 1/2/3 + DIAL sets the test sound; mod matrix with ENV 2, 2 LFOs and 2 step sequencers; MELODY step sequencer; TAPE with 8 recorded channels, bounce and per-channel EQ; output limiter with a LIMIT light.' },
   { id:'sf2', file:'versions/sound-first.html', label:'Sound-first draft 2: new Sound layout, cables, PLAY IN (2026-11-21)', note:'Sound buttons: 1 SOURCE (osc with none/tri back, mod osc with one ratio for ring + FM, feel with detune and phase), 2 TONE (24 dB filters with a v12-style curve and harmonics, grit, space, room), 3 MOTION (envelopes with no limits, LFOs, SEQs, matrix, effect order), 4 PLAY IN (chords or melody). Pick up a cable with F8 on a source page and turn any knob; every knob can be modulated; ENV1 RESTART chops the sound. One test sound, labels on screen instead of on the buttons, knob and dial fixes.' },
-  { id:'v49', file:'index.html', label:'v49 - Purple metal case, tilt, shine, volume wheel, PLAY trigger (2026-11-23)', note:'Same as v48 with the new look: brushed purple metal panel with a shine that follows a slight tilt on every press; front facing, about 3 phones thick, floating over black in full screen; PLAY is a shoulder trigger with its name printed above; LED rings, rubber keys, glass screen; Game Boy style volume wheel on the front panel (- and = keys); sound mixes with other apps on iPhone.' },
+  { id:'v49', file:'versions/v49.html', label:'v49 - Purple metal case, tilt, shine, volume wheel, PLAY trigger (2026-11-23)', note:'Same as v48 with the new look: brushed purple metal panel with a shine that follows a slight tilt on every press; front facing, about 3 phones thick, floating over black in full screen; PLAY is a shoulder trigger with its name printed above; LED rings, rubber keys, glass screen; Game Boy style volume wheel on the front panel (- and = keys); sound mixes with other apps on iPhone.' },
   { id:'vx1', file:'versions/versionx.html', label:'versionX: visualizer + white all-knob console, on sound-first draft 2 (2026-11-23)', note:'Sound-first draft 2 plus: VIEW bumper with a 3D visualizer of one note (a mirrored floating object, unison copies, a look per effect, a playhead slice); Switch console swaps the purple emulator for the white versionX console (every option on paged knobs, PRESET key with 9 presets, hold PLAY and turn CAMERA for the PATCH view of envelopes, effect order and modulation); new GATE page (gate, swell); the new case look.' },
+  { id:'v50', file:'index.html', label:'v50 - versionX joins the main line (2026-11-23)', note:'The main emulator now runs the sound-first engine with the visualizer extension and the Switch console button: the purple emulator (VIEW bumper, 3D note visualizer, GATE page) and the white versionX console (240 x 240 screen, every option on paged knobs, 24 presets, hold PLAY + turn CAMERA for the PATCH view of envelopes, effect order and modulation). Same case look as v49. The v48 song features are in v49 and older.' },
 ];
 const CURRENT = 'vx1';
 /* ---- sound-first: synth engine constants. One modulation system: the matrix ---- */
@@ -3669,7 +3672,7 @@ A:'010101111101101',B:'110101110101110',C:'011100100100011',D:'110101101101110',
 ' ':'000000000000000','#':'101111101111101','-':'000000111000000',':':'000010000010000','.':'000000000000010','/':'001001010100100','>':'100010001010100','<':'001010100010001','%':'101001010100101','+':'000010111010000','?':'110001010000010','!':'010010010000010','(':'001010010010001',')':'100010010010100','=':'000111000111000','*':'000101010101000',
 m:'000000110111101',o:'000000010101010'
 };
-const cv = document.getElementById('scr'), g = cv.getContext('2d');
+const cv = document.getElementById('scr'), g0 = cv.getContext('2d'); let g = g0;   // g can point at versionX's screen while the visualizer draws
 const C = { bg:'#0b1020', dim:'#26304a', grid:'#18213a', txt:'#e8f0ff', mut:'#7d8bb0', acc:'#ffd23f', auto:'#34d6e8', sug:'#ff4fd8', sel:'#ffffff', play:'#7dff6a' };
 function px(x, y, w, h, c){ g.fillStyle = c; g.fillRect(x, y, w, h); }
 function txt(s, x, y, c, sc){
@@ -4106,6 +4109,7 @@ function irisMask(R, th){
 // by a small software rasterizer (flat triangles + lines, painter's order), the kind of drawing the ESP32-S3 can do.
 // Every knob changes one part of the picture (see VIZ_MAP); a knob with no part of its own sends a ripple across the surface.
 const VIZ_DBL = 380, VIZ_NB = 24, VIZ_NT = 20, VIZ_HIST = 240;
+let VW = 112;   // the visualizer's resolution: 112 on the emulator, 240 on versionX (a 240 x 240 panel)
 const viz = { held:false, downT:0, locked:false, armT:0, swallow:false, lockPress:false, an:null, buf:null, bands:null,
   notes:[], dots:[], label:null, ripples:[], yaw:-0.62, lastMidi:60, img:null, u32:null, cur:null, target:null, T:1, sig:'' };
 // knob keys that own a part of the picture
@@ -4286,15 +4290,15 @@ function vizUpdate(now){
 const VZ = { r:0, g:0, b:0 };
 function vzRGB(hex){ const n = parseInt(hex.slice(1), 16); return [n >> 16 & 255, n >> 8 & 255, n & 255]; }
 function vzPut(x, y, r, gg, b, a){
-  if (x < 0 || y < 0 || x > 111 || y > 111) return;
-  const i = y * 112 + x, u = viz.u32;
+  if (x < 0 || y < 0 || x >= VW || y >= VW) return;
+  const i = y * VW + x, u = viz.u32;
   if (a >= 1) { u[i] = 0xff000000 | (b << 16) | (gg << 8) | r; return; }
   const o = u[i], or = o & 255, og = o >> 8 & 255, ob = o >> 16 & 255;
   u[i] = 0xff000000 | (Math.round(ob + (b - ob) * a) << 16) | (Math.round(og + (gg - og) * a) << 8) | Math.round(or + (r - or) * a);
 }
 function vzTri(x0, y0, x1, y1, x2, y2, r, gg, b, a){
-  const minX = Math.max(0, Math.floor(Math.min(x0, x1, x2))), maxX = Math.min(111, Math.ceil(Math.max(x0, x1, x2)));
-  const minY = Math.max(0, Math.floor(Math.min(y0, y1, y2))), maxY = Math.min(111, Math.ceil(Math.max(y0, y1, y2)));
+  const minX = Math.max(0, Math.floor(Math.min(x0, x1, x2))), maxX = Math.min(VW - 1, Math.ceil(Math.max(x0, x1, x2)));
+  const minY = Math.max(0, Math.floor(Math.min(y0, y1, y2))), maxY = Math.min(VW - 1, Math.ceil(Math.max(y0, y1, y2)));
   const area = (x1 - x0) * (y2 - y0) - (x2 - x0) * (y1 - y0); if (Math.abs(area) < 1e-6) return;
   const s = area > 0 ? 1 : -1;
   for (let y = minY; y <= maxY; y++) for (let x = minX; x <= maxX; x++) {
@@ -4306,7 +4310,7 @@ function vzTri(x0, y0, x1, y1, x2, y2, r, gg, b, a){
 function vzLine(x0, y0, x1, y1, r, gg, b, a){
   x0 = Math.round(x0); y0 = Math.round(y0); x1 = Math.round(x1); y1 = Math.round(y1);
   const dx = Math.abs(x1 - x0), dy = -Math.abs(y1 - y0), sx = x0 < x1 ? 1 : -1, sy = y0 < y1 ? 1 : -1; let e = dx + dy, n = 0;
-  while (n++ < 400) { vzPut(x0, y0, r, gg, b, a); if (x0 === x1 && y0 === y1) break; const e2 = 2 * e; if (e2 >= dy) { e += dy; x0 += sx; } if (e2 <= dx) { e += dx; y0 += sy; } }
+  while (n++ < 1200) { vzPut(x0, y0, r, gg, b, a); if (x0 === x1 && y0 === y1) break; const e2 = 2 * e; if (e2 >= dy) { e += dy; x0 += sx; } if (e2 <= dx) { e += dx; y0 += sy; } }
 }
 // classic rainbow colormap (blue -> cyan -> green -> yellow -> red), like the reference plots
 function vzJet(v){ v = clamp(v, 0, 1); const c = x => clamp(1.5 - Math.abs(x), 0, 1); return [c(4 * v - 3), c(4 * v - 2), c(4 * v - 1)]; }
@@ -4330,14 +4334,14 @@ function vizParams(){
   return q;
 }
 function drawViz(now){
-  if (!viz.img) { viz.img = g.createImageData(112, 112); viz.u32 = new Uint32Array(viz.img.data.buffer); }
+  const W = viz.hi ? 240 : 112, KS = W / 112; VW = W; vizTarget(W);
   const q = vizParams(), t = 0, u = viz.u32;   // t = 0: nothing in the picture moves on its own
   const light = !!viz.light;   // versionX: a glossy white-to-grey screen
-  vizBg(u, light);
+  vizBg(u, light, W);
   // camera: DIAL turns it
   const yaw = viz.yaw + Math.sin(t * 0.25) * 0.05, el = 0.52, ce = Math.cos(el), se = Math.sin(el), cy0 = Math.cos(yaw), sy0 = Math.sin(yaw);
-  const SC = 32, HS = 1.0;
-  const P3 = (x, y, z) => { const X = x * cy0 - z * sy0, Z = x * sy0 + z * cy0, Y = y * HS; return [56 + X * SC, 58 - (Y - 0.5) * SC * ce + Z * SC * se, Z * ce + Y * se]; };   // the object's middle (y 0.5) sits at the screen centre from every angle
+  const SC = 32 * KS, HS = 1.0;
+  const P3 = (x, y, z) => { const X = x * cy0 - z * sy0, Z = x * sy0 + z * cy0, Y = y * HS; return [W / 2 + X * SC, W * 0.518 - (Y - 0.5) * SC * ce + Z * SC * se, Z * ce + Y * se]; };   // the object's middle (y 0.5) sits at the screen centre from every angle
   const line3 = (a, b, col, al) => { const p = P3(a[0], a[1], a[2]), r2 = P3(b[0], b[1], b[2]); vzLine(p[0], p[1], r2[0], r2[1], col[0], col[1], col[2], al); };
   const bgBuf = Uint32Array.from(u);
   const dim = light ? [150, 148, 142] : vzRGB(C.dim), grid = light ? [178, 176, 170] : vzRGB(C.grid);
@@ -4453,7 +4457,7 @@ function drawViz(now){
     if (i % meshN === 0) vzLine(p[0][0], p[0][1], p[3][0], p[3][1], lr, lg, lb, 0.85);
     if (j % meshN === 0) vzLine(p[0][0], p[0][1], p[1][0], p[1][1], lr, lg, lb, 0.85);
   });
-  const objMask = new Uint8Array(112 * 112); for (let i = 0; i < objMask.length; i++) objMask[i] = u[i] !== preObj[i] ? 1 : 0;
+  const objMask = new Uint8Array(W * W); for (let i = 0; i < objMask.length; i++) objMask[i] = u[i] !== preObj[i] ? 1 : 0;
   // PLAYHEAD: the slice's outline, above and below
   if (phF >= 0) { const j0 = Math.min(NT - 2, Math.floor(phF)), fr = phF - j0, z = 1 - 2 * phF / (NT - 1), pc = light ? [43, 42, 39] : [255, 255, 255];
     for (let v = 0; v < nU; v++) for (let i = 0; i < NB - 1; i++) { const h0 = (H[j0][i] * (1 - fr) + H[j0 + 1][i] * fr) * K + 0.01, h1 = (H[j0][i + 1] * (1 - fr) + H[j0 + 1][i + 1] * fr) * K + 0.01, y0 = YC + lift(v);
@@ -4489,11 +4493,13 @@ function drawViz(now){
 
   vizStyle(q, u, bgBuf, light, objMask);
   g.putImageData(viz.img, 0, 0);
+  if (W !== 112) g.setTransform(2, 0, 0, 2, 8, 8);   // text and marks: the 112 layout drawn at 2x, so the pixel font stays crisp
   // axis letters, the knob you just turned, the double-tap bar, the lock mark
-  { const a1 = P3(0, 0, 1.2); const tc = light ? '#6e6c66' : C.mut; txt('START', Math.round(a1[0]) - 10, Math.round(a1[1]) + 2, tc); const l1 = P3(-1.15, 0, 1), l2 = P3(1.15, 0, 1); txt('LO', Math.round(l1[0]) - 8, Math.round(l1[1]), tc); txt('HI', Math.round(l2[0]), Math.round(l2[1]), tc); }
+  { const L2 = p => W === 112 ? p : [(p[0] - 8) / 2, (p[1] - 8) / 2], a1 = L2(P3(0, 0, 1.2)); const tc = light ? '#6e6c66' : C.mut; txt('START', Math.round(a1[0]) - 10, Math.round(a1[1]) + 2, tc); const l1 = L2(P3(-1.15, 0, 1)), l2 = L2(P3(1.15, 0, 1)); txt('LO', Math.round(l1[0]) - 8, Math.round(l1[1]), tc); txt('HI', Math.round(l2[0]), Math.round(l2[1]), tc); }
   if (viz.label && now - viz.label.t < 1400) { const s = (viz.label.name + ' ' + viz.label.val).slice(0, 27); if (light) { px(0, 0, 112, 7, '#2b2a27'); txt(s, Math.max(1, Math.round(56 - s.length * 2)), 1, '#ffd23f'); } else { px(0, 0, 112, 7, C.bg); txt(s, Math.max(1, Math.round(56 - s.length * 2)), 1, C.acc); } }
   if (viz.armT > 0 && !viz.locked) { const f = clamp((now - viz.armT) / VIZ_DBL, 0, 1); px(90, 106, 20, 3, C.dim); px(90, 106, Math.round(20 * f), 3, C.auto); }
   if (viz.locked) { px(106, 106, 4, 3, C.auto); }
+  vizDone();
 }
 // DIAL in the view turns the camera
 function vizTurn(dir){ viz.yaw += dir * 0.13; }
@@ -4514,62 +4520,63 @@ function vizKnob(i, def){
 // RESO = a bright rim around the silhouette, CHORUS = colour fringes (red and blue pulled apart), FLANGER = scanlines,
 // PHASER = diagonal colour bands, DOWNSAMPLE = fewer colours, CRUSH = big pixels, NOISE = grain, GATE = a darker vignette
 function vizStyle(q, u, bgBuf, light, objMask){
-  const W = 112, N = W * W, R = c => c & 255, G = c => c >> 8 & 255, B = c => c >> 16 & 255, pk = (r, g2, b) => 0xff000000 | (clamp(Math.round(b), 0, 255) << 16) | (clamp(Math.round(g2), 0, 255) << 8) | clamp(Math.round(r), 0, 255);
+  const W = VW, N = W * W, KS = W / 112, R = c => c & 255, G = c => c >> 8 & 255, B = c => c >> 16 & 255, pk = (r, g2, b) => 0xff000000 | (clamp(Math.round(b), 0, 255) << 16) | (clamp(Math.round(g2), 0, 255) << 8) | clamp(Math.round(r), 0, 255);
   const isObj = i => objMask[i] === 1;
-  const near = new Uint8Array(N); for (let y = 0; y < W; y++) for (let x = 0; x < W; x++) { let on = 0; for (let d = -3; d <= 3 && !on; d++) { const xx = x + d; if (xx >= 0 && xx < W && objMask[y * W + xx]) on = 1; } near[y * W + x] = on; }
+  const near = new Uint8Array(N); for (let y = 0; y < W; y++) for (let x = 0; x < W; x++) { let on = 0; for (let d = -Math.round(3 * KS); d <= Math.round(3 * KS) && !on; d++) { const xx = x + d; if (xx >= 0 && xx < W && objMask[y * W + xx]) on = 1; } near[y * W + x] = on; }
   const mix = (c, r, g2, b, a) => pk(R(c) + (r - R(c)) * a, G(c) + (g2 - G(c)) * a, B(c) + (b - B(c)) * a);
   const blur = (src, rad) => { const t = new Float32Array(N * 3), o = new Float32Array(N * 3);
     for (let y = 0; y < W; y++) for (let x = 0; x < W; x++) { let r = 0, g2 = 0, b = 0, n = 0; for (let d = -rad; d <= rad; d++) { const xx = x + d; if (xx < 0 || xx >= W) continue; const c = src[y * W + xx]; r += c[0]; g2 += c[1]; b += c[2]; n++; } const i = (y * W + x) * 3; t[i] = r / n; t[i + 1] = g2 / n; t[i + 2] = b / n; }
     for (let y = 0; y < W; y++) for (let x = 0; x < W; x++) { let r = 0, g2 = 0, b = 0, n = 0; for (let d = -rad; d <= rad; d++) { const yy = y + d; if (yy < 0 || yy >= W) continue; const i = (yy * W + x) * 3; r += t[i]; g2 += t[i + 1]; b += t[i + 2]; n++; } const i = (y * W + x) * 3; o[i] = r / n; o[i + 1] = g2 / n; o[i + 2] = b / n; }
     return o; };
   // ECHO: afterimages of the object, stepping up and back, fading
-  if (q.echo > 0) { const n = clamp(Math.ceil(Math.min(q.echo, 150) / 30), 1, 5), st2 = clamp(Math.round(2 + echoSec(q.etime) * 6), 2, 8), snap = Uint32Array.from(u);
+  if (q.echo > 0) { const n = clamp(Math.ceil(Math.min(q.echo, 150) / 30), 1, 5), st2 = Math.round(clamp(Math.round(2 + echoSec(q.etime) * 6), 2, 8) * KS), snap = Uint32Array.from(u);
     for (let k = n; k >= 1; k--) { const dx = -k * st2, dy = -Math.round(k * st2 * 0.6), a = 0.45 * Math.pow(0.65, k - 1);
       for (let y = 0; y < W; y++) for (let x = 0; x < W; x++) { const sx = x - dx, sy = y - dy; if (sx < 0 || sy < 0 || sx >= W || sy >= W) continue; const si = sy * W + sx, i = y * W + x;
         if (objMask[si] && !objMask[i]) u[i] = mix(u[i], R(snap[si]), G(snap[si]), B(snap[si]), a); } } }
   // LFO: the picture bends in a wave, deeper with more depth, tighter with a faster rate (only when the LFO is connected)
-  { let amp = 0, fr = 0; (q.lfo || []).forEach((L, k) => { if (L.dp > 0 && vizSrcUsed(k ? 'LFO2' : 'LFO1')) { amp += L.dp / 100 * 2.2; fr = Math.max(fr, clamp(Math.log2(1 + L.hz), 0.3, 6)); } });
+  { let amp = 0, fr = 0; (q.lfo || []).forEach((L, k) => { if (L.dp > 0 && vizSrcUsed(k ? 'LFO2' : 'LFO1')) { amp += L.dp / 100 * 2.2 * KS; fr = Math.max(fr, clamp(Math.log2(1 + L.hz), 0.3, 6)); } });
     if (amp > 0.2) { const snap = Uint32Array.from(u); for (let y = 0; y < W; y++) { const off = Math.round(Math.sin(y / W * Math.PI * 2 * fr) * amp); if (!off) continue;
       for (let x = 0; x < W; x++) { const sx = clamp(x - off, 0, W - 1); u[y * W + x] = snap[y * W + sx]; } } } }
   // REVERB: haze and bloom around the object
-  if (q.verb > 0) { const a = Math.min(q.verb, 150) / 100, src = Array.from(u, c => [R(c), G(c), B(c)]), bl = blur(src, 2 + Math.round(Math.min(3, q.size)));
+  if (q.verb > 0) { const a = Math.min(q.verb, 150) / 100, src = Array.from(u, c => [R(c), G(c), B(c)]), bl = blur(src, Math.round((2 + Math.min(3, q.size)) * KS));
     for (let i = 0; i < N; i++) { if (!near[i] && !isObj(i)) continue; const c = u[i]; u[i] = pk(R(c) * (1 - 0.35 * a) + bl[i * 3] * 0.35 * a + (light ? 0 : bl[i * 3] * 0.25 * a), G(c) * (1 - 0.35 * a) + bl[i * 3 + 1] * 0.35 * a + (light ? 0 : bl[i * 3 + 1] * 0.25 * a), B(c) * (1 - 0.35 * a) + bl[i * 3 + 2] * 0.35 * a + (light ? 0 : bl[i * 3 + 2] * 0.25 * a)); } }
   // DRIVE: a hot glow around the bright parts
-  if (q.drive > 0) { const a = Math.min(q.drive, 200) / 100, src = Array.from(u, (c, i) => { const l = (R(c) + G(c) + B(c)) / 3, on = isObj(i) && l > 90 ? 1 : 0; return [on * 255, on * 120, on * 40]; }), bl = blur(src, 3);
+  if (q.drive > 0) { const a = Math.min(q.drive, 200) / 100, src = Array.from(u, (c, i) => { const l = (R(c) + G(c) + B(c)) / 3, on = isObj(i) && l > 90 ? 1 : 0; return [on * 255, on * 120, on * 40]; }), bl = blur(src, Math.round(3 * KS));
     for (let i = 0; i < N; i++) { const c = u[i], gl = Math.min(1, a * 0.9), k2 = bl[i * 3] / 255 * gl; if (k2 < 0.01) continue;
       u[i] = light ? mix(c, 255, 128, 40, Math.min(0.6, k2 * 0.8)) : pk(R(c) + bl[i * 3] * gl, G(c) + bl[i * 3 + 1] * gl, B(c) + bl[i * 3 + 2] * gl); } }
   // RESO: a bright rim around the silhouette
   if (q.reso > 1.5) { const a = Math.min(1, (q.reso - 1.5) / 8), snapObj = new Uint8Array(N); for (let i = 0; i < N; i++) snapObj[i] = isObj(i) ? 1 : 0; const rc = light ? [40, 40, 40] : [255, 255, 255];
     for (let y = 1; y < W - 1; y++) for (let x = 1; x < W - 1; x++) { const i = y * W + x; if (!snapObj[i]) continue; if (!snapObj[i - 1] || !snapObj[i + 1] || !snapObj[i - W] || !snapObj[i + W]) u[i] = mix(u[i], rc[0], rc[1], rc[2], a); } }
   // CHORUS: colour fringes
-  if (q.chorus > 0) { const d = clamp(Math.round(1 + Math.min(q.chorus, 200) / 60), 1, 4), snap = Uint32Array.from(u);
+  if (q.chorus > 0) { const d = Math.round(clamp(Math.round(1 + Math.min(q.chorus, 200) / 60), 1, 4) * KS), snap = Uint32Array.from(u);
     for (let y = 0; y < W; y++) for (let x = 0; x < W; x++) { const i = y * W + x; if (!near[i]) continue; const li = y * W + clamp(x + d, 0, W - 1), ri = y * W + clamp(x - d, 0, W - 1), l = objMask[li] ? snap[li] : snap[i], r2 = objMask[ri] ? snap[ri] : snap[i]; u[i] = pk(R(l), G(snap[i]), B(r2)); } }
   // FLANGER: scanlines
-  if (q.flanger > 0) { const a = Math.min(q.flanger, 100) / 100 * 0.35, per = 2 + Math.round(Math.min(q.flanger, 100) / 50); for (let y = 0; y < W; y++) if (y % per === 0) for (let x = 0; x < W; x++) { if (!isObj(y * W + x)) continue; const c = u[y * W + x]; u[y * W + x] = pk(R(c) * (1 - a), G(c) * (1 - a), B(c) * (1 - a)); } }
+  if (q.flanger > 0) { const a = Math.min(q.flanger, 100) / 100 * 0.35, per = Math.round((2 + Math.round(Math.min(q.flanger, 100) / 50)) * KS); for (let y = 0; y < W; y++) if (y % per < KS) for (let x = 0; x < W; x++) { if (!isObj(y * W + x)) continue; const c = u[y * W + x]; u[y * W + x] = pk(R(c) * (1 - a), G(c) * (1 - a), B(c) * (1 - a)); } }
   // PHASER: diagonal colour bands across the object
-  if (q.phaser > 0) { const a = Math.min(q.phaser, 100) / 100 * 0.35; for (let y = 0; y < W; y++) for (let x = 0; x < W; x++) { const i = y * W + x; if (!isObj(i)) continue; const t = Math.sin((x + y) / 7);
+  if (q.phaser > 0) { const a = Math.min(q.phaser, 100) / 100 * 0.35; for (let y = 0; y < W; y++) for (let x = 0; x < W; x++) { const i = y * W + x; if (!isObj(i)) continue; const t = Math.sin((x + y) / (7 * KS));
     if (t > 0.6) { const c = u[i]; u[i] = pk(R(c) + (B(c) - R(c)) * a, G(c) + (R(c) - G(c)) * a, B(c) + (G(c) - B(c)) * a); } } }
   // DOWNSAMPLE: fewer colours
   if (q.srr > 0) { const lv = Math.max(2, Math.round(16 - Math.min(q.srr, 100) / 100 * 13)), qz = v => Math.round(v / 255 * (lv - 1)) / (lv - 1) * 255; for (let i = 0; i < N; i++) if (isObj(i)) { const c = u[i]; u[i] = pk(qz(R(c)), qz(G(c)), qz(B(c))); } }
   // CRUSH: big pixels
-  if (q.crush > 0) { const bs = 1 + Math.floor(Math.min(q.crush, 100) / 25); if (bs > 1) for (let by = 0; by < W; by += bs) for (let bx = 0; bx < W; bx += bs) { let r = 0, g2 = 0, b = 0, n = 0, obj = 0;
+  if (q.crush > 0) { const bs = Math.round((1 + Math.floor(Math.min(q.crush, 100) / 25)) * (q.crush > 0 ? KS : 1)); if (bs > 1) for (let by = 0; by < W; by += bs) for (let bx = 0; bx < W; bx += bs) { let r = 0, g2 = 0, b = 0, n = 0, obj = 0;
     for (let y = by; y < Math.min(W, by + bs); y++) for (let x = bx; x < Math.min(W, bx + bs); x++) { const c = u[y * W + x]; r += R(c); g2 += G(c); b += B(c); n++; if (isObj(y * W + x)) obj++; }
     if (!obj) continue; const c2 = pk(r / n, g2 / n, b / n); for (let y = by; y < Math.min(W, by + bs); y++) for (let x = bx; x < Math.min(W, bx + bs); x++) u[y * W + x] = c2; } }
   // NOISE: grain
   if (q.noise > 0) { const a = Math.min(q.noise, 200) / 100 * 36; for (let i = 0; i < N; i++) { if (!isObj(i)) continue; const n2 = (vzHash(i, 11) - 0.5) * a, c = u[i]; u[i] = pk(R(c) + n2, G(c) + n2, B(c) + n2); } }
   // GATE: a darker vignette, the harder the gate the tighter
-  if (q.gate > 0) { const a = Math.min(q.gate, 100) / 100 * 0.55; for (let y = 0; y < W; y++) for (let x = 0; x < W; x++) { const dx = (x - 56) / 56, dy = (y - 56) / 56, e = clamp((dx * dx + dy * dy - 0.45) / 0.8, 0, 1) * a, c = u[y * W + x];
+  if (q.gate > 0) { const a = Math.min(q.gate, 100) / 100 * 0.55; for (let y = 0; y < W; y++) for (let x = 0; x < W; x++) { const dx = (x - W / 2) / (W / 2), dy = (y - W / 2) / (W / 2), e = clamp((dx * dx + dy * dy - 0.45) / 0.8, 0, 1) * a, c = u[y * W + x];
     u[y * W + x] = pk(R(c) * (1 - e), G(c) * (1 - e), B(c) * (1 - e)); } }
 }
 
-function vizBg(u, light){
+function vizBg(u, light, W){
+  W = W || 112; const sc = 112 / W;
   if (!light) { const bg = vzRGB(C.bg), bgv = 0xff000000 | (bg[2] << 16) | (bg[1] << 8) | bg[0]; u.fill(bgv); }
-  else for (let y = 0; y < 112; y++) for (let x = 0; x < 112; x++) {
-    const f = y / 111; let v = 250 - f * 52;                                                  // white at the top, grey at the bottom
+  else for (let yy = 0; yy < W; yy++) for (let xx = 0; xx < W; xx++) {
+    const y = yy * sc, x = xx * sc, f = y / 111; let v = 250 - f * 52;                                                  // white at the top, grey at the bottom
     const dx = (x - 40) / 95, dy = (y + 30) / 70, e = dx * dx + dy * dy; if (e < 1 && y < 52) v += (1 - e) * 10;   // a curved gloss over the upper part
     if (y >= 50 && y < 53) v -= (53 - y) * 1.5 * (1 - Math.min(1, Math.abs(x - 50) / 70));     // the gloss's lower edge
     if (x > 92 && y > 70) v -= (x - 92) * 0.25;                                               // a little shade in the lower corner
-    const g2 = Math.round(clamp(v, 0, 255)), b2 = Math.round(clamp(v + 2, 0, 255)); u[y * 112 + x] = 0xff000000 | (b2 << 16) | (g2 << 8) | Math.round(clamp(v - 2, 0, 255)); }
+    const g2 = Math.round(clamp(v, 0, 255)), b2 = Math.round(clamp(v + 2, 0, 255)); u[yy * W + xx] = 0xff000000 | (b2 << 16) | (g2 << 8) | Math.round(clamp(v - 2, 0, 255)); }
 }
 
 // ---------- PATCH view (versionX: hold PLAY and turn CAMERA): the envelopes, the effect order and who moves what ----------
@@ -4581,8 +4588,8 @@ function pLine(x0, y0, x1, y1, col, dash){ x0 = Math.round(x0); y0 = Math.round(
   const dx = Math.abs(x1 - x0), dy = -Math.abs(y1 - y0), sx = x0 < x1 ? 1 : -1, sy = y0 < y1 ? 1 : -1; let e = dx + dy, n = 0;
   while (n < 300) { if (!dash || (n >> 1) % 2 === 0) px(x0, y0, 1, 1, col); n++; if (x0 === x1 && y0 === y1) break; const e2 = 2 * e; if (e2 >= dy) { e += dy; x0 += sx; } if (e2 <= dx) { e += dx; y0 += sy; } } }
 function drawPatch(now){
-  if (!viz.img) { viz.img = g.createImageData(112, 112); viz.u32 = new Uint32Array(viz.img.data.buffer); }
-  const light = !!viz.light; vizBg(viz.u32, light); g.putImageData(viz.img, 0, 0);
+  const W = viz.hi ? 240 : 112; VW = W; vizTarget(W);
+  const light = !!viz.light; vizBg(viz.u32, light, W); g.putImageData(viz.img, 0, 0); if (W !== 112) g.setTransform(2, 0, 0, 2, 8, 8);
   const P = st.patch, ink = light ? '#2b2a27' : '#e8e6f0', mut = light ? '#8a8880' : C.mut, panel = light ? '#e2e1dc' : '#161b2c';
   // header: the selected matrix row in words
   const rows = P.mtx.map((m, i) => ({ m, i })).filter(o => o.m.src && o.m.amt), M = P.mtx[st.mtxRow];
@@ -4616,7 +4623,15 @@ function drawPatch(now){
     else { const yy = dstY(D[1]) + 2; if (yy > 106) return; pLine(22, y0, 70, yy, col, m.amt < 0); if (selRow) pLine(22, y0 + 1, 70, yy + 1, col, false); txt(D[0].slice(0, 9), 72, yy - 2, selRow ? ink : mut); }
     if (m.via) { const vc = SRC_COL[SRCS[m.via]] || ink; px(44, y0 + Math.round(((fx ? by + 12 : dstY(D[1]) + 2) - y0) * 0.45) - 1, 3, 3, vc); } });
   if (!rows.length) txt('NO MOD YET: PAGE 2', 26, 104, mut);
+  vizDone();
 }
+
+// which canvas the visualizer draws on: the device screen (112) or versionX's 240 x 240 screen
+function vizTarget(W){
+  viz.imgs = viz.imgs || {}; if (!viz.imgs[W]) { const c = W === 112 ? g0 : document.getElementById('scrhi').getContext('2d'); const im = c.createImageData(W, W); viz.imgs[W] = { c, im, u:new Uint32Array(im.data.buffer) }; }
+  const T = viz.imgs[W]; viz.img = T.im; viz.u32 = T.u; g = T.c;
+}
+function vizDone(){ g.setTransform(1, 0, 0, 1, 0, 0); g = g0; VW = 112; }
 
 const easeIO = o => o < 0.5 ? 4 * o * o * o : 1 - Math.pow(-2 * o + 2, 3) / 2;
 function draw(){
@@ -4773,11 +4788,11 @@ renderSaves();
 function fitFs(){
   const vv = window.visualViewport, W = vv ? vv.width : innerWidth, H = vv ? vv.height : innerHeight;
   const cs = getComputedStyle(document.documentElement), sat = parseFloat(cs.getPropertyValue('--sat')) || 0, sab = parseFloat(cs.getPropertyValue('--sab')) || 0;
-  const Hu = H - sat - sab, sc = Math.min(W * 0.8 / 310, Hu * 0.84 / 540), devH = Math.max(540, Hu * 0.84 / sc), extra = devH - 540, b = document.body.style;
+  const Hu = H - sat - sab, sc = Math.min(W * 0.88 / 310, Hu * 0.82 / 540), devH = 540, extra = devH - 540, b = document.body.style;
   b.setProperty('--fsy', ((sat - sab) / 2).toFixed(1) + 'px');
   b.setProperty('--fs', sc.toFixed(3)); b.setProperty('--devh', devH.toFixed(1) + 'px');
   // spread the spare height: some above the screen, more between the screen and the buttons
-  b.setProperty('--fst', (16 + extra * 0.3).toFixed(1) + 'px'); b.setProperty('--fsl', (18 + extra * 0.55).toFixed(1) + 'px');
+  b.setProperty('--fst', '0px'); b.setProperty('--fsl', '0px');   // full screen keeps the real proportions: the device floats, scaled to fit
 }
 function setTheme(c){ const m = document.querySelector('meta[name=theme-color]'); if (m) m.setAttribute('content', c); }
 function enterFs(){
@@ -4870,7 +4885,22 @@ const VX_PRESETS = [
   { name:'CHIP LEAD', desc:'A square with crush and downsample for an 8-bit edge, and LFO 2 vibrato.', p:{ wave:3, a:0.001, d:0.1, s:0.8, r:0.1, cutoff:9000, reso:1, sh:{ crush:60, srr:25 }, mtx:[mrow(2, 'pitch', 2)] } },
   { name:'NOISE RISER', desc:'Pure noise through a filter that ENV 1 opens slowly, with swell and reverb. Good for transitions.', p:{ wave:4, a:2, d:0.5, s:1, r:1.5, cutoff:400, reso:4, sh:{ noise:100, swell:70, stime:2, verb:50 }, mtx:[mrow(3, 'cutoff', 90)] } },
   { name:'DIRTY DRONE', desc:'Reverb placed BEFORE grit, so the whole room gets folded and driven. An effect-order example.', p:{ wave:2, uni:3, det:50, a:0.6, d:0.5, s:1, r:3, cutoff:2500, reso:1.5, sh:{ fold:50, drive:60, verb:70, size:4 }, order:['reverb', 'echo', 'grit', 'chorus', 'flanger', 'phaser'] } },
-  { name:'GATED STAB', desc:'Five detuned saws into a big room, with a hard gate that chops the tail.', p:{ wave:2, uni:5, det:25, a:0.002, d:0.6, s:0.3, r:0.4, cutoff:4000, reso:1.2, sh:{ verb:80, size:2, gate:55, gspd:80 } } }];
+  { name:'GATED STAB', desc:'Five detuned saws into a big room, with a hard gate that chops the tail.', p:{ wave:2, uni:5, det:25, a:0.002, d:0.6, s:0.3, r:0.4, cutoff:4000, reso:1.2, sh:{ verb:80, size:2, gate:55, gspd:80 } } },
+  { name:'SUPERSAW LEAD', desc:'Seven detuned saws with a touch of chorus, echo and room. Big and bright.', p:{ wave:2, uni:7, det:40, a:0.005, d:0.3, s:0.8, r:0.4, cutoff:6000, reso:1.2, sh:{ chorus:30, verb:35, echo:30 } } },
+  { name:'SUB BASS', desc:'A pure sine an octave down with extra sub and a little drive. Felt more than heard.', p:{ wave:0, oct:-1, a:0.005, d:0.2, s:1, r:0.15, cutoff:300, reso:0.8, sh:{ sub:70, drive:15 } } },
+  { name:'ACID SQUELCH', desc:'Very high resonance, a low cutoff that ENV 1 snaps open, and drive. The 303-style squelch.', p:{ wave:2, a:0.002, d:0.2, s:0.2, r:0.1, cutoff:300, reso:12, sh:{ drive:50 }, mtx:[mrow(3, 'cutoff', 85)] } },
+  { name:'E-PIANO', desc:'A sine with gentle FM at a 1:1 ratio, decaying like a struck key, with chorus and a small room.', p:{ wave:0, a:0.002, d:1.2, s:0.3, r:0.5, cutoff:8000, reso:0.8, sh:{ fm:30, ratio:1, chorus:25, verb:25 } } },
+  { name:'BRASS', desc:'Two saws; ENV 2 opens the filter a moment after the attack, the way a horn blooms.', p:{ wave:2, uni:2, det:15, a:0.08, d:0.4, s:0.7, r:0.25, cutoff:1200, reso:1.5, env2:{ a:0.08, d:0.5, s:0.3, r:0.3 }, mtx:[mrow(4, 'cutoff', 60)] } },
+  { name:'STRINGS', desc:'Five detuned saws, slow attack, chorus, a little phaser and a hall.', p:{ wave:2, uni:5, det:30, a:0.6, d:0.8, s:0.9, r:1.2, cutoff:3500, reso:1, sh:{ chorus:40, phaser:20, verb:50, size:3 } } },
+  { name:'MARIMBA', desc:'A triangle with an instant attack and short decay, no sustain, in a small room.', p:{ wave:1, a:0.001, d:0.35, s:0, r:0.3, cutoff:5000, reso:1, sh:{ verb:30 } } },
+  { name:'FLANGED PAD', desc:'Slow saws through a deep flanger into reverb: a jet-like sweep.', p:{ wave:2, uni:3, det:20, a:1, d:1, s:1, r:2, cutoff:4000, reso:1, sh:{ flanger:70, verb:40 } } },
+  { name:'LO-FI KEYS', desc:'A triangle through crush and downsample, chorus and a room. Tape-and-cassette mood.', p:{ wave:1, a:0.005, d:0.6, s:0.4, r:0.5, cutoff:2500, reso:1, sh:{ crush:30, srr:40, chorus:30, verb:30 } } },
+  { name:'RING BELL', desc:'A sine ring-modulated at an uneven ratio for clangy partials, with a long tail.', p:{ wave:0, a:0.002, d:1.5, s:0, r:1.5, cutoff:10000, reso:1, sh:{ ring:70, ratio:2.7, verb:50, size:3 } } },
+  { name:'SYNC LEAD', desc:'Hard sync swept by ENV 2 for the classic tearing lead, plus echo.', p:{ wave:2, a:0.005, d:0.2, s:0.7, r:0.2, cutoff:7000, reso:1.2, env2:{ a:0.002, d:0.6, s:0, r:0.2 }, sh:{ sync:30, echo:30 }, mtx:[mrow(4, 'sync', 60)] } },
+  { name:'TREMOLO KEYS', desc:'Soft keys with LFO 1 pulsing the volume.', p:{ wave:1, a:0.005, d:0.8, s:0.6, r:0.5, cutoff:3000, reso:1, lfo:[{ shape:0, r:6, dp:100, retrig:1 }], sh:{ verb:25 }, mtx:[mrow(1, 'level', 40)] } },
+  { name:'ECHO PLUCK', desc:'A short square pluck with a strong echo trail. Plays rhythms by itself.', p:{ wave:3, a:0.001, d:0.25, s:0, r:0.2, cutoff:3000, reso:2, sh:{ echo:70, verb:20 } } },
+  { name:'DEEP SPACE', desc:'Slow detuned saws swelling into a huge room with echo. An ambient bed.', p:{ wave:2, uni:3, det:30, a:2, d:1, s:1, r:4, cutoff:1200, reso:1.5, sh:{ swell:60, stime:3, verb:100, size:8, echo:40 } } },
+  { name:'RANDOM BLEEPS', desc:'Short resonant squares with a sample-and-hold LFO jumping the cutoff, into echo.', p:{ wave:3, a:0.002, d:0.15, s:0, r:0.1, cutoff:1500, reso:6, lfo:[{ shape:4, r:8, dp:100, retrig:0 }], sh:{ echo:40 }, mtx:[mrow(1, 'cutoff', 70)] } }];
 function vxApplyPreset(i){
   const pr = VX_PRESETS[i]; if (!pr) return;
   const src = Object.assign({ tv:2 }, JSON.parse(JSON.stringify(pr.p)));
@@ -4921,7 +4951,7 @@ function vxRefresh(){
 setInterval(vxRefresh, 200);
 function vxTurnPage(d){ const n = vxPages().length; vxPage = (vxPage + d + n) % n; vxBuildPage(); }
 function vxSet(on){
-  vxOn = on; viz.light = on; document.body.classList.toggle('vxc', on);
+  vxOn = on; viz.light = on; viz.hi = on; document.body.classList.toggle('vxc', on);
   document.getElementById('vxSwitch').textContent = on ? 'Switch console: emulator' : 'Switch console: versionX';
   if (on) { wakeAudio(); if (!st.on) { powerOn(); setTimeout(() => { if (st.screen === 'pick') { st.picked = true; st.screen = 'design'; st.shTab = 0; st.shPage = 0; } }, 50); }
     else if (st.screen === 'pick') { st.picked = true; st.screen = 'design'; st.shTab = 0; st.shPage = 0; }
