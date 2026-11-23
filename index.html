@@ -431,6 +431,8 @@
 </div>
 
 <script>
+window.__errs = []; window.addEventListener('error', e => { window.__errs.push((e.message || 'error') + ' @' + (e.lineno || '?')); });
+window.addEventListener('unhandledrejection', e => { window.__errs.push('promise: ' + (e.reason && e.reason.message || e.reason)); });
 'use strict';
 /* ================= constants ================= */
 const NN = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
@@ -4862,6 +4864,18 @@ document.addEventListener('keydown', e => {
   const id = TILT_KEYS[k]; if (id) tiltEl(id, /^(r\d|mainknob)$/.test(id) ? 160 : 0);
 });
 document.addEventListener('keyup', e => { const id = TILT_KEYS[e.key.toLowerCase()]; if (id && !/^(r\d|mainknob)$/.test(id)) untilt(); });
+
+if (/debug/.test(location.search + location.hash)) {
+  const d = document.createElement('div'); d.style.cssText = 'position:fixed;left:6px;top:calc(6px + env(safe-area-inset-top));z-index:99;font:11px/1.35 ui-monospace,Menlo,monospace;color:#fff;background:rgba(0,0,0,.75);padding:6px 8px;border-radius:6px;max-width:92vw;white-space:pre-wrap;pointer-events:none';
+  document.body.appendChild(d);
+  setInterval(() => { let s = '';
+    try { s += 'audio: ' + (ac ? ac.state + ' @' + ac.sampleRate + 'Hz' : 'not created yet') + '\n'; } catch (e) { s += 'audio: ?\n'; }
+    try { s += 'unlocked: ' + iosUnlocked + '  session: ' + (navigator.audioSession ? navigator.audioSession.type : 'n/a') + '\n'; } catch (e) {}
+    try { s += 'master: ' + (master ? master.gain.value.toFixed(2) : '-') + '  vol: ' + (typeof mvol !== 'undefined' ? mvol : '-') + '\n'; } catch (e) {}
+    try { s += 'on: ' + st.on + '  screen: ' + st.screen + '  test: ' + !!st.testLoop + '  playing: ' + !!st.playing + '  vx: ' + (typeof vxOn !== 'undefined' && vxOn) + '\n'; } catch (e) {}
+    s += 'errors: ' + (window.__errs.length ? window.__errs.slice(-3).join(' | ') : 'none') + '\n' + navigator.userAgent.replace(/^Mozilla\/5.0 /, '').slice(0, 90);
+    d.textContent = s; }, 400);
+}
 
 /* ---- versionX: the white console. Knobs are on pages: SOURCE / TONE / MOTION jump, the arrows turn pages ---- */
 let vxOn = false, vxPage = 0, vxPrevT = 0, vxPreset = 0;
