@@ -4598,7 +4598,7 @@ function vizStyle(q, u, bgBuf, light, objMask){
   if (q.verb > 0) { const a = Math.min(q.verb, 150) / 100, src = Array.from(u, c => [R(c), G(c), B(c)]), bl = blur(src, Math.round((2 + Math.min(3, q.size)) * KS));
     for (let i = 0; i < N; i++) { if (!near[i] && !isObj(i)) continue; const c = u[i]; u[i] = pk(R(c) * (1 - 0.35 * a) + bl[i * 3] * 0.35 * a + (light ? 0 : bl[i * 3] * 0.25 * a), G(c) * (1 - 0.35 * a) + bl[i * 3 + 1] * 0.35 * a + (light ? 0 : bl[i * 3 + 1] * 0.25 * a), B(c) * (1 - 0.35 * a) + bl[i * 3 + 2] * 0.35 * a + (light ? 0 : bl[i * 3 + 2] * 0.25 * a)); } }
   // DRIVE: a hot glow around the bright parts
-  if (q.drive > 0) { const a = Math.min(q.drive, 200) / 100, src = Array.from(u, (c, i) => { const l = (R(c) + G(c) + B(c)) / 3, on = isObj(i) && l > 90 ? 1 : 0; return [on * 255, on * 120, on * 40]; }), bl = blur(src, Math.round(3 * KS));
+  if (false && q.drive > 0) { const a = Math.min(q.drive, 200) / 100, src = Array.from(u, (c, i) => { const l = (R(c) + G(c) + B(c)) / 3, on = isObj(i) && l > 90 ? 1 : 0; return [on * 255, on * 120, on * 40]; }), bl = blur(src, Math.round(3 * KS));
     for (let i = 0; i < N; i++) { const c = u[i], gl = Math.min(1, a * 0.9), k2 = bl[i * 3] / 255 * gl; if (k2 < 0.01) continue;
       u[i] = light ? mix(c, 255, 128, 40, Math.min(0.6, k2 * 0.8)) : pk(R(c) + bl[i * 3] * gl, G(c) + bl[i * 3 + 1] * gl, B(c) + bl[i * 3 + 2] * gl); } }
   // RESO: a bright rim around the silhouette
