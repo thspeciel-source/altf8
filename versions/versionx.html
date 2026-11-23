@@ -321,6 +321,27 @@
     background:linear-gradient(0deg, rgba(0,0,0,.35), rgba(255,255,255,.3) 50%, rgba(0,0,0,.35)), repeating-linear-gradient(90deg, #8a8880 0 2px, #f3f2ee 2px 4px); background-position:0 0, var(--vp,0px) 0;
     box-shadow:0 0 0 1px #bdbcb5, inset 0 2px 3px rgba(0,0,0,.35); }
   #vxface .vlab { position:absolute; left:212px; top:481px; width:62px; text-align:center; font:700 6.5px/1 ui-monospace,Menlo,monospace; letter-spacing:.1em; color:#7a7871; pointer-events:none; }
+
+  /* ---------- versionX face v2: screen, two big arrows, F8 and the DIAL; volume on the side ---------- */
+  body.vxc #vxface .cat, body.vxc #vxface .cam, body.vxc #vxface .grp, body.vxc #vxface .turn, body.vxc #vxface .pg, body.vxc #vxface .vwheel, body.vxc #vxface .vlab { display:none !important; }
+  body.vxc #scrwrap { width:282px; height:282px; }
+  body.vxc #scrhi { width:270px; height:270px; border-radius:6px; }
+  #vxface .bigarr { position:absolute; top:322px; width:137px; height:42px; border-radius:11px; border:0; cursor:pointer; font:700 18px/1 system-ui,sans-serif; color:#2f2e2a;
+    background:linear-gradient(180deg, #fdfdfb, #e8e7e1); box-shadow:0 0 0 1px #cfcec7, 0 3px 0 #c2c1ba, 0 5px 8px rgba(0,0,0,.12); touch-action:manipulation; }
+  #vxface .bigarr:active, #vxface .bigarr.dn { transform:translateY(2px); box-shadow:0 0 0 1px #cfcec7, 0 1px 0 #c2c1ba; }
+  #vxface #vxF8 { position:absolute; left:34px; top:382px; width:68px; height:68px; border-radius:50%; border:0; cursor:pointer; font:800 19px/1 system-ui,sans-serif; color:#fff; letter-spacing:.02em;
+    background:radial-gradient(circle at 40% 35%, #7cc4ff, #2a6fd0 70%); box-shadow:0 0 0 1px #1f56a6, 0 4px 0 #1b4c93, 0 7px 12px rgba(0,0,0,.25); touch-action:none; }
+  #vxface #vxF8.dn { transform:translateY(3px); box-shadow:0 0 0 1px #1f56a6, 0 1px 0 #1b4c93; }
+  #vxface #vxF8lab { position:absolute; left:8px; top:460px; width:120px; line-height:1.5; text-align:center; font:700 7.5px/1 system-ui,sans-serif; letter-spacing:.12em; color:#8a8880; pointer-events:none; }
+  #vxface #vxDial { position:absolute; left:170px; top:374px; width:122px; height:122px; border-radius:50%; cursor:ns-resize; touch-action:none;
+    background:radial-gradient(circle at 38% 30%, #ffffff, #f0efea 45%, #d6d5ce 100%); box-shadow:0 0 0 1px #c3c2bb, 0 4px 0 #b8b7b0, 0 9px 16px rgba(0,0,0,.2); }
+  #vxface #vxDial::before { content:''; position:absolute; inset:16px; border-radius:50%; background:repeating-conic-gradient(from var(--dr,0deg), rgba(0,0,0,.10) 0 3deg, transparent 3deg 12deg);
+    -webkit-mask:radial-gradient(circle, transparent 34px, #000 35px); mask:radial-gradient(circle, transparent 34px, #000 35px); }
+  #vxface #vxDial::after { content:'DIAL'; position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font:700 9px/1 system-ui,sans-serif; letter-spacing:.14em; color:#9a988f; }
+  #vxface #vxSide { position:absolute; left:305px; top:326px; width:9px; height:84px; border-radius:4px; cursor:ns-resize; touch-action:none;
+    background:linear-gradient(90deg, rgba(0,0,0,.35), rgba(255,255,255,.35) 50%, rgba(0,0,0,.35)), repeating-linear-gradient(0deg, #8a8880 0 2px, #f3f2ee 2px 4px); background-position:0 0, 0 var(--vp,0px);
+    box-shadow:0 0 0 1px #bdbcb5, inset 0 2px 3px rgba(0,0,0,.3); }
+  #vxface #vxSideLab { position:absolute; left:283px; top:422px; width:30px; text-align:right; font:700 6px/1.2 system-ui,sans-serif; letter-spacing:.1em; color:#9a988f; pointer-events:none; }
 </style>
 </head>
 <body>
@@ -344,7 +365,7 @@
         <div class="cam hi"><s class="hint">HOLD PLAY<br>+ TURN<br>= PATCH</s></div>
         <div class="grp lo" id="vxG0" style="top:280px"></div><div class="grp lo" id="vxG1" style="top:370px"></div>
         <button class="turn lo" id="vxPrev" style="left:14px">&#9664;</button><button class="turn lo" id="vxNext" style="left:62px">&#9654;</button>
-        <div class="pg lo" id="vxPg"></div><div class="vwheel lo" id="vxVol"></div><div class="vlab lo">VOL - +</div>
+        <div class="pg lo" id="vxPg"></div><button class="bigarr" id="vxL" style="left:14px">&#9664;</button><button class="bigarr" id="vxR" style="left:159px">&#9654;</button><button id="vxF8">F8</button><div id="vxF8lab">CLICK: CABLE<br>HOLD: MOVE &middot; 2&times;: EDIT</div><div id="vxDial"></div><div id="vxSide" title="Volume"></div><div class="vwheel lo" id="vxVol"></div><div class="vlab lo">VOL - +</div>
       </div>
       <div id="pwrled"></div>
       <div id="limled" title="Limiter: amber = working lightly, red = squashing hard"></div><div id="limlab">LIMIT</div>
@@ -2768,7 +2789,7 @@ function barList(b){ const B = st.bars[b], l = B.notes.map((n, i) => ({ midi:n.m
 function mainTurn(dir){
   if (!st.on) return;
   st.mainAngle += dir * 15; document.getElementById('mainknob').style.setProperty('--rot', st.mainAngle + 'deg');
-  if (vxOn) { if (held.play) { held.playUsed = true; vxSetView(dir > 0 ? 'patch' : 'object'); } else vizTurn(dir); return; }
+  if (vxOn) { vxDial(dir); return; }
   if (vizShowing() && !held.play) { vizTurn(dir); return; }
   if (held.play) { held.playUsed = true; if (!st.fan || st.fan.closing) openFan(); const n = fanList().length; st.fan.sel = (st.fan.sel + dir + n) % n; return; }
   if (st.screen === 'design' && held.bars.length) { held.barUsed = true; testTurn(held.bars[0], dir); return; }
@@ -4621,13 +4642,15 @@ function vizStyle(q, u, bgBuf, light, objMask){
   // NOISE: grain
   if (q.noise > 0) { const a = Math.min(q.noise, 200) / 100 * 36; for (let i = 0; i < N; i++) { if (!isObj(i)) continue; const n2 = (vzHash(i, 11) - 0.5) * a, c = u[i]; u[i] = pk(R(c) + n2, G(c) + n2, B(c) + n2); } }
   // GATE: a darker vignette, the harder the gate the tighter
-  if (q.gate > 0) { const a = Math.min(q.gate, 100) / 100 * 0.55; for (let y = 0; y < W; y++) for (let x = 0; x < W; x++) { const dx = (x - W / 2) / (W / 2), dy = (y - W / 2) / (W / 2), e = clamp((dx * dx + dy * dy - 0.45) / 0.8, 0, 1) * a, c = u[y * W + x];
+  if (q.gate > 0 && !light) { const a = Math.min(q.gate, 100) / 100 * 0.55; for (let y = 0; y < W; y++) for (let x = 0; x < W; x++) { const dx = (x - W / 2) / (W / 2), dy = (y - W / 2) / (W / 2), e = clamp((dx * dx + dy * dy - 0.45) / 0.8, 0, 1) * a, c = u[y * W + x];
     u[y * W + x] = pk(R(c) * (1 - e), G(c) * (1 - e), B(c) * (1 - e)); } }
 }
 
 function vizBg(u, light, W){
   W = W || 112; const sc = 112 / W;
   if (!light) { const bg = vzRGB(C.bg), bgv = 0xff000000 | (bg[2] << 16) | (bg[1] << 8) | bg[0]; u.fill(bgv); }
+  else if (W === 240) { const bgc = 0xff000000 | (248 << 16) | (251 << 8) | 251, dot = 0xff000000 | (205 << 16) | (212 << 8) | 214; u.fill(bgc);   // versionX: plain white with evenly spread dots, no vignette
+    for (let y = 6; y < W; y += 12) for (let x = 6; x < W; x += 12) { u[y * W + x] = dot; u[y * W + x + 1] = dot; u[(y + 1) * W + x] = dot; u[(y + 1) * W + x + 1] = dot; } }
   else for (let yy = 0; yy < W; yy++) for (let xx = 0; xx < W; xx++) {
     const y = yy * sc, x = xx * sc, f = y / 111; let v = 250 - f * 52;                                                  // white at the top, grey at the bottom
     const dx = (x - 40) / 95, dy = (y + 30) / 70, e = dx * dx + dy * dy; if (e < 1 && y < 52) v += (1 - e) * 10;   // a curved gloss over the upper part
@@ -4725,7 +4748,7 @@ function draw(){
       else if (!full) stxt('pr', showMsg ? st.msg : prompt, 27, 1, 99, showMsg ? C.acc : C.txt);
       else if (showMsg && !st.modHold) { px(0, 0, 112, 7, C.bg); txt(st.msg, Math.max(1, Math.round(56 - st.msg.length * 2)), 1, C.acc); }
       if (clean && showMsg && st.screen !== 'pick') { const m = st.msg.slice(0, 27); px(0, 0, 112, 7, C.bg); txt(m, Math.max(1, Math.round(56 - m.length * 2)), 1, C.acc); }
-      vizUpdate(now); if ((vizShowing() || vxOn) && !st.shut) { if (vxOn && viz.view === 'patch') drawPatch(now); else drawViz(now); }
+      vizUpdate(now); if ((vizShowing() || vxOn) && !st.shut) { if (vxOn) vxRender(now); else drawViz(now); }
       drawPlayPause(now); drawFan(now);
       { const t = now - st.boot - BOOT_LOGO - BOOT_CLOSE; if (t >= 0 && t < BOOT_OPEN) { const o = easeIO(t / BOOT_OPEN); irisMask(92 * o, 0.9 + o * 0.9); } }
     }
@@ -5068,6 +5091,295 @@ setInterval(() => {
   if (next < ac.currentTime + 0.12) { const t = Math.max(next, ac.currentTime + 0.02), N = nodesOf(selTrack());
     voice(st.patch.home ?? 60, t, hold, 0.9, 'vxtest', st.patch, N && N.inp); vxLast = t; }
 }, 25);
+
+/* ================= versionX v2: three levels on one screen (3D > PATCH > EDIT), changed with hold PLAY + DIAL =================
+   PATCH: colour-coded blocks for the sound path (left), modulators (right) and cables between them, with a little weight and
+   wiggle; unused effects wait as chips at the bottom. F8: click = cable, hold = move an effect, double-click = edit page. */
+const vx = { lvl:0, selId:'blk:FILTER 1', objSel:0, cab:null, move:null, edit:null, opt:0, boxes:{}, ropes:{}, mini:null, miniT:0, frame:0, f8:{ down:false, t:0, hold:false, holdT:null, clickT:null, clicks:0 } };
+const VXO = ['PRESET', 'ANGLE', 'TILT'];
+const vxObjDef = i => i === 0 ? vxPresetDef : vxDefs('READ')[i - 1];
+// every block: its own fill hue and outline hue, chosen so no two pairs match; settings shift them
+const VXB = {
+  'OSC':{ h:205, o:330, key:'pitch' }, 'FILTER 1':{ h:150, o:40, key:'cutoff' }, 'FILTER 2':{ h:168, o:12, key:'cut2' },
+  'GRIT':{ h:8, o:200, key:'drive', fx:'grit' }, 'CHORUS':{ h:186, o:300, key:'chorus', fx:'chorus' }, 'FLANGER':{ h:292, o:160, key:'flanger', fx:'flanger' },
+  'PHASER':{ h:96, o:18, key:'phaser', fx:'phaser' }, 'ECHO':{ h:50, o:250, key:'echo', fx:'echo' }, 'REVERB':{ h:228, o:62, key:'verb', fx:'reverb' },
+  'VOLUME':{ h:0, o:0, key:'level', lock:true },
+  'LFO 1':{ h:272, o:92, src:1 }, 'LFO 2':{ h:318, o:128, src:2 }, 'ADSR 1':{ h:0, o:0, src:3, lock:true }, 'ADSR 2':{ h:338, o:178, src:4 },
+  'SEQ 1':{ h:62, o:280, src:5 }, 'SEQ 2':{ h:120, o:340, src:6 }, 'VELO':{ h:24, o:210, src:7 }, 'KEY':{ h:240, o:30, src:8 }, 'HIT':{ h:356, o:150, src:9 } };
+const VX_SRCNAME = { 1:'LFO 1', 2:'LFO 2', 3:'ADSR 1', 4:'ADSR 2', 5:'SEQ 1', 6:'SEQ 2', 7:'VELO', 8:'KEY', 9:'HIT' };
+const VX_FXON = { grit:S => (S.drive || 0) + (S.fold || 0) + (S.crush || 0) + (S.srr || 0) > 0, chorus:S => (S.chorus || 0) > 0, flanger:S => (S.flanger || 0) > 0, phaser:S => (S.phaser || 0) > 0, echo:S => (S.echo || 0) > 0, reverb:S => (S.verb || 0) > 0 };
+const VX_FXADD = { grit:['drive', 30], chorus:['chorus', 40], flanger:['flanger', 40], phaser:['phaser', 40], echo:['echo', 35], reverb:['verb', 35] };
+// which block a matrix destination belongs to
+function vxBlockOfKey(k){
+  if (['cutoff', 'reso', 'ktrack'].includes(k)) return 'FILTER 1'; if (['cut2', 'reso2'].includes(k)) return 'FILTER 2';
+  if (['drive', 'fold', 'crush', 'srr'].includes(k)) return 'GRIT'; if (k === 'chorus') return 'CHORUS'; if (k === 'flanger') return 'FLANGER'; if (k === 'phaser') return 'PHASER';
+  if (['echo', 'etime'].includes(k)) return 'ECHO'; if (['verb', 'size'].includes(k)) return 'REVERB';
+  if (['level', 'pan'].includes(k)) return 'VOLUME'; if (['a', 'd', 's', 'r', 'retrig'].includes(k)) return 'ADSR 1'; if (/^e2/.test(k)) return 'ADSR 2';
+  if (/^l0/.test(k)) return 'LFO 1'; if (/^l1/.test(k)) return 'LFO 2'; if (k === 's0rt') return 'SEQ 1'; if (k === 's1rt') return 'SEQ 2';
+  return 'OSC'; }
+function vxBlockDefs(n){
+  const f = (pg, idx) => { const d = shapeDefs(pg); return idx ? idx.map(i => d[i]) : d; }, ok = a => a.filter(x => x && x !== NOKNOB && x.name !== '-');
+  if (n === 'OSC') return ok([vxWave].concat(f('OSC'), f('MOD OSC'), f('FEEL', [0, 2, 3])));
+  if (n === 'FILTER 1') return ok(f('FILTER')); if (n === 'FILTER 2') return ok(f('FILTER 2')); if (n === 'GRIT') return ok(f('GRIT'));
+  if (n === 'CHORUS') return ok(f('SPACE', [1])); if (n === 'FLANGER') return ok(f('SPACE', [2])); if (n === 'PHASER') return ok(f('SPACE', [3]));
+  if (n === 'ECHO') return ok(f('ROOM', [3, 1])); if (n === 'REVERB') return ok(f('ROOM', [2, 0]));
+  if (n === 'VOLUME') return ok(f('FEEL', [1]).concat(f('SPACE', [0]), f('GATE')));
+  if (n === 'ADSR 1') return ok(f('ENVELOPE')); if (n === 'ADSR 2') return ok(f('ENV 2')); if (n === 'LFO 1' || n === 'LFO 2') return ok(f(n));
+  if (n === 'SEQ 1' || n === 'SEQ 2') return ok(f(n));
+  return []; }
+function vxCableDefs(r){ const M = st.patch.mtx[r]; if (!M) return [];
+  return [{ name:'TARGET', frac:() => M.dst / (DSTS.length - 1), val:() => DSTS[M.dst][0], step:d => { const j = M.dst + Math.sign(d); if (j < 0) { M.src = 0; M.amt = 0; vxBack(); flash('CABLE REMOVED'); return; } M.dst = clamp(j, 0, DSTS.length - 1); } },
+    { name:'AMOUNT', frac:() => (M.amt + 100) / 200, val:() => sgnPct(M.amt), step:d => { M.amt = clamp(M.amt + d * 5, -100, 100); } },
+    { name:'VIA', frac:() => M.via / (SRCS.length - 1), val:() => M.via ? VX_SRCNAME[M.via] || SRCS[M.via] : 'NONE', step:d => { M.via = clamp(M.via + Math.sign(d), 0, SRCS.length - 1); } }]; }
+const vxFrac = d => { let f = 0.5; try { f = clamp(d.frac(), 0, 1); } catch (e) {} return isFinite(f) ? f : 0.5; };
+function vxHsl(h, s, l){ h = ((h % 360) + 360) % 360; const a = s * Math.min(l, 1 - l), f = n => { const k = (n + h / 30) % 12; return l - a * Math.max(-1, Math.min(k - 3, 9 - k, 1)); };
+  return [Math.round(f(0) * 255), Math.round(f(8) * 255), Math.round(f(4) * 255)]; }
+const vxCss = c => 'rgb(' + c[0] + ',' + c[1] + ',' + c[2] + ')';
+const vxInk = c => { const L = v => { v /= 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); }; return 0.2126 * L(c[0]) + 0.7152 * L(c[1]) + 0.0722 * L(c[2]) > 0.34 ? '#141318' : '#ffffff'; };
+// a block's colours from its settings: 1st setting moves the hue, 2nd the brightness, 3rd the saturation, 4th the outline
+// (floors on brightness and saturation keep it clean; only everything at the max drifts toward muddy)
+function vxColors(n){
+  const B = VXB[n] || { h:0, o:0 };
+  if (B.lock) return { bg:[226, 225, 220], ol:[178, 176, 170], ink:'#5b5a55' };
+  const fr = vxBlockDefs(n).map(vxFrac), f = i => fr[i] ?? 0.5;
+  let h = B.h + (f(0) - 0.5) * 46, l = 0.44 + f(1) * 0.2, s = 0.62 + f(2) * 0.33;
+  const all = fr.length ? fr.reduce((a, b) => a + b, 0) / fr.length : 0;
+  if (all > 0.92) { s *= 0.6; l *= 0.8; }                                   // everything at the max: allowed to go murky
+  else { const hh = ((h % 360) + 360) % 360; if (hh > 12 && hh < 58) { l = Math.max(l, 0.52); s = Math.max(s, 0.8); } }   // keep warm hues bright, never brown
+  const bg = vxHsl(h, s, l), ol = vxHsl(B.o + (f(3) - 0.5) * 70, 0.85, 0.5);
+  return { bg, ol, ink:vxInk(bg) }; }
+function vxChain(){ const P = st.patch, S = P.sh, c = ['OSC', 'FILTER 1']; if (P.route !== 2) c.push('FILTER 2');
+  (P.order || FX_ORDER).forEach(k => { if (VX_FXON[k] && VX_FXON[k](S)) c.push(FX_NAME[k]); }); c.push('VOLUME'); return c; }
+function vxUnused(){ const P = st.patch, S = P.sh, u = []; if (P.route === 2) u.push('FILTER 2');
+  FX_ORDER.forEach(k => { if (!VX_FXON[k](S)) u.push(FX_NAME[k]); }); return u; }
+function vxMods(){ const used = new Set(st.patch.mtx.filter(m => m.src && m.amt).map(m => m.src));
+  return ['LFO 1', 'LFO 2', 'ADSR 1', 'ADSR 2'].concat(['SEQ 1', 'SEQ 2', 'VELO', 'KEY', 'HIT'].filter(n => used.has(VXB[n].src))); }
+function vxCables(){ const out = [];
+  st.patch.mtx.forEach((m, r) => { if (!m.src || !m.amt) return; const from = VX_SRCNAME[m.src]; if (!from) return; out.push({ r, from, to:vxBlockOfKey(DSTS[m.dst][1]), m }); });
+  return out; }
+// the selectable things, in dial order: the chain, the modulators, the cables, the chips
+function vxItems(){ return [vxChain().map(n => 'blk:' + n), vxMods().map(n => 'mod:' + n), vxCables().map(c => 'cab:' + c.r), vxUnused().map(n => 'chip:' + n)]; }
+function vxSelIdx(flat){ let i = flat.indexOf(vx.selId); if (i < 0) { i = 0; vx.selId = flat[0]; } return i; }
+function vxLabel(name, val){ viz.label = { name, val:String(val), t:performance.now() }; }
+// ---------- layout (target positions) ----------
+function vxLayout(){
+  const ch = vxChain(), md = vxMods(), un = vxUnused(), L = {};
+  const top = 26, bot = un.length ? 206 : 232, gap = 5, n = ch.length, bh = Math.min(22, (bot - top - gap * (n - 1)) / n);
+  ch.forEach((nm, k) => L['blk:' + nm] = { x:10, y:top + k * (bh + gap), w:104, h:bh });
+  const mt = 52, mh = Math.min(20, (bot - mt - gap * (md.length - 1)) / md.length);
+  md.forEach((nm, k) => L['mod:' + nm] = { x:150, y:mt + k * (mh + gap), w:80, h:mh });
+  if (un.length) { const cw = Math.min(46, (220 - 4 * (un.length - 1)) / un.length); un.forEach((nm, k) => L['chip:' + nm] = { x:10 + k * (cw + 4), y:214, w:cw, h:18 }); }
+  return L; }
+function vxBoxes(L){
+  Object.keys(L).forEach(id => { const t = L[id]; let b = vx.boxes[id]; if (!b) b = vx.boxes[id] = { x:t.x, y:t.y, vx:0, vy:0 }; b.w = t.w; b.h = t.h; b.tx = t.x; b.ty = t.y; b.seen = vx.frame; });
+  Object.keys(vx.boxes).forEach(id => { if (vx.boxes[id].seen !== vx.frame) delete vx.boxes[id]; });
+  // springs: boxes settle back on their spots, a cable tugging on them budges them a little
+  Object.values(vx.boxes).forEach(b => { b.vx += (b.tx - b.x) * 0.16; b.vy += (b.ty - b.y) * 0.16; b.vx *= 0.72; b.vy *= 0.72; b.x += b.vx; b.y += b.vy; });
+  if (vx.move) { const b = vx.boxes['blk:' + vx.move]; if (b) { b.x += (b.tx + 10 - b.x) * 0.5; } } }
+// ---------- cables: a little rope with weight that settles straight ----------
+const VX_NP = 10;
+function vxRope(id, a, b){
+  let R = vx.ropes[id];
+  if (!R) { R = vx.ropes[id] = { p:[] }; for (let i = 0; i < VX_NP; i++) { const t = i / (VX_NP - 1), x = a[0] + (b[0] - a[0]) * t, y = a[1] + (b[1] - a[1]) * t; R.p.push({ x, y, px:x - (Math.random() - 0.5) * 3, py:y - (Math.random() - 0.5) * 3 }); } }
+  R.seen = vx.frame; const P = R.p, len = Math.hypot(b[0] - a[0], b[1] - a[1]) / (VX_NP - 1);
+  for (let i = 1; i < VX_NP - 1; i++) { const q = P[i], vxq = (q.x - q.px) * 0.94, vyq = (q.y - q.py) * 0.94; q.px = q.x; q.py = q.y; q.x += vxq; q.y += vyq + 0.06; }
+  P[0].x = a[0]; P[0].y = a[1]; P[VX_NP - 1].x = b[0]; P[VX_NP - 1].y = b[1];
+  for (let it = 0; it < 6; it++) for (let i = 0; i < VX_NP - 1; i++) { const p1 = P[i], p2 = P[i + 1], dx = p2.x - p1.x, dy = p2.y - p1.y, d = Math.hypot(dx, dy) || 1e-6, df = (d - len) / d * 0.5;
+    if (i > 0) { p1.x += dx * df; p1.y += dy * df; } if (i + 1 < VX_NP - 1) { p2.x -= dx * df; p2.y -= dy * df; } }
+  return R; }
+function vxTug(R, ida, idb){   // the rope pulls on the boxes at its ends when it swings: a small budge
+  const A = vx.boxes[ida], B = vx.boxes[idb], P = R.p;
+  if (A) { A.vx += (P[1].x - P[0].x - (P[2].x - P[1].x)) * 0.02; A.vy += (P[1].y - P[0].y) * 0.01; }
+  if (B) { const n = P.length; B.vx += (P[n - 2].x - P[n - 1].x - (P[n - 3].x - P[n - 2].x)) * 0.02; B.vy += (P[n - 2].y - P[n - 1].y) * 0.01; } }
+// ---------- drawing ----------
+const VX_FONT = '600 10px system-ui, -apple-system, "Segoe UI", Inter, sans-serif';
+function vxRR(c, x, y, w, h, r){ r = Math.min(r, w / 2, h / 2); c.beginPath(); c.moveTo(x + r, y); c.arcTo(x + w, y, x + w, y + h, r); c.arcTo(x + w, y + h, x, y + h, r); c.arcTo(x, y + h, x, y, r); c.arcTo(x, y, x + w, y, r); c.closePath(); }
+function vxDots(c){ c.fillStyle = '#fbfbf8'; c.fillRect(0, 0, 240, 240); c.fillStyle = '#d6d4cd'; for (let y = 6; y < 240; y += 12) for (let x = 6; x < 240; x += 12) { c.beginPath(); c.arc(x, y, 0.85, 0, 6.283); c.fill(); } }
+function vxPulse(now){ return 0.25 + 0.75 * (0.5 + 0.5 * Math.cos(now / 1000 * 2 * Math.PI / 1.2)); }   // the selection blinks with a soft fade
+function vxSelRing(c, b, now, r){ c.save(); c.globalAlpha = vxPulse(now); c.strokeStyle = '#18171d'; c.lineWidth = 1.8; vxRR(c, b.x - 3.5, b.y - 3.5, b.w + 7, b.h + 7, (r || 6) + 2); c.stroke(); c.restore(); }
+function vxBox(c, id, b, name, now, opt){
+  const col = vxColors(name), chip = id.startsWith('chip:');
+  if (chip) { c.fillStyle = '#ffffff'; vxRR(c, b.x, b.y, b.w, b.h, b.h / 2); c.fill(); c.lineWidth = 1.3; c.strokeStyle = vxCss(col.ol); c.setLineDash([3, 2]); c.stroke(); c.setLineDash([]);
+    c.fillStyle = '#6d6b66'; c.font = '600 7px system-ui, sans-serif'; c.textAlign = 'center'; c.fillText(name.replace('FILTER 2', 'FILT 2'), b.x + b.w / 2, b.y + b.h / 2 + 2.5); }
+  else { c.fillStyle = vxCss(col.bg); vxRR(c, b.x, b.y, b.w, b.h, 6); c.fill(); c.lineWidth = 2; c.strokeStyle = vxCss(col.ol); c.stroke();
+    c.fillStyle = col.ink; c.font = VX_FONT; c.textAlign = 'center'; c.fillText(name, b.x + b.w / 2, b.y + b.h / 2 + 3.5); }
+  if (opt && opt.sel) vxSelRing(c, b, now, chip ? b.h / 2 : 6); }
+function vxMini(c, x, y, w, h, now){
+  // the 3D view, small, always on top: refreshed a few times a second from the real visualizer
+  if (!vx.mini) { vx.mini = document.createElement('canvas'); vx.mini.width = 240; vx.mini.height = 240; }
+  c.save(); vxRR(c, x, y, w, h, 6); c.clip(); c.fillStyle = '#ffffff'; c.fillRect(x, y, w, h); c.drawImage(vx.mini, 20, 40, 200, 160, x, y, w, h); c.restore();
+  c.lineWidth = 1; c.strokeStyle = '#d3d1ca'; vxRR(c, x, y, w, h, 6); c.stroke(); }
+function vxRefreshMini(now){
+  if (now - vx.miniT < 120 || !vx.mini) return; vx.miniT = now;
+  const v0 = viz.view; viz.view = 'object'; try { drawViz(now); } catch (e) {} viz.view = v0;
+  const cv = document.getElementById('scrhi'); vx.mini.getContext('2d').drawImage(cv, 0, 0); }
+function vxCtx(){ const cv = document.getElementById('scrhi'), c = cv.getContext('2d'); c.setTransform(1, 0, 0, 1, 0, 0); return c; }
+function vxDrawPatch(now){
+  vx.frame++; vxRefreshMini(now); const c = vxCtx(); vxDots(c);
+  if (selTrack().type === 'drums') { c.fillStyle = '#2b2a27'; c.font = VX_FONT; c.textAlign = 'center'; c.fillText('DRUMS: NO PATCH', 120, 120); return; }
+  const L = vxLayout(); vxBoxes(L); const flat = vxItems().flat(), si = vxSelIdx(flat), sel = flat[si];
+  const anchorR = id => { const b = vx.boxes[id]; return b ? [b.x + b.w, b.y + b.h / 2] : null; }, anchorL = id => { const b = vx.boxes[id]; return b ? [b.x, b.y + b.h / 2] : null; };
+  // the sound path's links
+  const ch = vxChain(); c.strokeStyle = '#b9b7b0'; c.lineWidth = 1.2;
+  for (let k = 0; k < ch.length - 1; k++) { const a = vx.boxes['blk:' + ch[k]], b = vx.boxes['blk:' + ch[k + 1]]; if (!a || !b) continue; c.beginPath(); c.moveTo(a.x + 30, a.y + a.h); c.lineTo(b.x + 30, b.y); c.stroke(); }
+  // header
+  c.fillStyle = '#26252b'; c.font = '700 11px system-ui, -apple-system, sans-serif'; c.textAlign = 'left';
+  let head = 'PATCH'; if (vx.cab) head = vx.cab.from + ' → ' + (vx.cab.list[vx.cab.i] || '').replace(/^\w+:/, ''); else if (vx.move) head = 'MOVE ' + vx.move;
+  else if (sel) { const [k, v] = sel.split(':'); head = k === 'cab' ? (() => { const C = vxCables().find(x => x.r === +v); return C ? C.from + ' → ' + DSTS[C.m.dst][0] + ' ' + sgnPct(C.m.amt) : 'CABLE'; })() : v; }
+  c.fillText(head.slice(0, 24), 10, 16);
+  vxMini(c, 160, 4, 72, 42, now);
+  // ADSR 1 always shapes the volume: a grey dashed link
+  { const a = anchorL('mod:ADSR 1'), b = anchorR('blk:VOLUME'); if (a && b) { c.setLineDash([3, 3]); c.strokeStyle = '#b9b7b0'; c.lineWidth = 1.2; c.beginPath(); c.moveTo(a[0], a[1]); c.lineTo(b[0], b[1]); c.stroke(); c.setLineDash([]); } }
+  // cables
+  vxCables().forEach(C => { const ida = 'mod:' + C.from, idb = (C.to === C.from ? null : (vx.boxes['blk:' + C.to] ? 'blk:' + C.to : vx.boxes['mod:' + C.to] ? 'mod:' + C.to : null)); if (!idb) return;
+    const a = anchorL(ida), b = idb.startsWith('mod:') ? anchorL(idb) : anchorR(idb); if (!a || !b) return;
+    const R = vxRope('c' + C.r + ':' + C.from + '>' + C.to, a, b); vxTug(R, ida, idb);
+    const col = vxColors(C.from), amt = Math.abs(C.m.amt) / 100, w = 1.4 + amt * 4.2, k = 0.55 + amt * 0.45;
+    const cc = [Math.round(col.bg[0] * k + 255 * (1 - k) * 0.35), Math.round(col.bg[1] * k + 255 * (1 - k) * 0.35), Math.round(col.bg[2] * k + 255 * (1 - k) * 0.35)];
+    const path = () => { c.beginPath(); c.moveTo(R.p[0].x, R.p[0].y); for (let i = 1; i < R.p.length; i++) c.lineTo(R.p[i].x, R.p[i].y); };
+    const isSel = sel === 'cab:' + C.r;
+    if (isSel) { c.save(); c.globalAlpha = vxPulse(now) * 0.5; c.strokeStyle = '#18171d'; c.lineWidth = w + 5; c.lineCap = 'round'; path(); c.stroke(); c.restore(); }
+    c.lineCap = 'round'; c.lineJoin = 'round'; c.strokeStyle = vxCss(cc); c.lineWidth = w; if (C.m.amt < 0) c.setLineDash([5, 3]); path(); c.stroke(); c.setLineDash([]);
+    if (C.m.via) { const vn = VX_SRCNAME[C.m.via]; if (vn) { c.strokeStyle = vxCss(vxColors(vn).bg); c.lineWidth = Math.max(1, w / 3); c.setLineDash([2, 4]); path(); c.stroke(); c.setLineDash([]); } } });
+  Object.keys(vx.ropes).forEach(k => { if (vx.ropes[k].seen !== vx.frame) delete vx.ropes[k]; });
+  // a cable being made: a loose dashed line to where the dial points
+  if (vx.cab) { const tgt = vx.cab.list[vx.cab.i], a = vx.cab.fromId.startsWith('mod:') ? anchorL(vx.cab.fromId) : anchorR(vx.cab.fromId), tb = vx.boxes[tgt];
+    if (a && tb && tgt !== vx.cab.fromId) { const b = tgt.startsWith('mod:') ? [tb.x, tb.y + tb.h / 2] : tgt.startsWith('chip:') ? [tb.x + tb.w / 2, tb.y] : [tb.x + tb.w, tb.y + tb.h / 2];
+      const R = vxRope('preview', a, b); c.strokeStyle = vxCss(vxColors(vx.cab.from).bg); c.lineWidth = 2; c.setLineDash([4, 3]); c.beginPath(); c.moveTo(R.p[0].x, R.p[0].y); R.p.forEach(q => c.lineTo(q.x, q.y)); c.stroke(); c.setLineDash([]); } }
+  // boxes on top
+  const showSel = vx.cab ? vx.cab.list[vx.cab.i] : sel;
+  Object.keys(L).forEach(id => { const b = vx.boxes[id]; if (!b || (vx.move && id === 'blk:' + vx.move)) return; vxBox(c, id, b, id.split(':')[1], now, { sel:id === showSel }); });
+  if (vx.move) { const id = 'blk:' + vx.move, b = vx.boxes[id]; if (b) { c.setLineDash([4, 3]); c.strokeStyle = '#b9b7b0'; c.lineWidth = 1.2; vxRR(c, b.tx, b.ty, b.w, b.h, 6); c.stroke(); c.setLineDash([]);
+    vxBox(c, id, b, vx.move, now, { sel:true }); c.fillStyle = '#26252b'; c.font = '700 13px system-ui, sans-serif'; c.textAlign = 'left'; c.fillText('↕', b.x + b.w + 6, b.y + b.h / 2 + 4); } }
+}
+// ---------- the edit page: banner, one line, a graph of the block, the settings at the bottom ----------
+function vxEditDefs(){ const E = vx.edit; if (!E) return []; return E.cab != null ? vxCableDefs(E.cab) : vxBlockDefs(E.name); }
+function vxGraph(c, x, y, w, h, now){
+  const E = vx.edit, P = st.patch, S = P.sh, n = E.name, col = vxColors(E.cab != null ? VX_SRCNAME[(P.mtx[E.cab] || {}).src] || 'LFO 1' : n), stroke = vxCss(col.bg);
+  c.save(); c.strokeStyle = '#e6e4de'; c.lineWidth = 1; for (let k = 1; k < 4; k++) { c.beginPath(); c.moveTo(x + w * k / 4, y); c.lineTo(x + w * k / 4, y + h); c.stroke(); } c.beginPath(); c.moveTo(x, y + h); c.lineTo(x + w, y + h); c.stroke();
+  const line = (fn, N, fill) => { c.beginPath(); for (let i = 0; i <= N; i++) { const t = i / N, v = clamp(fn(t), -0.05, 1.05); const X = x + t * w, Y = y + h - v * h; i ? c.lineTo(X, Y) : c.moveTo(X, Y); }
+    if (fill) { c.lineTo(x + w, y + h); c.lineTo(x, y + h); c.closePath(); c.globalAlpha = 0.16; c.fillStyle = stroke; c.fill(); c.globalAlpha = 1; c.beginPath(); for (let i = 0; i <= N; i++) { const t = i / N, v = clamp(fn(t), -0.05, 1.05); i ? c.lineTo(x + t * w, y + h - v * h) : c.moveTo(x + t * w, y + h - v * h); } }
+    c.strokeStyle = stroke; c.lineWidth = 2.2; c.lineJoin = 'round'; c.stroke(); };
+  if (E.cab != null) { const M = P.mtx[E.cab] || { amt:0, via:0 }, a = Math.abs(M.amt) / 100;
+    for (let k = 0; k < 3; k++) { const yy = y + h * (0.25 + k * 0.25), ww = 1.4 + a * 4.2 * (k + 1) / 3; c.lineCap = 'round'; c.strokeStyle = stroke; c.globalAlpha = 0.35 + 0.65 * (k + 1) / 3; c.lineWidth = ww; c.beginPath();
+      for (let i = 0; i <= 40; i++) { const t = i / 40, X = x + 8 + t * (w - 16), Y = yy + Math.sin(t * Math.PI * 2 + now / 300 + k) * 2.5 * (1 - a * 0.6); i ? c.lineTo(X, Y) : c.moveTo(X, Y); } c.stroke(); }
+    c.globalAlpha = 1; if (M.via && VX_SRCNAME[M.via]) { c.strokeStyle = vxCss(vxColors(VX_SRCNAME[M.via]).bg); c.lineWidth = 2; c.setLineDash([2, 4]); c.beginPath(); c.moveTo(x + 8, y + h * 0.75); c.lineTo(x + w - 8, y + h * 0.75); c.stroke(); c.setLineDash([]); } }
+  else if (n === 'FILTER 1' || n === 'FILTER 2') { const f1 = n === 'FILTER 1', ty = f1 ? P.ftype : P.f2.type, cu = f1 ? P.cutoff : P.f2.cutoff, rs = f1 ? P.reso : P.f2.reso;
+    line(t => { const f = 20 * Math.pow(1000, t); let m = 1; try { m = vzBqMag(ty, clamp(cu, 20, 20000), Math.max(0.1, rs), f, f24(ty)); } catch (e) {} return 1 + 20 * Math.log10(Math.max(1e-6, m)) / 48 - 0.15; }, 90, true); }
+  else if (n === 'OSC') { const nU = Math.min(P.uni || 1, 5);
+    for (let u = nU - 1; u >= 0; u--) { c.globalAlpha = u ? 0.25 : 1; line(t => { let v = 0; try { v = shapeCycle(P, (t * 2 + u * 0.07) % 1); } catch (e) {} return 0.5 + v * 0.38; }, 120, false); } c.globalAlpha = 1; }
+  else if (n === 'ADSR 1' || n === 'ADSR 2') { const E2 = n === 'ADSR 1' ? P : P.env2, a = E2.a, d = E2.d, s = E2.s, r = E2.r, tot = a + d + 0.6 + r;
+    line(t => { const tt = t * tot; return tt < a ? tt / a : tt < a + d ? 1 - (1 - s) * (tt - a) / d : tt < a + d + 0.6 ? s : s * Math.max(0, 1 - (tt - a - d - 0.6) / r); }, 120, true); }
+  else if (n === 'LFO 1' || n === 'LFO 2') { const Lf = P.lfo[n === 'LFO 1' ? 0 : 1], dp = (Lf.dp || 0) / 100;
+    line(t => { const ph = (t * 3) % 1; let v; switch (Lf.shape) { case 0: v = Math.sin(ph * 6.283); break; case 1: v = 1 - 4 * Math.abs(ph - 0.5); break; case 2: v = 2 * ph - 1; break; case 3: v = ph < 0.5 ? 1 : -1; break; default: v = Math.sin(Math.floor(t * 12) * 12.9898) % 1; }
+      return 0.5 + v * 0.42 * Math.max(0.08, dp); }, 160, false); }
+  else if (n === 'GRIT') { const dr = (S.drive || 0) / 100, fo = (S.fold || 0) / 100, cr = (S.crush || 0) / 100;
+    line(t => { const xx = t * 2 - 1; let v = Math.tanh(xx * (1 + dr * 6)) / Math.tanh(1 + dr * 6); if (fo > 0) v = Math.sin(v * Math.PI / 2 * (1 + fo * 3)); if (cr > 0) { const q = Math.max(2, 16 - cr * 14); v = Math.round(v * q) / q; } return 0.5 + v * 0.45; }, 160, false); }
+  else if (n === 'ECHO') { const e = (S.echo || 0) / 100, sp = 0.12 + Math.min(1, (S.etime || 1) / 12) * 0.2; c.fillStyle = stroke;
+    for (let k = 0; k < 8; k++) { const xx = x + 8 + k * sp * w, hh = h * 0.9 * Math.pow(0.35 + e * 0.55, k); if (xx > x + w - 6) break; c.globalAlpha = 0.4 + 0.6 * Math.pow(0.8, k); vxRR(c, xx, y + h - hh, 7, hh, 3); c.fill(); } c.globalAlpha = 1; }
+  else if (n === 'REVERB') { const v = (S.verb || 0) / 100, sz = Math.min(1, (S.size || 1) / 6); line(t => (0.15 + 0.8 * v) * Math.exp(-t / (0.08 + sz * 0.6)) * (0.85 + 0.15 * Math.sin(t * 90)), 160, true); }
+  else if (n === 'CHORUS' || n === 'FLANGER' || n === 'PHASER') { const a = (S[VXB[n].key] || 0) / 100;
+    for (let k = 0; k < 3; k++) { c.globalAlpha = 1 - k * 0.3; line(t => 0.5 + Math.sin(t * 6.283 * (n === 'PHASER' ? 4 : 2) + k * a * 1.4 + now / 900) * (0.1 + 0.3 * a), 120, false); } c.globalAlpha = 1; }
+  else if (n === 'VOLUME') { const lv = (S.level ?? 100) / 100, gt = (S.gate || 0) / 100; c.fillStyle = stroke; c.globalAlpha = 0.25; vxRR(c, x + 8, y + h * (1 - lv * 0.9), w - 16, h * lv * 0.9, 6); c.fill(); c.globalAlpha = 1;
+    if (gt > 0) { c.strokeStyle = '#26252b'; c.setLineDash([4, 3]); c.beginPath(); c.moveTo(x, y + h * (1 - gt * 0.6)); c.lineTo(x + w, y + h * (1 - gt * 0.6)); c.stroke(); c.setLineDash([]); }
+    const pn = (S.pan || 0) / 100; c.fillStyle = '#26252b'; c.beginPath(); c.arc(x + w / 2 + pn * (w / 2 - 12), y + 10, 4, 0, 6.283); c.fill(); }
+  else { const D = vxEditDefs(); D.forEach((d, k) => { c.fillStyle = stroke; c.globalAlpha = 0.6; const bw = w / Math.max(1, D.length) - 8; vxRR(c, x + k * (bw + 8) + 4, y + h * (1 - vxFrac(d)), bw, h * vxFrac(d), 4); c.fill(); }); c.globalAlpha = 1; }
+  c.restore(); }
+function vxDrawEdit(now){
+  vx.frame++; vxRefreshMini(now); const c = vxCtx(); vxDots(c);
+  const E = vx.edit, D = vxEditDefs(); if (!E || !D.length) { vxBack(); return; }
+  vx.opt = clamp(vx.opt, 0, D.length - 1);
+  const title = E.cab != null ? (() => { const M = st.patch.mtx[E.cab]; return M ? (VX_SRCNAME[M.src] || '?') + ' → ' + vxBlockOfKey(DSTS[M.dst][1]) : 'CABLE'; })() : E.name;
+  const colN = E.cab != null ? VX_SRCNAME[(st.patch.mtx[E.cab] || {}).src] || 'LFO 1' : E.name, col = vxColors(colN);
+  c.fillStyle = vxCss(col.bg); vxRR(c, 8, 6, 146, 28, 7); c.fill(); c.fillStyle = col.ink; c.font = '700 12.5px system-ui, -apple-system, sans-serif'; c.textAlign = 'left'; c.fillText(title.slice(0, 18), 17, 24.5);
+  c.strokeStyle = vxCss(col.ol); c.lineWidth = 2.5; c.lineCap = 'round'; c.beginPath(); c.moveTo(8, 41); c.lineTo(154, 41); c.stroke();
+  vxMini(c, 160, 4, 72, 42, now);
+  vxGraph(c, 12, 54, 216, 112, now);
+  // settings: four at a time, each in its own colour (shifted from the block's hue, brightness from its value)
+  const B = VXB[colN] || { h:200, o:0 }, page = Math.floor(vx.opt / 4), shown = D.slice(page * 4, page * 4 + 4), tw = (224 - 6 * (shown.length - 1)) / shown.length;
+  shown.forEach((d, k) => { const i = page * 4 + k, f = vxFrac(d), cc = B.lock ? [120 + f * 80, 120 + f * 80, 116 + f * 80].map(Math.round) : vxHsl(B.h + 34 * (i + 1), 0.62 + f * 0.3, 0.4 + f * 0.22), xx = 8 + k * (tw + 6);
+    c.fillStyle = vxCss(cc); vxRR(c, xx, 178, tw, 50, 8); c.fill(); if (i === vx.opt) vxSelRing(c, { x:xx, y:178, w:tw, h:50 }, now, 8);
+    const ink = vxInk(cc); c.fillStyle = ink; c.textAlign = 'center'; c.font = '600 7.5px system-ui, sans-serif'; c.globalAlpha = 0.85; c.fillText(vxShort(d.name).slice(0, 12), xx + tw / 2, 196); c.globalAlpha = 1;
+    c.font = '700 10.5px system-ui, sans-serif'; let v = ''; try { v = String(d.val()); } catch (e) {} c.fillText(v.slice(0, 11), xx + tw / 2, 215); });
+  if (D.length > 4) { const np = Math.ceil(D.length / 4); for (let k = 0; k < np; k++) { c.fillStyle = k === page ? '#26252b' : '#c9c7c0'; c.beginPath(); c.arc(120 - (np - 1) * 5 + k * 10, 236, 2, 0, 6.283); c.fill(); } }
+}
+function vxRender(now){
+  if (vx.lvl === 0) { viz.view = 'object'; drawViz(now); return; }
+  if (vx.lvl === 2) vxDrawEdit(now); else vxDrawPatch(now);
+}
+// ---------- controls ----------
+function vxNav(d){   // hold PLAY + DIAL: 3D > PATCH > EDIT
+  if (vx.cab || vx.move) return;
+  const to = clamp(vx.lvl + Math.sign(d), 0, 2); if (to === vx.lvl) return;
+  if (to === 2) { if (!vxOpenEdit()) return; } else { vx.lvl = to; if (to === 1) viz.view = 'patch'; }
+  vxLabel(['3D VIEW', 'PATCH', 'EDIT'][vx.lvl], ''); }
+function vxOpenEdit(){ const flat = vxItems().flat(), id = flat[vxSelIdx(flat)]; if (!id) return false; const [k, v] = id.split(':');
+  if (k === 'chip') { vxAddFx(v); return false; }
+  vx.edit = k === 'cab' ? { cab:+v } : { name:v }; vx.opt = 0; vx.lvl = 2; viz.view = 'patch'; return true; }
+function vxBack(){ vx.edit = null; vx.lvl = 1; viz.view = 'patch'; }
+function vxAddFx(n){ const P = st.patch, S = P.sh;
+  if (n === 'FILTER 2') { P.route = 0; vx.selId = 'blk:FILTER 2'; flash('FILTER 2 IN'); applyFx(); return; }
+  const k = Object.keys(FX_NAME).find(x => FX_NAME[x] === n); if (!k) return; const [key, v] = VX_FXADD[k]; S[key] = v;
+  P.order = [k].concat((P.order || FX_ORDER).filter(x => x !== k)); vx.selId = 'blk:' + n; applyFx(); try { applyLive(); } catch (e) {} flash(n + ' IN'); }
+function vxDial(d){
+  if (held.play) { held.playUsed = true; clearTimeout(held.fanT); vxNav(d); return; }
+  if (vx.lvl === 0) { const def = vxObjDef(vx.objSel); def.step(d); applyFx(); vxLabel(def.name, def.val()); return; }
+  if (vx.lvl === 2) { const D = vxEditDefs(), def = D[vx.opt]; if (!def) return; def.step(d); applyFx(); try { applyLive(); } catch (e) {} st.lastEdit = performance.now();
+    if (!st.testLoop && !st.playing && performance.now() - vxPrevT > 700) { vxPrevT = performance.now(); try { previewDesign(); } catch (e) {} } return; }
+  if (vx.cab) { vx.cab.i = clamp(vx.cab.i + Math.sign(d), 0, vx.cab.list.length - 1); return; }
+  if (vx.move) { vxMoveStep(d); return; }
+  const flat = vxItems().flat(), i = clamp(vxSelIdx(flat) + Math.sign(d), 0, flat.length - 1); vx.selId = flat[i]; }
+function vxArrow(d){
+  if (vx.lvl === 0) { vx.objSel = (vx.objSel + d + VXO.length) % VXO.length; const def = vxObjDef(vx.objSel); vxLabel(def.name, def.val()); return; }
+  if (vx.lvl === 2) { const n = vxEditDefs().length; vx.opt = clamp(vx.opt + d, 0, n - 1); return; }
+  if (vx.cab || vx.move) return;
+  // PATCH: jump between the chain, the modulators, the cables and the chips
+  const G = vxItems().filter(g => g.length), flat = G.flat(), id = flat[vxSelIdx(flat)], gi = G.findIndex(g => g.includes(id)), to = clamp(gi + d, 0, G.length - 1); vx.selId = G[to][0]; }
+function vxCableStart(){
+  const flat = vxItems().flat(), id = flat[vxSelIdx(flat)]; if (!id) return; const [k, v] = id.split(':');
+  if (k === 'chip') { vxAddFx(v); return; }
+  if (k === 'cab') { flash('DOUBLE-CLICK TO EDIT'); return; }
+  if (k === 'mod') { if (v === 'VELO' || v === 'KEY' || v === 'HIT' || !VXB[v].src) {} vx.cab = { from:v, fromId:id, list:[id].concat(vxChain().map(n => 'blk:' + n), vxUnused().filter(n => n !== 'FILTER 2').map(n => 'chip:' + n)), i:1 }; return; }
+  if (v === 'VOLUME' || v === 'OSC' || VXB[v]) vx.cab = { to:v, fromId:id, from:v, list:[id].concat(vxMods().map(n => 'mod:' + n)), i:1 }; }
+function vxCableEnd(){
+  const C = vx.cab; vx.cab = null; delete vx.ropes.preview; const tgt = C.list[C.i]; if (!tgt || tgt === C.fromId) { flash('CANCELLED'); return; }
+  let src, blk; if (C.to) { src = VXB[tgt.split(':')[1]].src; blk = C.to; } else { src = VXB[C.from].src; blk = tgt.split(':')[1]; if (tgt.startsWith('chip:')) vxAddFx(blk); }
+  const key = (VXB[blk] || {}).key || 'pitch', dst = dstOfKey(key), M = st.patch.mtx; let r = M.findIndex(m => m.src === src && m.dst === dst);
+  if (r < 0) r = M.findIndex(m => !m.src || !m.amt); if (r < 0) { flash('NO FREE CABLES'); return; }
+  const same = M[r].src === src && M[r].dst === dst && M[r].amt; M[r].src = src; M[r].dst = dst; if (!same) { M[r].amt = 50; M[r].via = 0; }
+  applyFx(); try { applyLive(); } catch (e) {} vx.selId = 'cab:' + r; flash('CABLE IN'); }
+function vxMoveStart(){ const flat = vxItems().flat(), id = flat[vxSelIdx(flat)]; if (!id || !id.startsWith('blk:')) { flash('ONLY EFFECTS MOVE'); return; }
+  const n = id.slice(4), k = Object.keys(FX_NAME).find(x => FX_NAME[x] === n); if (!k) { flash(n + ' STAYS IN PLACE'); return; } vx.move = n; }
+function vxMoveStep(d){ const P = st.patch, k = Object.keys(FX_NAME).find(x => FX_NAME[x] === vx.move), o = P.order, act = o.filter(x => VX_FXON[x](P.sh)), i = act.indexOf(k), j = i + Math.sign(d);
+  if (i < 0 || j < 0 || j >= act.length) return; const a = o.indexOf(act[i]), b = o.indexOf(act[j]); [o[a], o[b]] = [o[b], o[a]]; applyFx(); }
+// F8: click / hold / double-click
+const VX_HOLD = 380, VX_DBL = 280;
+function vxF8Down(){ const F = vx.f8; if (F.down) return; F.down = true; F.hold = false; document.getElementById('vxF8').classList.add('dn');
+  if (vx.lvl === 0) return;
+  clearTimeout(F.holdT); F.holdT = setTimeout(() => { if (F.down && vx.lvl === 1 && !vx.cab) { F.hold = true; clearTimeout(F.clickT); F.clicks = 0; vxMoveStart(); } }, VX_HOLD); }
+function vxF8Up(){ const F = vx.f8; if (!F.down) return; F.down = false; clearTimeout(F.holdT); document.getElementById('vxF8').classList.remove('dn');
+  if (vx.lvl === 0) { vx.lvl = 1; viz.view = 'patch'; vxLabel('PATCH', ''); return; }
+  if (F.hold) { F.hold = false; if (vx.move) { flash(vx.move + ' PLACED'); vx.move = null; } return; }
+  if (vx.cab) { vxCableEnd(); return; }
+  F.clicks++; clearTimeout(F.clickT);
+  if (F.clicks >= 2) { F.clicks = 0; if (vx.lvl === 2) vxBack(); else vxOpenEdit(); return; }
+  F.clickT = setTimeout(() => { F.clicks = 0; if (vx.lvl === 1) vxCableStart(); }, VX_DBL); }
+{ const f8 = document.getElementById('vxF8');
+  f8.addEventListener('pointerdown', e => { e.preventDefault(); f8.setPointerCapture(e.pointerId); wakeAudio(); vxF8Down(); });
+  f8.addEventListener('pointerup', e => { e.preventDefault(); vxF8Up(); }); f8.addEventListener('pointercancel', () => vxF8Up());
+  document.getElementById('vxL').addEventListener('click', () => vxArrow(-1)); document.getElementById('vxR').addEventListener('click', () => vxArrow(1));
+  const dl = document.getElementById('vxDial'); let rot = 0; bindKnob(dl, d => { rot += d * 9; dl.style.setProperty('--dr', rot + 'deg'); vxDial(d); });
+  const sd = document.getElementById('vxSide'); let y0 = null, acc = 0, vp = 0; const vmove = d => { volTurn(d); vp += d * 2; sd.style.setProperty('--vp', vp + 'px'); };
+  sd.addEventListener('pointerdown', e => { e.preventDefault(); sd.setPointerCapture(e.pointerId); y0 = e.clientY; acc = 0; });
+  sd.addEventListener('pointermove', e => { if (y0 === null) return; acc += y0 - e.clientY; y0 = e.clientY; while (acc >= 5) { vmove(1); acc -= 5; } while (acc <= -5) { vmove(-1); acc += 5; } });
+  const end = () => { y0 = null; }; sd.addEventListener('pointerup', end); sd.addEventListener('pointercancel', end);
+  sd.addEventListener('wheel', e => { e.preventDefault(); vmove(e.deltaY < 0 ? 1 : -1); }, { passive:false }); }
+{ const _vxSet = vxSet; vxSet = on => { vx.lvl = 0; vx.cab = null; vx.move = null; vx.edit = null; viz.view = 'object'; _vxSet(on); }; }
+// keyboard in versionX: Enter = F8, [ ] = the arrows (the DIAL keys already arrive through the main knob)
+document.addEventListener('keydown', e => { if (!vxOn) return;
+  if (e.key === 'Enter') { e.preventDefault(); e.stopImmediatePropagation(); if (!e.repeat) vxF8Down(); }
+  else if (e.key === '[' || e.key === ']') { e.preventDefault(); e.stopImmediatePropagation(); vxArrow(e.key === '[' ? -1 : 1); } }, true);
+document.addEventListener('keyup', e => { if (!vxOn) return; if (e.key === 'Enter') { e.preventDefault(); e.stopImmediatePropagation(); vxF8Up(); } }, true);
 </script>
 </body>
 </html>
