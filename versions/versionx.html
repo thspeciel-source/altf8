@@ -1042,7 +1042,12 @@ function makeFx(tr, inp, out){
     const gate = { inp:G(), out:G(), on:false, sp:ac.createScriptProcessor ? ac.createScriptProcessor(512, 2, 2) : null, env:0, gain:1 };
     // READ ANGLE: the note is read along a slanted line through the picture, so each frequency band starts a little later
     // (positive: lows first, highs late; negative: the other way). Six crossover bands, each with its own delay.
-    const rd = { inp:G(), dry:G(1), bands:[], key:'' }; gate.inp.connect(gate.out); gate.out.connect(rd.inp); rd.inp.connect(rd.dry); rd.dry.connect(out);
+    const rd = { inp:G(), dry:G(1), bands:[], key:'' }; gate.inp.connect(gate.out);
+    // READ TILT: the read line also leans through loudness, so the loud parts are read later (or earlier) than the quiet ones:
+    // a delay whose time follows the sound's own level (it bends pitch as the level moves, like a warped tape)
+    rd.vd = ac.createDelay(2); rd.vk = G(0); { const rect = ac.createWaveShaper(), c = new Float32Array(257); for (let i = 0; i < 257; i++) c[i] = Math.abs(i / 128 - 1); rect.curve = c;
+      const sm = ac.createBiquadFilter(); sm.type = 'lowpass'; sm.frequency.value = 4; sm.Q.value = 0.5; gate.out.connect(rect); rect.connect(sm); sm.connect(rd.vk); rd.vk.connect(rd.vd.delayTime); }
+    gate.out.connect(rd.vd); rd.vd.connect(rd.inp); rd.inp.connect(rd.dry); rd.dry.connect(out);
     { const X = [150, 400, 1000, 2500, 6000], FC = [80, 245, 630, 1580, 3900, 10000];
       for (let i = 0; i < 6; i++) { let a2 = rd.inp; const chain = f => { a2.connect(f); a2 = f; };
         if (i > 0) { const h = ac.createBiquadFilter(); h.type = 'highpass'; h.frequency.value = X[i - 1]; h.Q.value = 0.707; chain(h); }
@@ -1103,6 +1108,9 @@ function applyFx(tr){
   if (F.sizeKey !== S.size) { F.sizeKey = S.size; F.verb.setSize(S.size, 0.35); }
   F.vbWet.gain.setTargetAtTime((S.verb || 0) / 100 * 0.9, t, 0.03);
   F.ed.delayTime.setTargetAtTime(Math.min(ECHO_MAX_S, echoSec(S.etime ?? 8)), t, 0.05);
+  if (F.rd && F.rd.vd) { const tl = clamp(S.rtilt || 0, -60, 60), tv = Math.tan(Math.abs(tl) * Math.PI / 180), span = Math.min(1.5, tv * (viz.T || 1));
+    // the follower reads about 0.2 on a full-level note; loud = later when tilting forward, earlier (from a held base) when tilting back
+    F.rd.vk.gain.setTargetAtTime(tl === 0 ? 0 : (tl > 0 ? 1 : -1) * span / 0.2, t, 0.05); F.rd.vd.delayTime.setTargetAtTime(tl < 0 ? span : 0, t, 0.05); }
   if (F.rd) { const ang = clamp(S.rang || 0, -60, 60), on = ang !== 0, tn = Math.tan(Math.abs(ang) * Math.PI / 180), T = viz.T || 1;
     F.rd.dry.gain.setTargetAtTime(on ? 0 : 1, t, 0.02);
     F.rd.bands.forEach(b => { b.g.gain.setTargetAtTime(on ? 1 : 0, t, 0.02); b.d.delayTime.setTargetAtTime(on ? Math.min(3.5, tn * T * (ang > 0 ? b.pos : 1 - b.pos)) : 0, t, 0.05); }); }
@@ -4463,8 +4471,9 @@ function drawViz(now){
   const meshN = q.add > 66 ? 1 : q.add > 33 ? 2 : q.add > 0 ? 3 : 4;                            // ADDITIVE: denser mesh
   const ringP = Math.max(1, Math.round(4 / clamp(q.ratio, 0.5, 8)));
   // where the newest note is now, in slices (start at the front, end at the back)
-  const rdAng = clamp((st.patch.sh && st.patch.sh.rang) || 0, -60, 60), rdTan = Math.tan(Math.abs(rdAng) * Math.PI / 180), rdOff = i => rdTan * NT * (rdAng > 0 ? i / (NB - 1) : 1 - i / (NB - 1));   // READ ANGLE: slices behind per band
-  let phJ = -1, phF = -1; { const last = viz.notes.filter(n => n.at <= now).pop(); if (last && viz.T) { const x = (now - last.at) / 1000 / (viz.T / NT) - 0.5; if (x >= 0 && x <= NT - 1 + rdTan * NT) { phF = x; phJ = Math.min(NT - 2, Math.floor(x)); } } }
+  const rdAng = clamp((st.patch.sh && st.patch.sh.rang) || 0, -60, 60), rdTan = Math.tan(Math.abs(rdAng) * Math.PI / 180), rdOff = i => rdTan * NT * (rdAng > 0 ? i / (NB - 1) : 1 - i / (NB - 1));
+  const rdTl = clamp((st.patch.sh && st.patch.sh.rtilt) || 0, -60, 60), rdTv = Math.tan(Math.abs(rdTl) * Math.PI / 180), rdVOff = h => rdTl === 0 ? 0 : (viz.T ? Math.min(1.5, rdTv * viz.T) / (viz.T / NT) : 0) * (rdTl > 0 ? Math.min(1, h) : Math.min(1, h) - 1);   // READ TILT: slices behind for a given height   // READ ANGLE: slices behind per band
+  let phJ = -1, phF = -1; { const last = viz.notes.filter(n => n.at <= now).pop(); if (last && viz.T) { const x = (now - last.at) / 1000 / (viz.T / NT) - 0.5; if (x >= 0 && x <= NT - 1 + rdTan * NT + rdVOff(1) + 1) { phF = x; phJ = Math.min(NT - 2, Math.floor(x)); } } }
   // ---- the sound as a floating mirrored solid: frequency left to right (low to high), time front to back (the note starts
   // at the front), loudness = how far the shape swells above AND below its middle, so it closes into one object ----
   // UNISON: one copy of the object per voice, side by side; DETUNE spreads them further apart
@@ -4493,7 +4502,7 @@ function drawViz(now){
     let shade = c.side === 1 ? 0.8 + clamp((H[j][i] - H[j][i + 1]) * 2.2 + (H[j + 1][i] - H[j][i]) * 1.2, -0.3, 0.2) : c.side === -1 ? 0.5 + clamp((H[j][i + 1] - H[j][i]) * 1.5, -0.2, 0.15) : 0.62;
     if (q.ring > 0 && ((Math.floor(i / ringP) + Math.floor(j / ringP)) % 2)) shade *= 1 - Math.min(q.ring, 100) / 100 * 0.4;   // RING MOD: checker
     shade *= colDim(i);
-    if (phF >= 0 && c.side !== 0 && j === Math.floor(phF - rdOff(i)) && j <= NT - 2) { col = col.map(x => x + (1 - x) * 0.6); shade = Math.max(shade, 0.9); }   // PLAYHEAD: the slice we are in
+    if (phF >= 0 && c.side !== 0 && j === Math.floor(phF - rdOff(i) - rdVOff(H[j][i])) && j <= NT - 2) { col = col.map(x => x + (1 - x) * 0.6); shade = Math.max(shade, 0.9); }   // PLAYHEAD: the slice we are in
     const r = Math.round(clamp(col[0] * shade, 0, 1) * 255), gg = Math.round(clamp(col[1] * shade, 0, 1) * 255), bb = Math.round(clamp(col[2] * shade, 0, 1) * 255);
     vzTri(p[0][0], p[0][1], p[1][0], p[1][1], p[2][0], p[2][1], r, gg, bb, 1); vzTri(p[0][0], p[0][1], p[2][0], p[2][1], p[3][0], p[3][1], r, gg, bb, 1);
     if (c.side === 0) return;
@@ -4504,10 +4513,12 @@ function drawViz(now){
   const objMask = new Uint8Array(W * W); for (let i = 0; i < objMask.length; i++) objMask[i] = u[i] !== preObj[i] ? 1 : 0;
   // PLAYHEAD: the slice's outline, above and below
   if (phF >= 0) { const pc = light ? [43, 42, 39] : [255, 255, 255];
-    const at = i => { const xi = clamp(phF - rdOff(i), 0, NT - 1), j0 = Math.min(NT - 2, Math.floor(xi)); return { ok:phF - rdOff(i) >= 0 && phF - rdOff(i) <= NT - 1, j0, fr:xi - j0, z:1 - 2 * xi / (NT - 1) }; };
+    const hAt = (i, x) => { const xc = clamp(x, 0, NT - 1), j0 = Math.min(NT - 2, Math.floor(xc)), fr = xc - j0; return H[j0][i] * (1 - fr) + H[j0 + 1][i] * fr; };
+    const at = i => { let x = phF - rdOff(i); if (rdTl !== 0) { let h = hAt(i, x); for (let it = 0; it < 4; it++) h = hAt(i, x - rdVOff(h)); x -= rdVOff(h); }
+      const xi = clamp(x, 0, NT - 1), j0 = Math.min(NT - 2, Math.floor(xi)); return { ok:x >= 0 && x <= NT - 1, j0, fr:xi - j0, z:1 - 2 * xi / (NT - 1) }; };
     for (let v = 0; v < nU; v++) for (let i = 0; i < NB - 1; i++) { const A = at(i), B = at(i + 1); if (!A.ok || !B.ok) continue;
       const h0 = (H[A.j0][i] * (1 - A.fr) + H[A.j0 + 1][i] * A.fr) * K + 0.01, h1 = (H[B.j0][i + 1] * (1 - B.fr) + H[B.j0 + 1][i + 1] * B.fr) * K + 0.01, y0 = YC + lift(v);
-      line3([X(i, v), y0 + h0, A.z], [X(i + 1, v), y0 + h1, B.z], pc, 1); line3([X(i, v), y0 - h0, A.z], [X(i + 1, v), y0 - h1, B.z], pc, 0.7); } }
+      line3([X(i, v), y0 + h0, A.z], [X(i + 1, v), y0 + h1, B.z], pc, 1); if (rdTl !== 0 && i % 3 === 0) { const x0 = phF - rdOff(i) - rdVOff(0); if (x0 >= 0 && x0 <= NT - 1) { const z0 = 1 - 2 * x0 / (NT - 1); line3([X(i, v), y0, z0], [X(i, v), y0 + h0, A.z], pc, 0.55); line3([X(i, v), y0, z0], [X(i, v), y0 - h0, A.z], pc, 0.4); } } line3([X(i, v), y0 - h0, A.z], [X(i + 1, v), y0 - h1, B.z], pc, 0.7); } }
   // FM: sparkles on the loud parts
   if (q.fm > 0) { const n = Math.round(Math.min(q.fm, 200) / 100 * 24); for (let s2 = 0; s2 < n; s2++) { const i = Math.floor(vzHash(s2, 7) * NB), j = Math.floor(vzHash(s2 + 99, 7) * NT);
     if (H[j][i] > 0.25) { const pp = P3(X(i, 0), YC + lift(0) + H[j][i] * K, Z(j)); vzPut(Math.round(pp[0]), Math.round(pp[1]) - 1, 255, 255, 255, 1); } } }
@@ -4940,7 +4951,7 @@ function showDebug(){
 /* ---- versionX: the white console. Knobs are on pages: SOURCE / TONE / MOTION jump, the arrows turn pages ---- */
 let vxOn = false, vxPage = 0, vxPrevT = 0, vxPreset = 0;
 // object view pages (PRESET / SOURCE / TONE / MOTION) and patch view pages (hold PLAY + turn CAMERA): effect order, envelopes, the matrix
-const VX_OBJ_PAGES = [['PRESET', ['PRESET']], ['SOURCE', ['OSC', 'MOD OSC']], ['SOURCE', ['FEEL', 'READ']], ['TONE', ['FILTER', 'FILTER 2']], ['TONE', ['GRIT', 'SPACE']], ['TONE', ['ROOM', 'GATE']], ['MOTION', ['ENVELOPE', 'ENV 2']], ['MOTION', ['LFO 1', 'LFO 2']]];
+const VX_OBJ_PAGES = [['PRESET', ['PRESET', 'READ']], ['SOURCE', ['OSC', 'MOD OSC']], ['SOURCE', ['FEEL']], ['TONE', ['FILTER', 'FILTER 2']], ['TONE', ['GRIT', 'SPACE']], ['TONE', ['ROOM', 'GATE']], ['MOTION', ['ENVELOPE', 'ENV 2']], ['MOTION', ['LFO 1', 'LFO 2']]];
 const VX_PATCH_PAGES = [['PATCH', ['ORDER', 'ENVELOPE']], ['PATCH', ['MATRIX', 'ENV 2']], ['PATCH', ['LFO 1', 'LFO 2']]];
 const vxPages = () => viz.view === 'patch' ? VX_PATCH_PAGES : VX_OBJ_PAGES;
 const VX_FAM = { SOURCE:0, TONE:2, MOTION:1, PATCH:1, PRESET:3 };
@@ -4988,7 +4999,8 @@ const vxPickDef = { name:'PICK', key:'ordpick', frac:() => st.ordSel / (FX_ORDER
 const vxRowDef = { name:'ROW', key:'mxrow', frac:() => st.mtxRow / (MTX_N - 1), val:() => String(st.mtxRow + 1), step:d => { st.mtxRow = clamp(st.mtxRow + Math.sign(d), 0, MTX_N - 1); } };
 function vxDefs(nm){
   if (nm === 'PRESET') return [vxPresetDef];
-  if (nm === 'READ') return [kNum('READ ANGLE', () => st.patch.sh.rang || 0, v => { st.patch.sh.rang = v; if (typeof applyFx === 'function') applyFx(); }, -60, 60, 5, v => v === 0 ? 'STRAIGHT' : (v > 0 ? 'LO>HI ' : 'HI>LO ') + Math.abs(v) + '\u00b0')];
+  if (nm === 'READ') return [kNum('ANGLE', () => st.patch.sh.rang || 0, v => { st.patch.sh.rang = v; if (typeof applyFx === 'function') applyFx(); }, -60, 60, 5, v => v === 0 ? 'STRAIGHT' : (v > 0 ? 'LO>HI ' : 'HI>LO ') + Math.abs(v) + '\u00b0'),
+    kNum('TILT', () => st.patch.sh.rtilt || 0, v => { st.patch.sh.rtilt = v; if (typeof applyFx === 'function') applyFx(); }, -60, 60, 5, v => v === 0 ? 'STRAIGHT' : (v > 0 ? 'LOUD LATE ' : 'LOUD 1ST ') + Math.abs(v) + '\u00b0')];
   if (selTrack().type === 'drums') return [];
   if (nm === 'ORDER') return [vxPickDef, Object.assign({}, shapeDefs('ORDER')[0], { name:'MOVE' })];
   if (nm === 'MATRIX') return [vxRowDef].concat(shapeDefs('MATRIX').filter(x => x && x !== NOKNOB));
@@ -5050,7 +5062,7 @@ let vxLast = -1, vxLoopWas = false;
 setInterval(() => {
   const on = vxOn && st.testLoop && ac && st.on && !st.playing && selTrack().type !== 'drums';
   if (!on) { vxLoopWas = false; return; }
-  const hold = 60 / (st.tempo || 110) * 2, whole = Math.max(hold + 0.2, (viz.T || hold) * (1 + Math.tan(Math.abs(st.patch.sh.rang || 0) * Math.PI / 180)) + 0.15);
+  const hold = 60 / (st.tempo || 110) * 2, whole = Math.max(hold + 0.2, (viz.T || hold) * (1 + Math.tan(Math.abs(st.patch.sh.rang || 0) * Math.PI / 180)) + Math.min(1.5, (viz.T || hold) * Math.tan(Math.abs(st.patch.sh.rtilt || 0) * Math.PI / 180)) + 0.15);
   if (!vxLoopWas) { vxLoopWas = true; vxLast = -1; }
   const next = vxLast < 0 ? ac.currentTime + 0.05 : vxLast + whole;
   if (next < ac.currentTime + 0.12) { const t = Math.max(next, ac.currentTime + 0.02), N = nodesOf(selTrack());
