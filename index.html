@@ -4358,7 +4358,8 @@ function drawViz(now){
   const ph = viz.hi ? (now || performance.now()) / 1000 * 2 * Math.PI / 16 : 0;   // versionX: slow, chill oval sway
   const yaw = viz.yaw + Math.sin(ph) * 0.32, el = 0.52 + Math.cos(ph) * 0.06, ce = Math.cos(el), se = Math.sin(el), cy0 = Math.cos(yaw), sy0 = Math.sin(yaw);
   const SC = 32 * KS, HS = 1.0;
-  const P3 = (x, y, z) => { const X = x * cy0 - z * sy0, Z = x * sy0 + z * cy0, Y = y * HS; return [W / 2 + X * SC, W * 0.518 - (Y - 0.5) * SC * ce + Z * SC * se, Z * ce + Y * se]; };   // the object's middle (y 0.5) sits at the screen centre from every angle
+  const P3 = (x, y, z) => { const X = x * cy0 - z * sy0, Z = x * sy0 + z * cy0, Y = y * HS; return [W / 2 + X * SC, W * 0.518 - (Y - 0.5) * SC * ce + Z * SC * se, Z * ce + Y * se]; };
+  { const a0 = P3(0, 0.5, 1), a1 = P3(0, 0.5, -1), dx = a1[0] - a0[0], dy = a1[1] - a0[1], l = Math.hypot(dx, dy) || 1; viz.tdir = [dx / l, dy / l]; }   // which way 'later' points on screen   // the object's middle (y 0.5) sits at the screen centre from every angle
   const line3 = (a, b, col, al) => { const p = P3(a[0], a[1], a[2]), r2 = P3(b[0], b[1], b[2]); vzLine(p[0], p[1], r2[0], r2[1], col[0], col[1], col[2], al); };
   const bgBuf = Uint32Array.from(u);
   const dim = light ? [150, 148, 142] : vzRGB(C.dim), grid = light ? [178, 176, 170] : vzRGB(C.grid);
@@ -4547,7 +4548,7 @@ function vizStyle(q, u, bgBuf, light, objMask){
     return o; };
   // ECHO: afterimages of the object, stepping up and back, fading
   if (q.echo > 0) { const n = clamp(Math.ceil(Math.min(q.echo, 150) / 30), 1, 5), st2 = Math.round(clamp(Math.round(2 + echoSec(q.etime) * 6), 2, 8) * KS), snap = Uint32Array.from(u);
-    for (let k = n; k >= 1; k--) { const dx = -k * st2, dy = -Math.round(k * st2 * 0.6), a = 0.45 * Math.pow(0.65, k - 1);
+    for (let k = n; k >= 1; k--) { const td = viz.tdir || [1, -0.6], dx = Math.round(k * st2 * td[0]), dy = Math.round(k * st2 * td[1]), a = 0.45 * Math.pow(0.65, k - 1);
       for (let y = 0; y < W; y++) for (let x = 0; x < W; x++) { const sx = x - dx, sy = y - dy; if (sx < 0 || sy < 0 || sx >= W || sy >= W) continue; const si = sy * W + sx, i = y * W + x;
         if (objMask[si] && !objMask[i]) u[i] = mix(u[i], R(snap[si]), G(snap[si]), B(snap[si]), a); } } }
   // LFO: the picture bends in a wave, deeper with more depth, tighter with a faster rate (only when the LFO is connected)
