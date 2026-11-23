@@ -4828,7 +4828,7 @@ try { if (navigator.standalone || matchMedia('(display-mode: standalone)').match
 /* ---- visualizer extension: volume wheel and press tilt ---- */
 let mvol = 80;
 try { const v = parseInt(localStorage.getItem('altf8.vol'), 10); if (!isNaN(v)) mvol = clamp(v, 0, 100); } catch (e) {}
-function volGain(){ return 0.32 * Math.pow(mvol / 80, 2); }
+function volGain(){ let v = 80; try { v = mvol; } catch (e) { try { const x = parseInt(localStorage.getItem('altf8.vol'), 10); if (!isNaN(x)) v = clamp(x, 0, 100); } catch (e2) {} } return 0.32 * Math.pow(v / 80, 2); }   // safe even if the sound starts before this part of the page has loaded
 function volTurn(d){
   mvol = clamp(mvol + d * 5, 0, 100);
   try { localStorage.setItem('altf8.vol', String(mvol)); } catch (e) {}
