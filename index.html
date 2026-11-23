@@ -4379,7 +4379,7 @@ function drawViz(now){
     vzTri(p[0][0], p[0][1], p[1][0], p[1][1], p[2][0], p[2][1], 255, 120, 40, a); vzTri(p[0][0], p[0][1], p[2][0], p[2][1], p[3][0], p[3][1], 255, 120, 40, a); }
   // ---- heights: the sound, then each setting bends it ----
   const NB = VIZ_NB, NT = VIZ_NT, H = [], ids = [], src = viz.cur || new Float32Array(NB * NT);
-  const block = 1 + Math.round(clamp(q.srr, 0, 100) / 100 * 4);                          // DOWNSAMPLE: wider blocks
+  const block = 1;   // DOWNSAMPLE no longer makes blocky steps                          // DOWNSAMPLE: wider blocks
   const levels = q.crush > 0 ? Math.max(2, Math.round(16 - clamp(q.crush, 0, 100) / 100 * 14)) : 0;   // CRUSH: terraces
   for (let j = 0; j < NT; j++) {
     const hr = new Float32Array(NB); ids.push(j);
@@ -4575,8 +4575,8 @@ function vizStyle(q, u, bgBuf, light, objMask){
     if (t > 0.6) { const c = u[i]; u[i] = pk(R(c) + (B(c) - R(c)) * a, G(c) + (R(c) - G(c)) * a, B(c) + (G(c) - B(c)) * a); } } }
   // DOWNSAMPLE: fewer colours
   if (q.srr > 0) { const lv = Math.max(2, Math.round(16 - Math.min(q.srr, 100) / 100 * 13)), qz = v => Math.round(v / 255 * (lv - 1)) / (lv - 1) * 255; for (let i = 0; i < N; i++) if (isObj(i)) { const c = u[i]; u[i] = pk(qz(R(c)), qz(G(c)), qz(B(c))); } }
-  // CRUSH: big pixels
-  if (q.crush > 0) { const bs = Math.round((1 + Math.floor(Math.min(q.crush, 100) / 25)) * (q.crush > 0 ? KS : 1)); if (bs > 1) for (let by = 0; by < W; by += bs) for (let bx = 0; bx < W; bx += bs) { let r = 0, g2 = 0, b = 0, n = 0, obj = 0;
+  // CRUSH: no big pixels any more (it shows as terraces in the shape)
+  if (false) { const bs = Math.round((1 + Math.floor(Math.min(q.crush, 100) / 25)) * (q.crush > 0 ? KS : 1)); if (bs > 1) for (let by = 0; by < W; by += bs) for (let bx = 0; bx < W; bx += bs) { let r = 0, g2 = 0, b = 0, n = 0, obj = 0;
     for (let y = by; y < Math.min(W, by + bs); y++) for (let x = bx; x < Math.min(W, bx + bs); x++) { const c = u[y * W + x]; r += R(c); g2 += G(c); b += B(c); n++; if (isObj(y * W + x)) obj++; }
     if (!obj) continue; const c2 = pk(r / n, g2 / n, b / n); for (let y = by; y < Math.min(W, by + bs); y++) for (let x = bx; x < Math.min(W, bx + bs); x++) u[y * W + x] = c2; } }
   // NOISE: grain
