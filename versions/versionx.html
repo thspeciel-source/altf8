@@ -1914,14 +1914,29 @@ function adaptProg(){
 // Output: everything sums into master -> limiter -> headphones. The limiter is the one safeguard; its LED shows when it works.
 let ac = null, master, bus, limiter, activeV = 0, voices = [], dispF = null;
 function wakeAudio(){ if (!ac) initAudio(); else if (ac.state !== 'running') ac.resume(); }
+let lev = null, levA = null; const LEV_TARGET = 0.16;
 function initAudio(){
   if (ac) { ac.resume(); return; }
   try {
     ac = new (window.AudioContext || window.webkitAudioContext)();
     master = ac.createGain(); master.gain.value = volGain();
     limiter = ac.createDynamicsCompressor();
-    limiter.threshold.value = -4; limiter.knee.value = 0; limiter.ratio.value = 20; limiter.attack.value = 0.002; limiter.release.value = 0.12;
-    master.connect(limiter); limiter.connect(ac.destination);
+    limiter.threshold.value = -8; limiter.knee.value = 0; limiter.ratio.value = 20; limiter.attack.value = 0.002; limiter.release.value = 0.12;
+    // LEVELER: watches how loud the sound is (before the volume wheel) and turns quiet patches up and loud ones down.
+    // It follows the loudest recent moment, which fades slowly, so a note's own tail still dies away naturally.
+    lev = ac.createGain(); levA = ac.createAnalyser(); levA.fftSize = 2048;
+    // measured roughly the way ears weigh it (like LUFS): deep lows count less, bright highs count more
+    const kH = ac.createBiquadFilter(); kH.type = 'highpass'; kH.frequency.value = 60; const kS = ac.createBiquadFilter(); kS.type = 'highshelf'; kS.frequency.value = 1500; kS.gain.value = 4;
+    master.connect(lev); master.connect(kH); kH.connect(kS); kS.connect(levA); lev.connect(limiter); limiter.connect(ac.destination);
+    { const buf = new Float32Array(levA.fftSize); let pk = 0, last = performance.now();
+      setInterval(() => { if (!ac || ac.state !== 'running') return; const now = performance.now(), dts = (now - last) / 1000; last = now;
+        levA.getFloatTimeDomainData(buf); let s = 0; for (let i = 0; i < buf.length; i++) s += buf[i] * buf[i];
+        const vg = Math.max(1e-4, master.gain.value), rms = Math.sqrt(s / buf.length) / vg;   // loudness as if the wheel were at its default
+        pk = rms > pk ? rms : pk * Math.exp(-dts / 2.5);                                     // the loudest recent moment, fading over a few seconds
+        if (pk < 0.004) return;                                                              // near silence: leave the gain alone
+        const want = Math.min(8, Math.max(0.15, LEV_TARGET / pk)), cur = lev.gain.value;
+        if (want < cur * 0.8) { lev.gain.cancelScheduledValues(ac.currentTime); lev.gain.setValueAtTime(cur, ac.currentTime); lev.gain.linearRampToValueAtTime(want, ac.currentTime + 0.01); }   // too loud: down right away
+        else lev.gain.setTargetAtTime(want, ac.currentTime, want < cur ? 0.03 : 0.6); }, 20); }
     bus = ac.createGain(); bus.connect(master);
     dispF = [ac.createBiquadFilter(), ac.createBiquadFilter()];
     initShared(); initTape(); initFx();
