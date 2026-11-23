@@ -338,6 +338,25 @@
   #vxface #vxDial::before { content:''; position:absolute; inset:16px; border-radius:50%; background:repeating-conic-gradient(from var(--dr,0deg), rgba(0,0,0,.10) 0 3deg, transparent 3deg 12deg);
     -webkit-mask:radial-gradient(circle, transparent 34px, #000 35px); mask:radial-gradient(circle, transparent 34px, #000 35px); }
   #vxface #vxDial::after { content:'DIAL'; position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font:700 9px/1 system-ui,sans-serif; letter-spacing:.14em; color:#9a988f; }
+  /* the DIAL is the emulator's own machined knob, moved and enlarged */
+  body.vxc #mainknob { display:block !important; left:170px !important; top:374px !important; width:122px !important; height:122px !important; z-index:4; }
+  #vxface #vxDial { display:none !important; }
+  /* brushed white aluminium: fine horizontal grain, a soft sheen, machined edges */
+  body.vxc #shell { background:
+      url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='220' height='220'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='1.6 0.03' numOctaves='3' seed='11'/><feColorMatrix values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 .32 -.12'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>"),
+      url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='m'><feTurbulence type='fractalNoise' baseFrequency='1.3 0.05' numOctaves='2' seed='4'/><feColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 .6 -.22'/></filter><rect width='100%25' height='100%25' filter='url(%23m)'/></svg>"),
+      radial-gradient(circle at 13px 13px, #ffffff 0 1.6px, #9d9b94 2px 2.6px, rgba(0,0,0,.2) 3px, transparent 3.6px),
+      radial-gradient(circle at calc(100% - 13px) 13px, #ffffff 0 1.6px, #9d9b94 2px 2.6px, rgba(0,0,0,.2) 3px, transparent 3.6px),
+      radial-gradient(circle at 13px calc(100% - 13px), #ffffff 0 1.6px, #9d9b94 2px 2.6px, rgba(0,0,0,.2) 3px, transparent 3.6px),
+      radial-gradient(circle at calc(100% - 13px) calc(100% - 13px), #ffffff 0 1.6px, #9d9b94 2px 2.6px, rgba(0,0,0,.2) 3px, transparent 3.6px),
+      linear-gradient(180deg, rgba(255,255,255,.55), rgba(255,255,255,0) 22%, rgba(0,0,0,0) 74%, rgba(0,0,0,.09)),
+      linear-gradient(100deg, rgba(255,255,255,0) 30%, rgba(255,255,255,.45) 46%, rgba(255,255,255,0) 60%),
+      radial-gradient(120% 70% at 20% 4%, rgba(255,255,255,.7), rgba(255,255,255,0) 55%),
+      linear-gradient(165deg, #f3f3f1 0%, #e2e2df 38%, #d3d3cf 70%, #c4c4c0 100%) !important;
+    background-size:220px 220px, 180px 180px, auto, auto, auto, auto, auto, auto, auto, auto !important;
+    box-shadow:inset 0 1.5px 0 #ffffff, inset 0 0 0 1px rgba(0,0,0,.12), inset 0 -2px 0 rgba(0,0,0,.18), inset 0 0 0 4px rgba(255,255,255,.25), inset 0 0 0 5px rgba(0,0,0,.05) !important; }
+  body.vxc .slab { background:linear-gradient(165deg, #dcdcd8, #b9b9b4 55%, #a2a29c) !important; box-shadow:inset 0 0 0 1px rgba(255,255,255,.35) !important; }
+  body.vxc #shine::before { background:linear-gradient(118deg, rgba(255,255,255,0) 36%, rgba(255,255,255,.75) 47%, rgba(255,255,255,0) 58%) !important; mix-blend-mode:soft-light !important; opacity:.9 !important; }
   #vxface #vxSide { position:absolute; left:305px; top:326px; width:9px; height:84px; border-radius:4px; cursor:ns-resize; touch-action:none;
     background:linear-gradient(90deg, rgba(0,0,0,.35), rgba(255,255,255,.35) 50%, rgba(0,0,0,.35)), repeating-linear-gradient(0deg, #8a8880 0 2px, #f3f2ee 2px 4px); background-position:0 0, 0 var(--vp,0px);
     box-shadow:0 0 0 1px #bdbcb5, inset 0 2px 3px rgba(0,0,0,.3); }
@@ -4574,7 +4593,7 @@ function drawViz(now){
   if (W !== 112) g.setTransform(2, 0, 0, 2, 8, 8);   // text and marks: the 112 layout drawn at 2x, so the pixel font stays crisp
   // axis letters, the knob you just turned, the double-tap bar, the lock mark
   if (!viz.hi) { const L2 = p => W === 112 ? p : [(p[0] - 8) / 2, (p[1] - 8) / 2], a1 = L2(P3(0, 0, 1.2)); const tc = light ? '#6e6c66' : C.mut; txt('START', Math.round(a1[0]) - 10, Math.round(a1[1]) + 2, tc); const l1 = L2(P3(-1.15, 0, 1)), l2 = L2(P3(1.15, 0, 1)); txt('LO', Math.round(l1[0]) - 8, Math.round(l1[1]), tc); txt('HI', Math.round(l2[0]), Math.round(l2[1]), tc); }
-  if (viz.label && now - viz.label.t < 1400) { const s = (viz.label.name + ' ' + viz.label.val).slice(0, 27); if (light) { px(0, 0, 112, 7, '#2b2a27'); txt(s, Math.max(1, Math.round(56 - s.length * 2)), 1, '#ffd23f'); } else { px(0, 0, 112, 7, C.bg); txt(s, Math.max(1, Math.round(56 - s.length * 2)), 1, C.acc); } }
+  if (viz.label && !viz.hi && now - viz.label.t < 1400) { const s = (viz.label.name + ' ' + viz.label.val).slice(0, 27); if (light) { px(0, 0, 112, 7, '#2b2a27'); txt(s, Math.max(1, Math.round(56 - s.length * 2)), 1, '#ffd23f'); } else { px(0, 0, 112, 7, C.bg); txt(s, Math.max(1, Math.round(56 - s.length * 2)), 1, C.acc); } }
   if (viz.armT > 0 && !viz.locked) { const f = clamp((now - viz.armT) / VIZ_DBL, 0, 1); px(90, 106, 20, 3, C.dim); px(90, 106, Math.round(20 * f), 3, C.auto); }
   if (viz.locked) { px(106, 106, 4, 3, C.auto); }
   vizDone();
@@ -4650,7 +4669,7 @@ function vizBg(u, light, W){
   W = W || 112; const sc = 112 / W;
   if (!light) { const bg = vzRGB(C.bg), bgv = 0xff000000 | (bg[2] << 16) | (bg[1] << 8) | bg[0]; u.fill(bgv); }
   else if (W === 240) { const bgc = 0xff000000 | (248 << 16) | (251 << 8) | 251, dot = 0xff000000 | (205 << 16) | (212 << 8) | 214; u.fill(bgc);   // versionX: plain white with evenly spread dots, no vignette
-    for (let y = 6; y < W; y += 12) for (let x = 6; x < W; x += 12) { u[y * W + x] = dot; u[y * W + x + 1] = dot; u[(y + 1) * W + x] = dot; u[(y + 1) * W + x + 1] = dot; } }
+    for (let y = 10; y < W; y += 20) for (let x = 10; x < W; x += 20) { u[y * W + x] = dot; u[y * W + x + 1] = dot; u[(y + 1) * W + x] = dot; u[(y + 1) * W + x + 1] = dot; } }
   else for (let yy = 0; yy < W; yy++) for (let xx = 0; xx < W; xx++) {
     const y = yy * sc, x = xx * sc, f = y / 111; let v = 250 - f * 52;                                                  // white at the top, grey at the bottom
     const dx = (x - 40) / 95, dy = (y + 30) / 70, e = dx * dx + dy * dy; if (e < 1 && y < 52) v += (1 - e) * 10;   // a curved gloss over the upper part
@@ -5194,7 +5213,7 @@ function vxTug(R, ida, idb){   // the rope pulls on the boxes at its ends when i
 // ---------- drawing ----------
 const VX_FONT = '600 10px system-ui, -apple-system, "Segoe UI", Inter, sans-serif';
 function vxRR(c, x, y, w, h, r){ r = Math.min(r, w / 2, h / 2); c.beginPath(); c.moveTo(x + r, y); c.arcTo(x + w, y, x + w, y + h, r); c.arcTo(x + w, y + h, x, y + h, r); c.arcTo(x, y + h, x, y, r); c.arcTo(x, y, x + w, y, r); c.closePath(); }
-function vxDots(c){ c.fillStyle = '#fbfbf8'; c.fillRect(0, 0, 240, 240); c.fillStyle = '#d6d4cd'; for (let y = 6; y < 240; y += 12) for (let x = 6; x < 240; x += 12) { c.beginPath(); c.arc(x, y, 0.85, 0, 6.283); c.fill(); } }
+function vxDots(c){ c.fillStyle = '#fbfbf8'; c.fillRect(0, 0, 240, 240); c.fillStyle = '#d3d1ca'; for (let y = 10; y < 240; y += 20) for (let x = 10; x < 240; x += 20) { c.beginPath(); c.arc(x, y, 1, 0, 6.283); c.fill(); } }
 function vxPulse(now){ return 0.25 + 0.75 * (0.5 + 0.5 * Math.cos(now / 1000 * 2 * Math.PI / 1.2)); }   // the selection blinks with a soft fade
 function vxSelRing(c, b, now, r){ c.save(); c.globalAlpha = vxPulse(now); c.strokeStyle = '#18171d'; c.lineWidth = 1.8; vxRR(c, b.x - 3.5, b.y - 3.5, b.w + 7, b.h + 7, (r || 6) + 2); c.stroke(); c.restore(); }
 function vxBox(c, id, b, name, now, opt){
@@ -5303,16 +5322,31 @@ function vxDrawEdit(now){
     c.font = '700 10.5px system-ui, sans-serif'; let v = ''; try { v = String(d.val()); } catch (e) {} c.fillText(v.slice(0, 11), xx + tw / 2, 215); });
   if (D.length > 4) { const np = Math.ceil(D.length / 4); for (let k = 0; k < np; k++) { c.fillStyle = k === page ? '#26252b' : '#c9c7c0'; c.beginPath(); c.arc(120 - (np - 1) * 5 + k * 10, 236, 2, 0, 6.283); c.fill(); } }
 }
+// a clean label pill at the top: the setting being turned, or a short message
+function vxPill(now){
+  let name = '', val = '', t0 = 0;
+  if (viz.label && now - viz.label.t < 1600) { name = viz.label.name; val = viz.label.val; t0 = viz.label.t; }
+  if (st.msg && now - st.msgT < 1400 && st.msgT > t0) { name = ''; val = st.msg; t0 = st.msgT; }
+  if (!val && !name) return;
+  const age = now - t0, a = age > 1100 ? Math.max(0, 1 - (age - 1100) / 450) : Math.min(1, age / 90), c = vxCtx();
+  c.save(); c.globalAlpha = a; c.textAlign = 'left';
+  c.font = '600 8px system-ui, -apple-system, sans-serif'; const nw = name ? c.measureText(name.toUpperCase()).width + 8 : 0;
+  c.font = '700 12px system-ui, -apple-system, sans-serif'; const vw = c.measureText(val).width, w = Math.min(228, nw + vw + 24), x = 120 - w / 2, y = 8;
+  c.shadowColor = 'rgba(0,0,0,0.14)'; c.shadowBlur = 8; c.shadowOffsetY = 2; c.fillStyle = 'rgba(255,255,255,0.96)'; vxRR(c, x, y, w, 26, 13); c.fill(); c.shadowColor = 'transparent';
+  c.strokeStyle = '#e2e0da'; c.lineWidth = 1; c.stroke();
+  let xx = x + 12; if (name) { c.font = '600 8px system-ui, -apple-system, sans-serif'; c.fillStyle = '#8f8d86'; c.fillText(name.toUpperCase(), xx, y + 16.5); xx += nw; }
+  c.font = '700 12px system-ui, -apple-system, sans-serif'; c.fillStyle = '#1d1c22'; c.fillText(val, xx, y + 17.5); c.restore(); }
 function vxRender(now){
-  if (vx.lvl === 0) { viz.view = 'object'; drawViz(now); return; }
-  if (vx.lvl === 2) vxDrawEdit(now); else vxDrawPatch(now);
+  if (vx.lvl === 0) { viz.view = 'object'; drawViz(now); }
+  else if (vx.lvl === 2) vxDrawEdit(now); else vxDrawPatch(now);
+  vxPill(now);
 }
 // ---------- controls ----------
 function vxNav(d){   // hold PLAY + DIAL: 3D > PATCH > EDIT
   if (vx.cab || vx.move) return;
   const to = clamp(vx.lvl + Math.sign(d), 0, 2); if (to === vx.lvl) return;
   if (to === 2) { if (!vxOpenEdit()) return; } else { vx.lvl = to; if (to === 1) viz.view = 'patch'; }
-  vxLabel(['3D VIEW', 'PATCH', 'EDIT'][vx.lvl], ''); }
+  vxLabel('', ['3D VIEW', 'PATCH', 'EDIT'][vx.lvl]); }
 function vxOpenEdit(){ const flat = vxItems().flat(), id = flat[vxSelIdx(flat)]; if (!id) return false; const [k, v] = id.split(':');
   if (k === 'chip') { vxAddFx(v); return false; }
   vx.edit = k === 'cab' ? { cab:+v } : { name:v }; vx.opt = 0; vx.lvl = 2; viz.view = 'patch'; return true; }
@@ -5358,7 +5392,7 @@ function vxF8Down(){ const F = vx.f8; if (F.down) return; F.down = true; F.hold 
   if (vx.lvl === 0) return;
   clearTimeout(F.holdT); F.holdT = setTimeout(() => { if (F.down && vx.lvl === 1 && !vx.cab) { F.hold = true; clearTimeout(F.clickT); F.clicks = 0; vxMoveStart(); } }, VX_HOLD); }
 function vxF8Up(){ const F = vx.f8; if (!F.down) return; F.down = false; clearTimeout(F.holdT); document.getElementById('vxF8').classList.remove('dn');
-  if (vx.lvl === 0) { vx.lvl = 1; viz.view = 'patch'; vxLabel('PATCH', ''); return; }
+  if (vx.lvl === 0) { vx.lvl = 1; viz.view = 'patch'; vxLabel('', 'PATCH'); return; }
   if (F.hold) { F.hold = false; if (vx.move) { flash(vx.move + ' PLACED'); vx.move = null; } return; }
   if (vx.cab) { vxCableEnd(); return; }
   F.clicks++; clearTimeout(F.clickT);
