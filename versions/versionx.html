@@ -298,6 +298,7 @@
   #vxface .cat.patch { background:linear-gradient(180deg, #e6ddff, #cbb8ff); color:#1d0f45; }
   #vxface .cat.on { background:linear-gradient(180deg, #ffe58a, #f0bf28); color:#3a2a00; box-shadow:0 0 0 1px #d9a92a, 0 2px 0 #b38a1a, 0 0 10px rgba(255,210,63,.45); }
   #vxface .cat:active { transform:translateY(1.5px); }
+  #vxface .cam .hint { font:700 6.5px/1.4 ui-monospace,monospace; color:#9a978f; text-align:center; letter-spacing:.06em; text-decoration:none; }
   #vxface .cam { position:absolute; left:258px; top:194px; width:40px; display:flex; flex-direction:column; align-items:center; gap:3px; }
   #vxface .grp { position:absolute; left:14px; width:282px; }
   #vxface .gname { font:800 8px/1 ui-monospace,Menlo,monospace; letter-spacing:.12em; color:#7a7871; height:10px; display:flex; gap:6px; align-items:center; }
@@ -340,7 +341,7 @@
       <div id="vxface">
         <div class="xbrand">AltF8 versionX</div>
         <button class="cat hi" data-cat="PRESET" style="top:36px">PRESET</button><button class="cat hi" data-cat="SOURCE" style="top:76px">SOURCE</button><button class="cat hi" data-cat="TONE" style="top:116px">TONE</button><button class="cat hi" data-cat="MOTION" style="top:156px">MOTION</button>
-        <div class="cam hi"><div class="vk" id="vxCam"><b>CAMERA</b><div class="vcap" style="--c:#141414"></div><s>+PLAY: VIEW</s></div></div>
+        <div class="cam hi"><s class="hint">HOLD PLAY<br>+ TURN<br>= PATCH</s></div>
         <div class="grp lo" id="vxG0" style="top:280px"></div><div class="grp lo" id="vxG1" style="top:370px"></div>
         <button class="turn lo" id="vxPrev" style="left:14px">&#9664;</button><button class="turn lo" id="vxNext" style="left:62px">&#9654;</button>
         <div class="pg lo" id="vxPg"></div><div class="vwheel lo" id="vxVol"></div><div class="vlab lo">VOL - +</div>
@@ -4112,7 +4113,7 @@ function irisMask(R, th){
 const VIZ_DBL = 380, VIZ_NB = 24, VIZ_NT = 20, VIZ_HIST = 240;
 let VW = 112;   // the visualizer's resolution: 112 on the emulator, 240 on versionX (a 240 x 240 panel)
 const viz = { held:false, downT:0, locked:false, armT:0, swallow:false, lockPress:false, an:null, buf:null, bands:null,
-  notes:[], dots:[], label:null, ripples:[], yaw:-0.62, lastMidi:60, img:null, u32:null, cur:null, target:null, T:1, sig:'' };
+  notes:[], dots:[], label:null, ripples:[], yaw:2.25, lastMidi:60, img:null, u32:null, cur:null, target:null, T:1, sig:'' };
 // knob keys that own a part of the picture
 const VIZ_MAP = new Set(['add','uni','sub','noise','sync','ratio','ring','fm','tune','level','det','phase','a','d','s','r','e2a','e2d','e2s','e2r',
   'l0sh','l0rt','l0dp','l1sh','l1rt','l1dp','s0st','s0ln','s0rt','s0gl','s1st','s1ln','s1rt','s1gl','mx0','mx1','mx2','mx3','ord',
@@ -4155,7 +4156,7 @@ function vzBqMag(type, fc, Q, f, two){
 function vzBessel(n, x){ let s = 0, f1 = 1, f2 = 1; for (let i = 1; i <= n; i++) f2 *= i;
   for (let m = 0; m < 8; m++) { s += (m % 2 ? -1 : 1) / (f1 * f2) * Math.pow(x / 2, 2 * m + n); f1 *= (m + 1); f2 *= (m + n + 1); } return s; }
 function vizSrcUsed(name){ return (st.patch.mtx || []).some(m => m.src && m.amt && (SRCS[m.src] === name || SRCS[m.via] === name)); }
-function vizModel(){
+function vizModelAt(Tf){
   const tr = selTrack(), P = st.patch, S = P.sh, drums = tr.type === 'drums', NB = VIZ_NB, NT = VIZ_NT;
   const tm = shTimes(P), A = Math.max(0.002, P.a), Dd = Math.max(0.002, P.d), Su = P.s, R = Math.max(0.01, P.r);
   // the note is held as long as the last played note was (the test sound's length); before any note, attack + decay + a short hold
@@ -4176,7 +4177,7 @@ function vizModel(){
     dr = { f:base[0] * Math.pow(2, tn / 12), tau:base[1] * dk, nz:base[2], nf:base[3], drop:nm === 'KICK' || nm === 'TOM', tone:(D.tone ? D.tone[L] : 50), lvl:(D.lvl ? D.lvl[L] : 100) / 100 }; }
   const dur = drums ? dr.tau * 6 + 0.05 : on + R;
   const tail = Math.max(eN * es, vw > 0 ? vsz * 0.75 : 0, sw > 0 ? stime + 1.5 : 0, drums ? 0.05 : 0.1);
-  const T = clamp(dur + tail, 0.25, 16), dt = T / NT;
+  const T = Tf || clamp(dur + tail, 0.25, 16), dt = T / NT;
   // matrix rows that act inside the note
   const rows = (P.mtx || []).filter(m => m.src && m.amt);
   const sv = (nm, t) => { if (!nm || nm === 'NONE') return 0;
@@ -4270,6 +4271,20 @@ function vizModel(){
       const m = route === 0 ? h1 * h2 : route === 1 ? 0.6 * (h1 + h2) : h1; cap[b] = clamp(1 + 20 * Math.log10(Math.max(1e-6, m)) / 40, 0, 1.25); if (Math.abs(cap[b] - 1) > 0.03) capOn = true; } }
   return { H:out, T, env:envC, env2:env2C, cap, capOn };
 }
+// trim the silent end: anything after the last slice louder than about -30 dB is cut, and the time axis
+// is recalculated over what is left (twice, so the cut lands within a slice of the real fade-out)
+const VIZ_TRIM = 0.032;
+function vizModel(){
+  let m = vizModelAt();
+  for (let pass = 0; pass < 2; pass++) {
+    const NT = VIZ_NT, NB = VIZ_NB; let last = -1;
+    for (let j = 0; j < NT; j++) { let mx = 0; for (let b = 0; b < NB; b++) mx = Math.max(mx, m.H[j * NB + b]); if (mx > VIZ_TRIM) last = j; }
+    if (last < 0 || last >= NT - 2) break;
+    const T2 = Math.max(0.25, m.T * (last + 2) / NT); if (T2 >= m.T * 0.97) break;
+    m = vizModelAt(T2);
+  }
+  return m;
+}
 // recalculated only when a setting changes; the drawn shape morphs toward it
 function vizUpdate(now){
   if (!st.on || !st.patch) return;
@@ -4340,7 +4355,8 @@ function drawViz(now){
   const light = !!viz.light;   // versionX: a glossy white-to-grey screen
   vizBg(u, light, W);
   // camera: DIAL turns it
-  const yaw = viz.yaw + Math.sin(t * 0.25) * 0.05, el = 0.52, ce = Math.cos(el), se = Math.sin(el), cy0 = Math.cos(yaw), sy0 = Math.sin(yaw);
+  const ph = viz.hi ? (now || performance.now()) / 1000 * 2 * Math.PI / 16 : 0;   // versionX: slow, chill oval sway
+  const yaw = viz.yaw + Math.sin(ph) * 0.32, el = 0.52 + Math.cos(ph) * 0.06, ce = Math.cos(el), se = Math.sin(el), cy0 = Math.cos(yaw), sy0 = Math.sin(yaw);
   const SC = 32 * KS, HS = 1.0;
   const P3 = (x, y, z) => { const X = x * cy0 - z * sy0, Z = x * sy0 + z * cy0, Y = y * HS; return [W / 2 + X * SC, W * 0.518 - (Y - 0.5) * SC * ce + Z * SC * se, Z * ce + Y * se]; };   // the object's middle (y 0.5) sits at the screen centre from every angle
   const line3 = (a, b, col, al) => { const p = P3(a[0], a[1], a[2]), r2 = P3(b[0], b[1], b[2]); vzLine(p[0], p[1], r2[0], r2[1], col[0], col[1], col[2], al); };
@@ -4496,7 +4512,7 @@ function drawViz(now){
   g.putImageData(viz.img, 0, 0);
   if (W !== 112) g.setTransform(2, 0, 0, 2, 8, 8);   // text and marks: the 112 layout drawn at 2x, so the pixel font stays crisp
   // axis letters, the knob you just turned, the double-tap bar, the lock mark
-  { const L2 = p => W === 112 ? p : [(p[0] - 8) / 2, (p[1] - 8) / 2], a1 = L2(P3(0, 0, 1.2)); const tc = light ? '#6e6c66' : C.mut; txt('START', Math.round(a1[0]) - 10, Math.round(a1[1]) + 2, tc); const l1 = L2(P3(-1.15, 0, 1)), l2 = L2(P3(1.15, 0, 1)); txt('LO', Math.round(l1[0]) - 8, Math.round(l1[1]), tc); txt('HI', Math.round(l2[0]), Math.round(l2[1]), tc); }
+  if (!viz.hi) { const L2 = p => W === 112 ? p : [(p[0] - 8) / 2, (p[1] - 8) / 2], a1 = L2(P3(0, 0, 1.2)); const tc = light ? '#6e6c66' : C.mut; txt('START', Math.round(a1[0]) - 10, Math.round(a1[1]) + 2, tc); const l1 = L2(P3(-1.15, 0, 1)), l2 = L2(P3(1.15, 0, 1)); txt('LO', Math.round(l1[0]) - 8, Math.round(l1[1]), tc); txt('HI', Math.round(l2[0]), Math.round(l2[1]), tc); }
   if (viz.label && now - viz.label.t < 1400) { const s = (viz.label.name + ' ' + viz.label.val).slice(0, 27); if (light) { px(0, 0, 112, 7, '#2b2a27'); txt(s, Math.max(1, Math.round(56 - s.length * 2)), 1, '#ffd23f'); } else { px(0, 0, 112, 7, C.bg); txt(s, Math.max(1, Math.round(56 - s.length * 2)), 1, C.acc); } }
   if (viz.armT > 0 && !viz.locked) { const f = clamp((now - viz.armT) / VIZ_DBL, 0, 1); px(90, 106, 20, 3, C.dim); px(90, 106, Math.round(20 * f), 3, C.auto); }
   if (viz.locked) { px(106, 106, 4, 3, C.auto); }
@@ -4956,7 +4972,7 @@ function vxBuildPage(){
     el.innerHTML = '<div class="gname"><i style="background:' + cols[1] + '"></i>' + nm + '</div><div class="krow">' +
       vxDefs(nm).map((d, i) => '<div class="vk" data-nm="' + nm + '" data-i="' + i + '"><b>' + vxShort(d.name) + '</b><div class="vcap" style="--c:' + cols[i % cols.length] + '"></div><s></s></div>').join('') + '</div>';
     el.querySelectorAll('.vk').forEach(v => { const i = +v.dataset.i;
-      const tk = []; bindKnob(v.querySelector('.vcap'), (dir, wheel) => { const d = vxDefs(nm)[i]; if (!d) return;
+      const tk = []; bindKnob(v.querySelector('.vcap'), (dir, wheel) => { if (held.play) { held.playUsed = true; clearTimeout(held.fanT); vxSetView(dir > 0 ? 'patch' : 'object'); return; } const d = vxDefs(nm)[i]; if (!d) return;
         // like the emulator: knobs with no maximum speed up when turned fast; time knobs (12% a notch) also take bigger steps
         const nowT = performance.now(); tk.push(nowT); while (tk.length && nowT - tk[0] > 500) tk.shift();
         const timeK = /^(ATTACK|DECAY|RELEASE|ROOM SIZE|SWELL TIME)$/.test(d.name), mult = timeK ? 3 : d.acc && !wheel ? (tk.length > 9 ? 4 : tk.length > 5 ? 2 : 1) : 1;
@@ -4973,7 +4989,6 @@ function vxRefresh(){
   document.querySelectorAll('#vxface .grp .vk').forEach(el => { const d = vxDefs(el.dataset.nm)[+el.dataset.i]; if (!d) return;
     let f = 0; try { f = d.frac(); } catch (e) {} el.querySelector('.vcap').style.setProperty('--p', clamp(f, 0, 1).toFixed(3)); el.querySelector('s').textContent = String(d.val()); });
   const dsc = document.getElementById('vxDesc'); if (dsc) dsc.textContent = VX_PRESETS[vxPreset].desc;
-  document.querySelector('#vxCam .vcap').style.setProperty('--p', (((viz.yaw / (2 * Math.PI)) % 1 + 1) % 1).toFixed(3));
   document.getElementById('vxVol').style.setProperty('--vp', (mvol * 0.6).toFixed(1) + 'px');
 }
 setInterval(vxRefresh, 200);
@@ -4990,7 +5005,6 @@ document.getElementById('fsSwitch').addEventListener('click', () => vxSet(!vxOn)
 document.getElementById('vxPrev').addEventListener('click', () => vxTurnPage(-1));
 document.getElementById('vxNext').addEventListener('click', () => vxTurnPage(1));
 document.querySelectorAll('#vxface .cat').forEach(b => b.addEventListener('click', () => { viz.view = 'object'; vxPage = VX_OBJ_PAGES.findIndex(p => p[0] === b.dataset.cat); vxBuildPage(); }));
-bindKnob(document.querySelector('#vxCam .vcap'), d => { if (held.play) { held.playUsed = true; clearTimeout(held.fanT); vxSetView(d > 0 ? 'patch' : 'object'); return; } vizTurn(d); vxRefresh(); });
 { const el = document.getElementById('vxVol'); let x0 = null, acc = 0;
   el.addEventListener('pointerdown', e => { e.preventDefault(); el.setPointerCapture(e.pointerId); x0 = e.clientX; acc = 0; });
   el.addEventListener('pointermove', e => { if (x0 === null) return; acc += e.clientX - x0; x0 = e.clientX; while (acc >= 6) { volTurn(1); acc -= 6; } while (acc <= -6) { volTurn(-1); acc += 6; } vxRefresh(); });
