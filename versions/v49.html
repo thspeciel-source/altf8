@@ -3175,10 +3175,17 @@ document.addEventListener('keydown', e => {
 });
 document.addEventListener('keyup', e => { const id = TILT_KEYS[e.key.toLowerCase()]; if (id && !/^(r\d|mainknob)$/.test(id)) untilt(); });
 
-if (/debug/.test(location.search + location.hash)) {
-  const d = document.createElement('div'); d.style.cssText = 'position:fixed;left:6px;top:calc(6px + env(safe-area-inset-top));z-index:99;font:11px/1.35 ui-monospace,Menlo,monospace;color:#fff;background:rgba(0,0,0,.75);padding:6px 8px;border-radius:6px;max-width:92vw;white-space:pre-wrap;pointer-events:none';
+// open it with ?debug, or by tapping the screen 4 times quickly (again to hide)
+let dbgEl = null, dbgTaps = [];
+document.addEventListener('pointerup', e => { const w = document.getElementById('scrwrap'); if (!w) return; const r = w.getBoundingClientRect();
+  if (e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom) return;
+  const t = performance.now(); dbgTaps = dbgTaps.filter(x => t - x < 900); dbgTaps.push(t);
+  if (dbgTaps.length >= 4) { dbgTaps = []; if (dbgEl) { clearInterval(dbgEl._iv); dbgEl.remove(); dbgEl = null; } else showDebug(); } }, true);
+if (/debug/.test(location.search + location.hash)) showDebug();
+function showDebug(){
+  const d = document.createElement('div'); dbgEl = d; d.style.cssText = 'position:fixed;left:6px;top:calc(6px + env(safe-area-inset-top));z-index:99;font:11px/1.35 ui-monospace,Menlo,monospace;color:#fff;background:rgba(0,0,0,.75);padding:6px 8px;border-radius:6px;max-width:92vw;white-space:pre-wrap;pointer-events:none';
   document.body.appendChild(d);
-  setInterval(() => { let s = '';
+  d._iv = setInterval(() => { let s = '';
     try { s += 'audio: ' + (ac ? ac.state + ' @' + ac.sampleRate + 'Hz' : 'not created yet') + '\n'; } catch (e) { s += 'audio: ?\n'; }
     try { s += 'unlocked: ' + iosUnlocked + '  session: ' + (navigator.audioSession ? navigator.audioSession.type : 'n/a') + '\n'; } catch (e) {}
     try { s += 'master: ' + (master ? master.gain.value.toFixed(2) : '-') + '  vol: ' + (typeof mvol !== 'undefined' ? mvol : '-') + '\n'; } catch (e) {}
