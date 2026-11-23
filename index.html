@@ -5407,15 +5407,21 @@ function vxDial(d){
   if (vx.lvl === 0) { const def = vxObjDef(vx.objSel); def.step(d); applyFx(); vxLabel(def.name, def.val()); return; }
   if (vx.lvl === 2) { const D = vxEditDefs(), def = D[vx.opt]; if (!def) return; def.step(d); applyFx(); try { applyLive(); } catch (e) {} st.lastEdit = performance.now();
     if (!st.testLoop && !st.playing && performance.now() - vxPrevT > 700) { vxPrevT = performance.now(); try { previewDesign(); } catch (e) {} } return; }
-  if (vx.cab) { vx.cab.i = clamp(vx.cab.i + Math.sign(d), 0, vx.cab.list.length - 1); return; }
+  if (vx.cab) { const n = vx.cab.list.length; vx.cab.i = (vx.cab.i + Math.sign(d) + n) % n; return; }
   if (vx.move) { vxMoveStep(d); return; }
-  const flat = vxItems().flat(), i = clamp(vxSelIdx(flat) + Math.sign(d), 0, flat.length - 1); vx.selId = flat[i]; }
+  // the DIAL moves inside the current group (sound path, modulators, cables, unused effects) and wraps around at the end
+  const G = vxItems().filter(g => g.length), flat = G.flat(), id = flat[vxSelIdx(flat)], g = G.find(x => x.includes(id)) || G[0], n = g.length;
+  vx.selId = g[(g.indexOf(id) + Math.sign(d) + n) % n]; }
 function vxArrow(d){
   if (vx.lvl === 0) { vx.objSel = (vx.objSel + d + VXO.length) % VXO.length; const def = vxObjDef(vx.objSel); vxLabel(def.name, def.val()); return; }
   if (vx.lvl === 2) { const n = vxEditDefs().length; vx.opt = clamp(vx.opt + d, 0, n - 1); return; }
   if (vx.cab || vx.move) return;
   // PATCH: jump between the chain, the modulators, the cables and the chips
-  const G = vxItems().filter(g => g.length), flat = G.flat(), id = flat[vxSelIdx(flat)], gi = G.findIndex(g => g.includes(id)), to = clamp(gi + d, 0, G.length - 1); vx.selId = G[to][0]; }
+  // the arrows jump between groups (wrapping), back to where you last were in that group
+  const G = vxItems().filter(g => g.length), flat = G.flat(), id = flat[vxSelIdx(flat)], gi = G.findIndex(g => g.includes(id)), to = (gi + d + G.length) % G.length;
+  vx.gmem = vx.gmem || {}; vx.gmem[G[gi][0].split(':')[0]] = id; const k = G[to][0].split(':')[0], back = vx.gmem[k];
+  vx.selId = back && G[to].includes(back) ? back : G[to][0];
+  vxLabel('', { blk:'SOUND PATH', mod:'MODULATORS', cab:'CABLES', chip:'UNUSED' }[k] || ''); }
 function vxCableStart(){
   const flat = vxItems().flat(), id = flat[vxSelIdx(flat)]; if (!id) return; const [k, v] = id.split(':');
   if (k === 'chip') { vxAddFx(v); return; }
