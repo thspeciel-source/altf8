@@ -187,6 +187,10 @@
     background-position:0 0, var(--vp,0px) 0; box-shadow:0 0 0 1px #f2f4f7, 0 0 0 2.5px #9097a1, 0 0 0 3.5px #dde1e6, 0 0 0 4px rgba(40,20,70,.45), inset 0 2px 4px rgba(0,0,0,.5); }
   #volmark { position:absolute; left:34px; top:458px; width:74px; text-align:center; font:700 7px/1 ui-monospace,Menlo,monospace; letter-spacing:.1em; color:rgba(235,225,255,.62); pointer-events:none; }
   body.fs #vol, body.fs #volmark { translate:0 var(--fsl,0px); }
+  #fsMix { display:none; position:fixed; z-index:10; bottom:max(12px, env(safe-area-inset-bottom)); left:50%; transform:translateX(-50%); height:36px; padding:0 14px; border-radius:18px;
+    font:600 13px/1 system-ui,sans-serif; background:rgba(38,43,53,.55); color:#fff; border:1px solid rgba(255,255,255,.25); }
+  body.fs #fsMix { display:block; }
+  body.nomix #mixBtn, body.nomix #fsMix { display:none !important; }
   /* ---------- realism pass: anodized purple aluminum, glass screen, LED rings, rubber keys, shoulder trigger + bumper ---------- */
   #device { --rx:0deg; --ry:0deg; }
   #pcb { display:none !important; }
@@ -258,13 +262,13 @@
 </style>
 </head>
 <body>
-<button id="fsExit" aria-label="Exit full screen">&times;</button>
+<button id="fsExit" aria-label="Exit full screen">&times;</button><button id="fsMix"></button>
 <div id="app">
   <div id="devcol">
     <div>
       <h1>AltF8 emulator</h1>
       <div class="sub">A pocket loop studio: pads (chord finder), bass, arpeggiated melody and drums, mixed together. Click the page, then tap F8 (Enter) to power on. Hold Play + B (Space + Backspace) to turn off; hold Play + F8 (Space + Enter) to save the song. Hold Play to open the screen fan, turn the main knob to pick a screen, let go to open it.</div>
-      <button id="fsBtn">Full screen (phone)</button>
+      <button id="fsBtn">Full screen (phone)</button><button id="mixBtn" style="margin-left:6px"></button>
       <button id="updKeep" title="Reload the newest code and keep the song you have on the device">Update, keep my song</button>
       <button id="updFresh" title="Reload the newest code from scratch">Update fresh</button>
     </div>
@@ -1372,7 +1376,7 @@ const seqRun = [{ idx:0, t:0, q:[], cur:-1 }, { idx:0, t:0, q:[], cur:-1 }];
 function wakeAudio(){ if (!ac) initAudio(); else if (ac.state !== 'running') ac.resume(); }
 function initAudio(){
   if (ac) { ac.resume(); return; }
-  try { if (navigator.audioSession) navigator.audioSession.type = 'ambient'; } catch (e) {}
+  try { if (navigator.audioSession) navigator.audioSession.type = mixOn ? 'ambient' : 'playback'; } catch (e) {}
   try {
     ac = new (window.AudioContext || window.webkitAudioContext)();
     master = ac.createGain(); master.gain.value = volGain();
@@ -3173,6 +3177,18 @@ document.addEventListener('keydown', e => {
   const id = TILT_KEYS[k]; if (id) tiltEl(id, /^(r\d|mainknob)$/.test(id) ? 160 : 0);
 });
 document.addEventListener('keyup', e => { const id = TILT_KEYS[e.key.toLowerCase()]; if (id && !/^(r\d|mainknob)$/.test(id)) untilt(); });
+
+/* iPhone audio: MIX ON plays alongside other apps (a podcast keeps going) but the ring/silent switch mutes it;
+   MIX OFF always plays, even on silent, and pauses other apps' audio */
+let mixOn = true; try { mixOn = localStorage.getItem('altf8.mix') !== '0'; } catch (e) {}
+function mixLabel(){ document.getElementById('mixBtn').textContent = mixOn ? 'Mix with other apps: on (silent switch mutes)' : 'Mix with other apps: off (always plays)'; document.getElementById('fsMix').textContent = mixOn ? 'MIX ON' : 'MIX OFF'; }
+function setMix(on){ mixOn = on; try { localStorage.setItem('altf8.mix', on ? '1' : '0'); } catch (e) {}
+  try { if (navigator.audioSession) navigator.audioSession.type = on ? 'ambient' : 'playback'; } catch (e) {}
+  mixLabel(); if (st.on) flash(on ? 'MIX WITH OTHER APPS' : 'ALWAYS PLAYS'); }
+if (!navigator.audioSession) document.body.classList.add('nomix');
+mixLabel();
+document.getElementById('mixBtn').addEventListener('click', () => setMix(!mixOn));
+document.getElementById('fsMix').addEventListener('click', () => setMix(!mixOn));
 </script>
 </body>
 </html>
